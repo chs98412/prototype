@@ -61,6 +61,10 @@ Draft → Approved → In Progress → Review → Done
 
 - [x] PRD created (`docs/prd.md`)
 - [x] Architecture defined (`docs/architecture.md`)
-- [x] First epic identified
-- [x] First story approved (EP01-S01 ~ S04, Sprint 1)
-- [ ] UX spec for EP01-S01
+- [x] Design system implemented (EP00-S01)
+- [x] Sprint 1 완료 — EP01 콘텐츠 기록 & 평점 (S01~S04 모두 Done)
+  - [x] EP01-S01: 회원가입 & 로그인 (Supabase OAuth)
+  - [x] EP01-S02: 작품 검색 (TMDB 연동)
+  - [x] EP01-S03: 작품 상세 페이지 (ISR)
+  - [x] EP01-S04: 시청 기록 & 별점 (Supabase upsert)
+- [ ] Sprint 2 계획 (EP02 게임화 — 컬렉션 & 도전과제)
