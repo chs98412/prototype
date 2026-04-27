@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=375, initial-scale=1.0" />
+  <title>Logged — Search (EP01-S02)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --color-primary:    #FF5733;
+      --color-background: #FFFFFF;
+      --color-surface:    #F5F5F5;
+      --color-text:       #1A1A1A;
+      --color-muted:      #6B6B6B;
+      --color-border:     #E5E5E5;
+      --color-accent:     #FFC107;
+      --radius:           12px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #E0E0E0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 0 64px;
+      gap: 40px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    .phone {
+      width: 375px;
+      height: 812px;
+      background: var(--color-background);
+      border-radius: 40px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-background);
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .screen::-webkit-scrollbar { display: none; }
+
+    .search-header {
+      padding: 56px 16px 12px;
+      background: var(--color-background);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--color-surface);
+      border-radius: 999px;
+      padding: 12px 16px;
+    }
+
+    .search-bar.active {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+
+    .search-icon { font-size: 16px; color: var(--color-muted); }
+
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: var(--color-text);
+      font-family: inherit;
+    }
+
+    .search-input::placeholder { color: var(--color-muted); }
+
+    .clear-btn {
+      width: 20px; height: 20px;
+      background: var(--color-muted);
+      border-radius: 999px;
+      border: none;
+      color: white;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section { padding: 20px 16px 0; }
+    .section-label { font-size: 13px; font-weight: 700; color: var(--color-text); margin-bottom: 12px; }
+
+    .recent-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .recent-tag {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--color-surface);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      color: var(--color-text);
+    }
+    .tag-x { font-size: 11px; color: var(--color-muted); }
+
+    .popular-scroll {
+      display: flex; gap: 10px;
+      overflow-x: auto; scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .popular-scroll::-webkit-scrollbar { display: none; }
+
+    .poster-card { flex-shrink: 0; width: 90px; }
+    .poster-img {
+      width: 90px; height: 130px;
+      border-radius: 10px; margin-bottom: 6px;
+      position: relative;
+    }
+    .poster-bg-1 { background: linear-gradient(145deg, #667eea, #764ba2); }
+    .poster-bg-2 { background: linear-gradient(145deg, #f093fb, #f5576c); }
+    .poster-bg-3 { background: linear-gradient(145deg, #4facfe, #00f2fe); }
+    .poster-bg-4 { background: linear-gradient(145deg, #43e97b, #38f9d7); }
+    .poster-bg-5 { background: linear-gradient(145deg, #fa709a, #fee140); }
+
+    .poster-rank {
+      position: absolute; top: 6px; left: 6px;
+      background: var(--color-primary);
+      color: white; font-size: 10px; font-weight: 800;
+      border-radius: 4px; padding: 2px 5px;
+    }
+    .poster-title { font-size: 12px; font-weight: 600; color: var(--color-text); line-height: 1.3; }
+    .poster-year { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
+
+    .results-list { padding: 8px 16px; }
+    .result-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .result-item:last-child { border-bottom: none; }
+    .result-thumb { width: 44px; height: 62px; border-radius: 7px; flex-shrink: 0; }
+    .result-info { flex: 1; min-width: 0; }
+    .result-title { font-size: 14px; font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .result-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .result-year { font-size: 12px; color: var(--color-muted); }
+    .type-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--color-surface); color: var(--color-muted); }
+    .type-badge.movie { background: #FFF0EC; color: var(--color-primary); }
+    .result-status { font-size: 18px; flex-shrink: 0; }
+
+    .empty-state {
+      display: flex; flex-direction: column;
+      align-items: center; padding: 60px 32px;
+      text-align: center; gap: 8px;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 4px; }
+    .empty-title { font-size: 15px; font-weight: 700; color: var(--color-text); line-height: 1.4; }
+    .empty-sub { font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<span class="label">Screen 1 — 검색 (수소)</span>
+<div class="phone"><div class="screen">
+  <div class="search-header">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" placeholder="영화, 시리즈, 예능 검색" readonly />
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">최근 검색</div>
+    <div class="recent-tags">
+      <div class="recent-tag">기생충 <span class="tag-x">✕</span></div>
+      <div class="recent-tag">오징어게임 <span class="tag-x">✕</span></div>
+      <div class="recent-tag">인터스텔라 <span class="tag-x">✕</span></div>
+      <div class="recent-tag">무빙 <span class="tag-x">✕</span></div>
+    </div>
+  </div>
+  <div class="section" style="margin-top:24px">
+    <div class="section-label">지금 많이 기록 중 🔥</div>
+    <div class="popular-scroll">
+      <div class="poster-card"><div class="poster-img poster-bg-1"><span class="poster-rank">1</span></div><div class="poster-title">파묘</div><div class="poster-year">2024</div></div>
+      <div class="poster-card"><div class="poster-img poster-bg-2"><span class="poster-rank">2</span></div><div class="poster-title">오펜하이머</div><div class="poster-year">2023</div></div>
+      <div class="poster-card"><div class="poster-img poster-bg-3"><span class="poster-rank">3</span></div><div class="poster-title">무빙</div><div class="poster-year">2023</div></div>
+      <div class="poster-card"><div class="poster-img poster-bg-4"><span class="poster-rank">4</span></div><div class="poster-title">더 글로리</div><div class="poster-year">2022</div></div>
+      <div class="poster-card"><div class="poster-img poster-bg-5"><span class="poster-rank">5</span></div><div class="poster-title">기생충</div><div class="poster-year">2019</div></div>
+    </div>
+  </div>
+  <div class="section" style="margin-top:24px;padding-bottom:24px">
+    <div class="section-label">장르별 탐색</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:16px;color:white;font-size:14px;font-weight:700">🎭 드라마</div>
+      <div style="background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:12px;padding:16px;color:white;font-size:14px;font-weight:700">😂 코미디</div>
+      <div style="background:linear-gradient(135deg,#4facfe,#00f2fe);border-radius:12px;padding:16px;color:white;font-size:14px;font-weight:700">👻 공포</div>
+      <div style="background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:12px;padding:16px;color:white;font-size:14px;font-weight:700">🚀 SF</div>
+    </div>
+  </div>
+</div></div>
+
+<span class="label">Screen 2 — 검색 결과</span>
+<div class="phone"><div class="screen">
+  <div class="search-header">
+    <div class="search-bar active">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" value="오펜하이머" readonly />
+      <button class="clear-btn">✕</button>
+    </div>
+  </div>
+  <div style="padding:10px 16px 4px"><span style="font-size:12px;color:var(--color-muted)">"오펜하이머" 검색 결과 3개</span></div>
+  <div class="results-list">
+    <div class="result-item"><div class="result-thumb poster-bg-1"></div><div class="result-info"><div class="result-title">오펜하이머</div><div class="result-meta"><span class="result-year">2023</span><span class="type-badge movie">영화</span></div></div><div class="result-status">✅</div></div>
+    <div class="result-item"><div class="result-thumb poster-bg-2"></div><div class="result-info"><div class="result-title">American Prometheus</div><div class="result-meta"><span class="result-year">2023</span><span class="type-badge movie">영화</span></div></div><div class="result-status">🔖</div></div>
+    <div class="result-item"><div class="result-thumb poster-bg-3"></div><div class="result-info"><div class="result-title">Oppenheimer: IMAX</div><div class="result-meta"><span class="result-year">2023</span><span class="type-badge movie">영화</span></div></div><div class="result-status"></div></div>
+  </div>
+</div></div>
+
+<span class="label">Screen 3 — 결과 없음</span>
+<div class="phone"><div class="screen">
+  <div class="search-header">
+    <div class="search-bar active">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" value="asdfqwerty" readonly />
+      <button class="clear-btn">✕</button>
+    </div>
+  </div>
+  <div class="empty-state">
+    <div class="empty-icon">🎬</div>
+    <div class="empty-title">'asdfqwerty'에 대한<br/>결과가 없어요</div>
+    <div class="empty-sub">제목, 감독, 배우 이름으로<br/>다시 검색해보세요</div>
+  </div>
+</div></div>
+
+</body></html>
