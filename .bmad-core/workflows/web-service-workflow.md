@@ -75,12 +75,21 @@ Example: docs/stories/EP01-S01.md
 
 Repeat for each story in the sprint:
 
-### 4a. Implement (Developer)
+### 4a. Design (Designer)
+1. Activate **Designer**: "Act as the Designer"
+2. Designer reviews story acceptance criteria
+3. Defines UX flow (screens + transitions)
+4. Writes UI spec per screen (layout, components, interactions)
+5. Outputs v0.dev prompt for AI-assisted UI generation
+6. Adds `## UX Spec` section to the story file
+
+### 4b. Implement (Developer)
 1. Activate **Developer**: "Act as the Developer"
-2. Developer picks next `Approved` story
+2. Developer picks next `Approved` story (UX spec 확인 후 시작)
 3. Implements and sets status → `In Progress`
-4. Writes tests alongside code
-5. Sets status → `Review` when done
+4. Uses v0.dev prompt to generate base UI components
+5. Writes tests alongside code
+6. Sets status → `Review` when done
 
 ### 4b. Test (QA Engineer)
 1. Activate **QA Engineer**: "Act as the QA Engineer"

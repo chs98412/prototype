@@ -14,6 +14,7 @@ Available agents (definitions in `.bmad-core/agents/`):
 |---|---|---|
 | Analyst | `analyst.md` | Elicit requirements, create PRD |
 | Architect | `architect.md` | Design system architecture |
+| Designer | `designer.md` | UX flows, UI specs, v0.dev prompts |
 | Developer | `developer.md` | Implement features (full-stack) |
 | QA Engineer | `qa-engineer.md` | Write & run tests |
 | Scrum Master | `scrum-master.md` | Manage stories, sprints |
@@ -26,10 +27,11 @@ Available agents (definitions in `.bmad-core/agents/`):
 2. [Architect]   → Design architecture (docs/architecture.md)
 3. [PO]          → Break PRD into Epics & Stories (docs/stories/)
 4. [SM]          → Sprint planning, story refinement
-5. [Developer]   → Implement stories (one story at a time)
-6. [QA Engineer] → Write & execute tests, log defects
-7. [PO]          → Review & accept completed stories
-8. Repeat 4–7 per sprint
+5. [Designer]    → UX flow & UI spec per story (v0.dev prompt 포함)
+6. [Developer]   → Implement stories (one story at a time)
+7. [QA Engineer] → Write & execute tests, log defects
+8. [PO]          → Review & accept completed stories
+9. Repeat 4–8 per sprint
 ```
 
 ## Project Conventions
@@ -57,7 +59,8 @@ Draft → Approved → In Progress → Review → Done
 
 ## Current Project State
 
-- [ ] PRD created (`docs/prd.md`)
-- [ ] Architecture defined (`docs/architecture.md`)
-- [ ] First epic identified
-- [ ] First story approved
+- [x] PRD created (`docs/prd.md`)
+- [x] Architecture defined (`docs/architecture.md`)
+- [x] First epic identified
+- [x] First story approved (EP01-S01 ~ S04, Sprint 1)
+- [ ] UX spec for EP01-S01
