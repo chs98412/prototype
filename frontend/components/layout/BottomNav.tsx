@@ -3,7 +3,7 @@
 import Link from 'next/link'
 
 interface BottomNavProps {
-  active: 'home' | 'search' | 'profile'
+  active: 'home' | 'search' | 'challenges' | 'profile'
 }
 
 function HomeIcon({ active }: { active: boolean }) {
@@ -24,6 +24,15 @@ function SearchIcon({ active }: { active: boolean }) {
   )
 }
 
+function ChallengesIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="6" />
+      <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
+    </svg>
+  )
+}
+
 function ProfileIcon({ active }: { active: boolean }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,6 +45,7 @@ function ProfileIcon({ active }: { active: boolean }) {
 const tabs = [
   { id: 'home' as const, label: '홈', href: '/home', Icon: HomeIcon },
   { id: 'search' as const, label: '검색', href: '/search', Icon: SearchIcon },
+  { id: 'challenges' as const, label: '도전과제', href: '/challenges', Icon: ChallengesIcon },
   { id: 'profile' as const, label: '프로필', href: '/profile', Icon: ProfileIcon },
 ]
 
