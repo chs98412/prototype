@@ -11,12 +11,12 @@ export async function upsertRecord(data: {
   rating?: number
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Unauthorized')
 
   const { error } = await supabase.from('user_records').upsert(
     {
-      user_id: user.id,
+      user_id: session.user.id,
       tmdb_id: data.tmdbId,
       media_type: data.mediaType,
       status: data.status,
@@ -27,6 +27,17 @@ export async function upsertRecord(data: {
   )
 
   if (error) throw error
+
+  // 스트릭 업데이트 — "봄" 상태일 때만 카운트
+  if (data.status === 'watched') {
+    const apiUrl = process.env.API_URL
+    if (apiUrl) {
+      await fetch(`${apiUrl}/v1/streaks/log`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }).catch(() => { /* 스트릭 실패가 기록 저장을 막지 않음 */ })
+    }
+  }
 }
 
 export async function deleteRecord(data: {
