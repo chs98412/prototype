@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { BackButton } from '@/components/content/BackButton'
-import { RecordStatusBar } from '@/components/content/RecordStatusBar'
+import { RecordSection } from '@/components/content/RecordSection'
 import type { Metadata } from 'next'
 
 export const revalidate = 86400
@@ -142,14 +142,12 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
           </div>
         </div>
 
-        {/* Record status */}
-        <div>
-          <h2 className="text-text font-semibold text-[15px] mb-3">내 기록</h2>
-          <RecordStatusBar isLoggedIn={!!user} />
-          {!user && (
-            <p className="text-muted text-[12px] text-center mt-2">로그인하면 기록을 남길 수 있어요</p>
-          )}
-        </div>
+        {/* Record status & rating */}
+        <RecordSection
+          tmdbId={content.id}
+          mediaType={type as 'movie' | 'tv'}
+          isLoggedIn={!!user}
+        />
 
         {/* Synopsis */}
         {content.overview && (
