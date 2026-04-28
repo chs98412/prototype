@@ -1,4 +1,4 @@
-app = "logged-backend"
+app = "logged-backend-chs98412"
 primary_region = "nrt"
 
 [build]
