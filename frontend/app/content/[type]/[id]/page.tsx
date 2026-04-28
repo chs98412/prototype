@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { BackButton } from '@/components/content/BackButton'
 import { RecordSection } from '@/components/content/RecordSection'
@@ -179,7 +180,13 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
         {directors.length > 0 && (
           <div>
             <h2 className="text-text font-semibold text-[15px] mb-2">감독</h2>
-            <p className="text-muted text-[14px]">{directors.map((d) => d.name).join(', ')}</p>
+            <div className="flex gap-2 flex-wrap">
+              {directors.map((d) => (
+                <Link key={d.id} href={`/person/${d.id}`} className="text-primary text-[14px] underline-offset-2 hover:underline">
+                  {d.name}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
@@ -189,7 +196,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
             <h2 className="text-text font-semibold text-[15px] mb-3">출연진</h2>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
               {cast.map((actor) => (
-                <div key={actor.id} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[68px]">
+                <Link key={actor.id} href={`/person/${actor.id}`} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[68px]">
                   <div className="relative w-[60px] h-[60px] rounded-full overflow-hidden bg-surface">
                     {actor.profile_path ? (
                       <Image
@@ -205,7 +212,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
                   </div>
                   <p className="text-text text-[11px] font-medium text-center leading-tight line-clamp-2">{actor.name}</p>
                   <p className="text-muted text-[10px] text-center leading-tight line-clamp-1">{actor.character}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
