@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { BackButton } from '@/components/content/BackButton'
 import { RecordSection } from '@/components/content/RecordSection'
+import { ReviewSection } from '@/components/content/ReviewSection'
 import type { Metadata } from 'next'
 
 export const revalidate = 86400
@@ -253,15 +254,12 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
           </div>
         )}
 
-        {/* Reviews placeholder */}
-        <div>
-          <h2 className="text-text font-semibold text-[15px] mb-3">리뷰</h2>
-          <div className="flex flex-col items-center gap-2 py-8 rounded-xl bg-surface text-center">
-            <span className="text-3xl">✏️</span>
-            <p className="text-text font-medium text-[14px]">첫 리뷰를 남겨보세요</p>
-            <p className="text-muted text-[12px]">아직 리뷰가 없어요</p>
-          </div>
-        </div>
+        {/* Reviews */}
+        <ReviewSection
+          tmdbId={content.id}
+          mediaType={type as 'movie' | 'tv'}
+          userId={user?.id ?? null}
+        />
       </div>
     </main>
   )
