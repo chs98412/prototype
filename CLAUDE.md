@@ -72,4 +72,8 @@ Draft → Approved → In Progress → Review → Done
   - [x] EP02-S01: 스트릭 카운터
   - [x] EP02-S02: 도전과제 카탈로그
   - [x] EP02-S03: 도전과제 진척도 자동 업데이트
-- [ ] Sprint 3 계획 (EP02 필모그래피 컬렉션 + EP03 소셜)
+- [x] Sprint 3 완료 — 필모그래피 컬렉션 + EP03 소셜 (S01~S04 모두 Done)
+  - [x] EP02-S04: 필모그래피 컬렉션 (감독/배우별 모아보기, 시청 오버레이)
+  - [x] EP03-S01: 팔로우/팔로워 시스템 (user_follows, FollowButton)
+  - [x] EP03-S02: 친구 활동 피드 (get_friend_feed RPC, FriendFeed 컴포넌트)
+  - [x] EP03-S03: 취향 레이팅 (genre_ids 저장, get_genre_ratings RPC, GenreRatings 컴포넌트)
