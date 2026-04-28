@@ -166,6 +166,8 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
           tmdbId={content.id}
           mediaType={type as 'movie' | 'tv'}
           isLoggedIn={!!user}
+          title={title}
+          posterPath={content.poster_path}
         />
 
         {/* Synopsis */}
