@@ -67,4 +67,9 @@ Draft → Approved → In Progress → Review → Done
   - [x] EP01-S02: 작품 검색 (TMDB 연동)
   - [x] EP01-S03: 작품 상세 페이지 (ISR)
   - [x] EP01-S04: 시청 기록 & 별점 (Supabase upsert)
-- [ ] Sprint 2 계획 (EP02 게임화 — 컬렉션 & 도전과제)
+- [x] Sprint 2 완료 — EP02 게임화 (S00~S03 모두 Done)
+  - [x] EP02-S00: Go 백엔드 기초 세팅 (Gin + JWT + Fly.io)
+  - [x] EP02-S01: 스트릭 카운터
+  - [x] EP02-S02: 도전과제 카탈로그
+  - [x] EP02-S03: 도전과제 진척도 자동 업데이트
+- [ ] Sprint 3 계획 (EP02 필모그래피 컬렉션 + EP03 소셜)
