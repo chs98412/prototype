@@ -10,6 +10,8 @@ interface RecordSectionProps {
   tmdbId: number
   mediaType: 'movie' | 'tv'
   isLoggedIn: boolean
+  title?: string
+  posterPath?: string
 }
 
 type UserRecord = { status: RecordStatus; rating: number | null }
@@ -20,7 +22,7 @@ const STATUSES: { id: RecordStatus; label: string; emoji: string }[] = [
   { id: 'want', label: '보고 싶음', emoji: '🔖' },
 ]
 
-export function RecordSection({ tmdbId, mediaType, isLoggedIn }: RecordSectionProps) {
+export function RecordSection({ tmdbId, mediaType, isLoggedIn, title, posterPath }: RecordSectionProps) {
   const router = useRouter()
   const [record, setRecord] = useState<UserRecord | null>(null)
   const [loadingRecord, setLoadingRecord] = useState(isLoggedIn)
@@ -50,13 +52,13 @@ export function RecordSection({ tmdbId, mediaType, isLoggedIn }: RecordSectionPr
       rating: status === 'watched' ? (record?.rating ?? null) : null,
     }
     setRecord(next)
-    startTransition(() => upsertRecord({ tmdbId, mediaType, status, rating: next.rating ?? undefined }))
+    startTransition(() => upsertRecord({ tmdbId, mediaType, status, rating: next.rating ?? undefined, title, posterPath }))
   }
 
   function handleRating(rating: number) {
     const next: UserRecord = { status: 'watched', rating }
     setRecord(next)
-    startTransition(() => upsertRecord({ tmdbId, mediaType, status: 'watched', rating }))
+    startTransition(() => upsertRecord({ tmdbId, mediaType, status: 'watched', rating, title, posterPath }))
   }
 
   function handleDelete() {

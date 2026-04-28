@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { FriendFeed } from '@/components/feed/FriendFeed'
 import Link from 'next/link'
 
 const STREAK_MILESTONES = [7, 30, 100]
@@ -54,9 +55,12 @@ export default async function HomePage() {
           영화, 시리즈 검색...
         </Link>
 
-        {/* User info */}
-        {user?.email && (
-          <p className="text-muted text-[12px] text-center mt-1">{user.email}</p>
+        {/* Friend feed */}
+        {user && (
+          <div className="flex flex-col gap-3">
+            <h2 className="text-text font-semibold text-[15px]">친구 피드</h2>
+            <FriendFeed userId={user.id} />
+          </div>
         )}
       </div>
 

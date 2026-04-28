@@ -9,6 +9,8 @@ export async function upsertRecord(data: {
   mediaType: 'movie' | 'tv'
   status: RecordStatus
   rating?: number
+  title?: string
+  posterPath?: string
 }) {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -21,6 +23,8 @@ export async function upsertRecord(data: {
       media_type: data.mediaType,
       status: data.status,
       rating: data.status === 'watched' ? (data.rating ?? null) : null,
+      title: data.title ?? null,
+      poster_path: data.posterPath ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,tmdb_id,media_type' },
