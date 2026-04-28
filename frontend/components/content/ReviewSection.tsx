@@ -47,7 +47,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
       .eq('tmdb_id', tmdbId)
       .eq('media_type', mediaType)
       .order('created_at', { ascending: false })
-    setReviews((data ?? []) as Review[])
+    setReviews((data ?? []) as unknown as Review[])
     setLoading(false)
   }
 
