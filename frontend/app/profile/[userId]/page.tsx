@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { BackButton } from '@/components/content/BackButton'
 import { LogoutButton } from '@/components/auth/LogoutButton'
+import { GenreRatings } from '@/components/profile/GenreRatings'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
 
@@ -31,6 +32,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
     { count: followerCount },
     { count: followingCount },
     { data: recentRecords = [] },
+    { data: genreRatings = [] },
   ] = await Promise.all([
     supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', userId),
     supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
@@ -41,6 +43,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
       .eq('status', 'watched')
       .order('updated_at', { ascending: false })
       .limit(10),
+    supabase.rpc('get_genre_ratings', { p_user_id: userId }),
   ])
 
   const isFollowing = me && !isSelf
@@ -120,8 +123,14 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
         )}
       </div>
 
+      {/* Genre ratings */}
+      <div className="px-4 mt-2">
+        <h2 className="text-text font-semibold text-[15px] mb-3">취향 레이팅</h2>
+        <GenreRatings ratings={(genreRatings ?? []) as { genre_id: number; cnt: number; avg_rating: number; level: number }[]} />
+      </div>
+
       {/* Recent records */}
-      <div className="px-4">
+      <div className="px-4 mt-4">
         <h2 className="text-text font-semibold text-[15px] mb-3">최근 기록</h2>
         {(!recentRecords || recentRecords.length === 0) ? (
           <div className="flex flex-col items-center gap-2 py-10 text-center">

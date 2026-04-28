@@ -168,6 +168,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
           isLoggedIn={!!user}
           title={title}
           posterPath={content.poster_path}
+          genreIds={content.genres?.map((g) => g.id)}
         />
 
         {/* Synopsis */}

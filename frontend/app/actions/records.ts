@@ -11,6 +11,7 @@ export async function upsertRecord(data: {
   rating?: number
   title?: string
   posterPath?: string
+  genreIds?: number[]
 }) {
   const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
@@ -25,6 +26,7 @@ export async function upsertRecord(data: {
       rating: data.status === 'watched' ? (data.rating ?? null) : null,
       title: data.title ?? null,
       poster_path: data.posterPath ?? null,
+      genre_ids: data.genreIds ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,tmdb_id,media_type' },
