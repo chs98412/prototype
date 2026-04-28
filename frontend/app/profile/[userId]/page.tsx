@@ -8,6 +8,8 @@ import { BackButton } from '@/components/content/BackButton'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { GenreRatings } from '@/components/profile/GenreRatings'
 import { RecordTabs } from '@/components/profile/RecordTabs'
+import { ActivityHeatmap } from '@/components/profile/ActivityHeatmap'
+import { TasteMatch } from '@/components/profile/TasteMatch'
 
 type Params = { userId: string }
 
@@ -99,7 +101,9 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
         </div>
 
         {!isSelf && me && (
-          <FollowButton targetUserId={userId} initialFollowing={isFollowing} />
+          <div className="flex flex-col items-center gap-2 w-full">
+            <FollowButton targetUserId={userId} initialFollowing={isFollowing} />
+          </div>
         )}
         {!isSelf && !me && (
           <Link href="/login" className="px-5 py-2 rounded-full text-sm font-semibold bg-primary text-white">
@@ -130,8 +134,21 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
         </div>
       )}
 
-      {/* Genre ratings */}
+      {/* Taste match — only for other logged-in users */}
+      {!isSelf && me && (
+        <div className="px-4 mt-2">
+          <TasteMatch myId={me.id} friendId={userId} />
+        </div>
+      )}
+
+      {/* Activity heatmap */}
       <div className="px-4 mt-4">
+        <h2 className="text-text font-semibold text-[15px] mb-3">활동 히트맵</h2>
+        <ActivityHeatmap userId={userId} />
+      </div>
+
+      {/* Genre ratings */}
+      <div className="px-4 mt-6">
         <h2 className="text-text font-semibold text-[15px] mb-3">취향 레이팅</h2>
         <GenreRatings ratings={(genreRatings ?? []) as { genre_id: number; cnt: number; avg_rating: number; level: number }[]} />
       </div>

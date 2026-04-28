@@ -3,6 +3,7 @@ import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { FriendFeed } from '@/components/feed/FriendFeed'
+import { YearlyGoal } from '@/components/home/YearlyGoal'
 import Link from 'next/link'
 
 const STREAK_MILESTONES = [7, 30, 100]
@@ -11,16 +12,20 @@ export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: streak } = user
-    ? await supabase
-        .from('user_streaks')
-        .select('current_streak, longest_streak')
-        .eq('user_id', user.id)
-        .maybeSingle()
-    : { data: null }
+  const year = new Date().getFullYear()
 
-  const currentStreak = streak?.current_streak ?? 0
+  const [streakResult, goalResult, watchedResult] = user
+    ? await Promise.all([
+        supabase.from('user_streaks').select('current_streak').eq('user_id', user.id).maybeSingle(),
+        supabase.from('user_goals').select('target_count').eq('user_id', user.id).eq('year', year).maybeSingle(),
+        supabase.from('user_records').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'watched'),
+      ])
+    : [{ data: null }, { data: null }, { count: 0 }]
+
+  const currentStreak = (streakResult as { data: { current_streak: number } | null }).data?.current_streak ?? 0
   const isMilestone = STREAK_MILESTONES.includes(currentStreak)
+  const goalTarget = (goalResult as { data: { target_count: number } | null }).data?.target_count ?? null
+  const watchedCount = (watchedResult as { count: number | null }).count ?? 0
 
   return (
     <main className="flex flex-col min-h-screen bg-background pb-16">
@@ -43,6 +48,11 @@ export default async function HomePage() {
           </div>
           <span className="text-5xl">{currentStreak > 0 ? '🔥' : '💤'}</span>
         </div>
+
+        {/* Yearly goal widget */}
+        {user && (
+          <YearlyGoal currentCount={watchedCount} initialTarget={goalTarget} />
+        )}
 
         {/* Search shortcut */}
         <Link
