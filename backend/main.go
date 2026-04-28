@@ -35,6 +35,7 @@ func main() {
 			c.JSON(http.StatusOK, gin.H{"user_id": c.GetString("userID")})
 		})
 		v1.POST("/streaks/log", handler.LogStreak)
+		v1.POST("/challenges/progress", handler.UpdateChallengeProgress)
 	}
 
 	port := os.Getenv("PORT")

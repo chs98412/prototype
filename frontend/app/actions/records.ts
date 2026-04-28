@@ -28,14 +28,19 @@ export async function upsertRecord(data: {
 
   if (error) throw error
 
-  // 스트릭 업데이트 — "봄" 상태일 때만 카운트
+  // "봄" 상태일 때만 스트릭·도전과제 업데이트 (비동기, 실패해도 기록 저장은 유지)
   if (data.status === 'watched') {
     const apiUrl = process.env.API_URL
     if (apiUrl) {
-      await fetch(`${apiUrl}/v1/streaks/log`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      }).catch(() => { /* 스트릭 실패가 기록 저장을 막지 않음 */ })
+      const headers = { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+      await Promise.allSettled([
+        fetch(`${apiUrl}/v1/streaks/log`, { method: 'POST', headers }),
+        fetch(`${apiUrl}/v1/challenges/progress`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ tmdb_id: data.tmdbId, delta: 1 }),
+        }),
+      ])
     }
   }
 }
@@ -45,13 +50,23 @@ export async function deleteRecord(data: {
   mediaType: 'movie' | 'tv'
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Unauthorized')
 
   const { error } = await supabase
     .from('user_records')
     .delete()
-    .match({ user_id: user.id, tmdb_id: data.tmdbId, media_type: data.mediaType })
+    .match({ user_id: session.user.id, tmdb_id: data.tmdbId, media_type: data.mediaType })
 
   if (error) throw error
+
+  // 도전과제 진척도 -1
+  const apiUrl = process.env.API_URL
+  if (apiUrl) {
+    await fetch(`${apiUrl}/v1/challenges/progress`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tmdb_id: data.tmdbId, delta: -1 }),
+    }).catch(() => {})
+  }
 }
