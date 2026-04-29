@@ -138,7 +138,7 @@ export default async function ChallengesPage({
         )}
       </div>
 
-      <BottomNav active="challenges" />
+      <BottomNav active="home" />
     </main>
   )
 }
