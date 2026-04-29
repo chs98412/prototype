@@ -22,7 +22,7 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
 
   if (!review) notFound()
 
-  const profile = review.user_profiles as { display_name: string | null } | null
+  const profile = review.user_profiles as unknown as { display_name: string | null } | null
 
   const apiKey = process.env.TMDB_API_KEY
   let posterPath: string | null = null
