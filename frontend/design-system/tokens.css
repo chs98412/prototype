@@ -1,11 +1,11 @@
 :root {
-  --color-primary:    #FF5733;
-  --color-background: #FFFFFF;
-  --color-surface:    #F5F5F5;
+  --color-primary:    #1A1A1A;
+  --color-background: #FAFAF8;
+  --color-surface:    #F2F2F0;
   --color-text:       #1A1A1A;
-  --color-text-muted: #6B6B6B;
-  --color-border:     #E5E5E5;
-  --color-accent:     #FFC107;
-  --border-radius:    12px;
+  --color-text-muted: #8C8C8A;
+  --color-border:     #E0E0DC;
+  --color-accent:     #1A1A1A;
+  --border-radius:    4px;
   --font-family:      'Pretendard', 'Inter', sans-serif;
 }
