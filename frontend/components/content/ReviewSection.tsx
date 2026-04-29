@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { upsertReview, deleteReview } from '@/app/actions/reviews'
 
@@ -11,6 +11,7 @@ type Review = {
   content: string
   is_spoiler: boolean
   created_at: string
+  like_count?: number
   user_profiles: { display_name: string | null; avatar_url: string | null } | null
 }
 
@@ -47,7 +48,24 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
       .eq('tmdb_id', tmdbId)
       .eq('media_type', mediaType)
       .order('created_at', { ascending: false })
-    setReviews((data ?? []) as unknown as Review[])
+
+    const rawReviews = (data ?? []) as unknown as Review[]
+
+    const reviewIds = rawReviews.map((r) => r.id)
+    let likeCounts: Record<string, number> = {}
+    if (reviewIds.length > 0) {
+      const { data: likes } = await supabase
+        .from('review_likes')
+        .select('review_id')
+        .in('review_id', reviewIds)
+      if (likes) {
+        for (const like of likes) {
+          likeCounts[like.review_id] = (likeCounts[like.review_id] ?? 0) + 1
+        }
+      }
+    }
+
+    setReviews(rawReviews.map((r) => ({ ...r, like_count: likeCounts[r.id] ?? 0 })))
     setLoading(false)
   }
 
@@ -93,16 +111,15 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
         )}
       </div>
 
-      {/* Write/Edit form */}
       {userId && editing && (
-        <div className="flex flex-col gap-3 p-4 rounded-xl bg-surface">
+        <div className="flex flex-col gap-3 p-4 rounded-sm bg-surface">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             maxLength={500}
             rows={4}
             placeholder="감상을 남겨보세요... (최대 500자)"
-            className="w-full bg-background rounded-lg p-3 text-[14px] text-text resize-none outline-none border border-border focus:border-primary"
+            className="w-full bg-background p-3 text-[14px] text-text resize-none outline-none border border-border focus:border-text"
           />
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-[13px] text-muted cursor-pointer select-none">
@@ -110,7 +127,6 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
                 type="checkbox"
                 checked={isSpoiler}
                 onChange={(e) => setIsSpoiler(e.target.checked)}
-                className="rounded"
               />
               스포일러 포함
             </label>
@@ -125,7 +141,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
               <button
                 onClick={handleSubmit}
                 disabled={saving || !content.trim()}
-                className="px-4 py-1.5 rounded-lg bg-primary text-white text-[13px] font-medium disabled:opacity-50"
+                className="px-4 py-1.5 bg-text text-white text-[13px] font-medium disabled:opacity-50"
               >
                 {saving ? '저장 중...' : '저장'}
               </button>
@@ -134,14 +150,12 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
         </div>
       )}
 
-      {/* Review list */}
       {loading ? (
         <div className="flex justify-center py-6">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-text border-t-transparent rounded-full animate-spin" />
         </div>
       ) : reviews.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 rounded-xl bg-surface text-center">
-          <span className="text-3xl">✏️</span>
+        <div className="flex flex-col items-center gap-2 py-8 bg-surface text-center">
           <p className="text-text font-medium text-[14px]">첫 리뷰를 남겨보세요</p>
           <p className="text-muted text-[12px]">아직 리뷰가 없어요</p>
         </div>
@@ -151,22 +165,11 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
             const isMe = r.user_id === userId
             const profile = r.user_profiles
             const spoilerVisible = revealed.has(r.id)
+            const preview = r.content.slice(0, 100)
+
             return (
               <div key={r.id} className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="relative w-7 h-7 rounded-full overflow-hidden bg-surface flex-shrink-0">
-                    {profile?.avatar_url ? (
-                      <Image
-                        src={profile.avatar_url}
-                        alt={profile.display_name ?? ''}
-                        fill
-                        className="object-cover"
-                        sizes="28px"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-sm">👤</div>
-                    )}
-                  </div>
                   <span className="text-text text-[13px] font-medium">
                     {profile?.display_name ?? '유저'}
                   </span>
@@ -191,18 +194,39 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
                 </div>
 
                 {r.is_spoiler && !spoilerVisible ? (
-                  <div className="flex flex-col items-center gap-2 py-4 rounded-xl bg-surface">
+                  <div className="flex flex-col items-center gap-2 py-4 bg-surface">
                     <p className="text-muted text-[12px]">스포일러가 포함된 리뷰입니다</p>
                     <button
                       onClick={() => setRevealed((prev) => new Set([...prev, r.id]))}
-                      className="px-3 py-1 rounded-full bg-border text-text text-[12px] font-medium"
+                      className="px-3 py-1 border border-border text-text text-[12px] font-medium"
                     >
                       스포일러 보기
                     </button>
                   </div>
                 ) : (
-                  <p className="text-text text-[14px] leading-relaxed whitespace-pre-wrap">{r.content}</p>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-text text-[14px] leading-relaxed">
+                      {preview}{r.content.length > 100 ? '...' : ''}
+                    </p>
+                    {r.content.length > 100 && (
+                      <Link
+                        href={`/review/${r.id}`}
+                        className="text-muted text-[12px] underline underline-offset-2"
+                      >
+                        더 보기
+                      </Link>
+                    )}
+                  </div>
                 )}
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-muted">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span className="text-[12px]">{r.like_count ?? 0}</span>
+                  </div>
+                </div>
 
                 <div className="h-px bg-border" />
               </div>
