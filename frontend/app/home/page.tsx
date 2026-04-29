@@ -36,17 +36,17 @@ export default async function HomePage() {
 
       <div className="flex flex-col gap-4 px-4 pt-5">
         {/* Streak widget */}
-        <div className={`flex items-center justify-between px-5 py-4 rounded-2xl ${currentStreak > 0 ? 'bg-primary' : 'bg-surface'}`}>
+        <div className={`flex items-center justify-between px-5 py-4 rounded-sm border ${currentStreak > 0 ? 'bg-text border-text' : 'bg-surface border-border'}`}>
           <div>
-            <p className={`text-[13px] font-medium ${currentStreak > 0 ? 'text-white/80' : 'text-muted'}`}>연속 기록</p>
-            <p className={`text-3xl font-bold mt-0.5 ${currentStreak > 0 ? 'text-white' : 'text-text'}`}>
+            <p className={`text-[11px] font-medium tracking-widest uppercase ${currentStreak > 0 ? 'text-white/60' : 'text-muted'}`}>연속 기록</p>
+            <p className={`text-3xl font-bold mt-1 ${currentStreak > 0 ? 'text-white' : 'text-text'}`}>
               {currentStreak}일
             </p>
             {isMilestone && (
-              <p className="text-white text-[12px] mt-1">🎉 {currentStreak}일 달성!</p>
+              <p className="text-white/80 text-[11px] mt-1 tracking-wide">🎉 {currentStreak}일 달성</p>
             )}
           </div>
-          <span className="text-5xl">{currentStreak > 0 ? '🔥' : '💤'}</span>
+          <span className="text-4xl">{currentStreak > 0 ? '🔥' : '💤'}</span>
         </div>
 
         {/* Yearly goal widget */}
@@ -57,7 +57,7 @@ export default async function HomePage() {
         {/* Search shortcut */}
         <Link
           href="/search"
-          className="flex items-center gap-2 w-full h-12 px-4 rounded-xl bg-surface text-muted text-[15px]"
+          className="flex items-center gap-2 w-full h-12 px-4 rounded-sm border border-border bg-surface text-muted text-[13px] tracking-wide"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
