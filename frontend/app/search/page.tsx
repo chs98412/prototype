@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { BottomNav } from '@/components/layout/BottomNav'
+import SearchGridView from '@/components/search/SearchGridView'
 
 type SearchResult = {
   id: number
@@ -112,7 +113,16 @@ export default function SearchPage() {
 
   useEffect(() => {
     inputRef.current?.focus()
+    // Load saved view mode from localStorage
+    const savedMode = localStorage.getItem('searchViewMode') as 'list' | 'grid' | null
+    if (savedMode) {
+      setViewMode(savedMode)
+    }
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('searchViewMode', viewMode)
+  }, [viewMode])
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -207,11 +217,7 @@ export default function SearchPage() {
         )}
 
         {showResults && viewMode === 'grid' && (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 pt-4">
-            {results!.map((item) => (
-              <GridItem key={`${item.type}-${item.id}`} item={item} />
-            ))}
-          </div>
+          <SearchGridView results={results!} />
         )}
       </div>
 
