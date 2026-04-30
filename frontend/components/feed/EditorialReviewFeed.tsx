@@ -41,11 +41,11 @@ export function EditorialReviewFeed({
   const [hasMore, setHasMore] = useState(false)
   const [offset, setOffset] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [likedReviews, setLikedReviews] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const supabase = createClient()
 
-    // Fetch reviews (need to implement get_friend_reviews RPC)
     supabase
       .from('reviews')
       .select(`
@@ -63,7 +63,6 @@ export function EditorialReviewFeed({
       .order('created_at', { ascending: false })
       .limit(PAGE_SIZE)
       .then(({ data }) => {
-        // Transform data
         const results = (data ?? []).map((item: any) => ({
           id: item.id,
           user_id: item.user_id,
@@ -72,7 +71,7 @@ export function EditorialReviewFeed({
           tmdb_id: item.tmdb_id,
           media_type: item.media_type,
           title: item.title,
-          poster_path: null, // Need to join with content
+          poster_path: null,
           rating: item.rating,
           review_text: item.review_text,
           like_count: item.reviews_likes?.[0]?.count ?? 0,
@@ -86,6 +85,16 @@ export function EditorialReviewFeed({
         setLoading(false)
       })
   }, [userId, onlyFollowing])
+
+  const handleLike = (reviewId: string) => {
+    const newLiked = new Set(likedReviews)
+    if (newLiked.has(reviewId)) {
+      newLiked.delete(reviewId)
+    } else {
+      newLiked.add(reviewId)
+    }
+    setLikedReviews(newLiked)
+  }
 
   if (loading) {
     return (
@@ -107,86 +116,86 @@ export function EditorialReviewFeed({
 
   return (
     <div className="flex flex-col divide-y divide-gray-200">
-      {items.map((item) => (
-        <Link
-          key={item.id}
-          href={`/review/${item.id}`}
-          className="px-4 py-6 hover:bg-gray-50 transition-colors"
-        >
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-              {item.avatar_url ? (
-                <Image
-                  src={item.avatar_url}
-                  alt={item.display_name ?? 'User'}
-                  fill
-                  className="object-cover"
-                  sizes="32px"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">👤</div>
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">
-                {item.display_name ?? '유저'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {formatRelativeTime(new Date(item.created_at))}
-              </p>
-            </div>
-          </div>
-
-          {/* Title */}
-          <h3 className="text-base font-bold text-gray-900 mb-3">{item.title ?? '제목 없음'}</h3>
-
-          {/* Content: Poster + Review */}
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            {/* Poster */}
-            {item.poster_path && (
-              <div className="relative w-full md:w-40 h-48 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                <Image
-                  src={`${IMG_BASE}/w300${item.poster_path}`}
-                  alt={item.title ?? ''}
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                />
-              </div>
-            )}
-
-            {/* Review Text */}
-            <div className="flex-1">
-              {item.highlight_text && (
-                <div className="bg-gray-100 border-l-4 border-gray-400 p-3 rounded mb-3 italic text-gray-700 text-sm">
-                  "{item.highlight_text}"
+      {items.map((item) => {
+        const isLiked = likedReviews.has(item.id)
+        return (
+          <div key={item.id} className="py-6">
+            {/* Header */}
+            <div className="px-4 mb-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {item.title ?? '제목 없음'}
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className="relative w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                  {item.avatar_url ? (
+                    <Image
+                      src={item.avatar_url}
+                      alt={item.display_name ?? 'User'}
+                      fill
+                      className="object-cover"
+                      sizes="24px"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs">👤</div>
+                  )}
                 </div>
-              )}
-              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap line-clamp-5">
-                {item.review_text}
-              </p>
+                <p className="text-sm text-gray-600">
+                  {item.display_name ?? '유저'} · {formatRelativeTime(new Date(item.created_at))}
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Rating & Actions */}
-          <div className="flex items-center gap-4 pt-3 border-t border-gray-200">
-            {item.rating && (
-              <span className="text-sm text-gray-600">⭐ {item.rating}</span>
-            )}
-            <div className="flex gap-4 ml-auto">
-              <button className="flex items-center gap-1 text-gray-600 hover:text-red-600 transition-colors">
-                <span>❤️</span>
-                <span className="text-xs">{item.like_count}</span>
+            {/* Content: Poster + Quote + Review Text */}
+            <div className="px-4 mb-4">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Poster */}
+                {item.poster_path && (
+                  <div className="relative w-40 h-60 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 shadow-md">
+                    <Image
+                      src={`${IMG_BASE}/w300${item.poster_path}`}
+                      alt={item.title ?? ''}
+                      fill
+                      className="object-cover"
+                      sizes="200px"
+                    />
+                  </div>
+                )}
+
+                {/* Quote Box + Review Text */}
+                <div className="flex-1">
+                  {item.highlight_text && (
+                    <div className="bg-gray-100 border-l-4 border-gray-400 px-4 py-3 rounded mb-4 italic text-gray-700 text-sm leading-relaxed">
+                      "{item.highlight_text}"
+                    </div>
+                  )}
+                  <p className="text-gray-700 text-sm leading-8 whitespace-pre-wrap">
+                    {item.review_text}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-4 flex items-center gap-6 pt-3 border-t border-gray-200">
+              <button
+                onClick={() => handleLike(item.id)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                style={{ color: isLiked ? '#ff4458' : '#666' }}
+              >
+                <span className="text-base">{isLiked ? '❤️' : '🤍'}</span>
+                <span className="text-xs font-medium">{item.like_count}</span>
               </button>
-              <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
-                <span>💬</span>
-                <span className="text-xs">{item.comment_count}</span>
-              </button>
+              <Link
+                href={`/review/${item.id}`}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <span className="text-base">💬</span>
+                <span className="text-xs font-medium">{item.comment_count}</span>
+              </Link>
             </div>
           </div>
-        </Link>
-      ))}
+        )
+      })}
 
       {hasMore && (
         <button
