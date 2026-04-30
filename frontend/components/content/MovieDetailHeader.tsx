@@ -24,45 +24,24 @@ export function MovieDetailHeader({
 }: MovieDetailHeaderProps) {
   return (
     <div>
-      {/* Hero Background */}
-      <div className="relative w-full h-[280px] md:h-[360px]">
-        {backdropPath ? (
-          <Image
-            src={`${IMG_BASE}/w780${backdropPath}`}
-            alt={title}
-            fill
-            priority
-            className="object-cover"
-            sizes="100vw"
-          />
-        ) : posterPath ? (
-          <Image
-            src={`${IMG_BASE}/w500${posterPath}`}
-            alt={title}
-            fill
-            priority
-            className="object-cover object-top"
-            sizes="100vw"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-6xl">🎬</div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent" />
-
-        <div className="absolute top-4 left-4">
+      {/* Back Button Header */}
+      <div className="sticky top-0 flex items-center justify-center h-14 px-4 border-b border-gray-200 bg-white">
+        <div className="absolute left-4">
           <BackButton />
         </div>
+        <h1 className="font-bold text-lg">상세 정보</h1>
       </div>
 
       {/* Content Section */}
-      <div className="px-4 py-6 flex flex-col items-center gap-4">
+      <div className="px-4 py-8 flex flex-col items-center gap-6">
         {/* Poster */}
         {posterPath && (
-          <div className="relative w-[160px] h-[240px] rounded-lg overflow-hidden shadow-md md:w-[200px] md:h-[300px]">
+          <div className="relative w-40 h-60 rounded-xl overflow-hidden shadow-lg">
             <Image
               src={`${IMG_BASE}/w300${posterPath}`}
               alt={title}
               fill
+              priority
               className="object-cover"
               sizes="200px"
             />
@@ -70,26 +49,19 @@ export function MovieDetailHeader({
         )}
 
         {/* Title & Meta */}
-        <div className="text-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{title}</h1>
+        <div className="text-center max-w-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1 line-clamp-2">{title}</h2>
           {originalTitle && originalTitle !== title && (
-            <p className="text-sm text-gray-500 mb-3">{originalTitle}</p>
+            <p className="text-xs text-gray-500 mb-3">{originalTitle}</p>
           )}
-          <div className="flex justify-center gap-2 flex-wrap">
-            <span className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-600">
-              {typeLabel}
-            </span>
-            {year && (
-              <span className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-600">
-                {year}
-              </span>
-            )}
-            {genres?.slice(0, 2).map((g) => (
-              <span key={g.id} className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-600">
-                {g.name}
-              </span>
-            ))}
-          </div>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {[typeLabel, year].filter(Boolean).join(' · ')}
+          </p>
+          {genres && genres.length > 0 && (
+            <p className="text-sm text-gray-600 mt-1">
+              {genres.slice(0, 2).map((g) => g.name).join(', ')}
+            </p>
+          )}
         </div>
       </div>
     </div>

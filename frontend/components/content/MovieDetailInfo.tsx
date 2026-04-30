@@ -24,25 +24,25 @@ interface MovieDetailInfoProps {
 
 export function MovieDetailInfo({ overview, directors, cast }: MovieDetailInfoProps) {
   return (
-    <div className="flex flex-col gap-6 px-4 pb-4">
+    <div className="flex flex-col gap-0 divide-y divide-gray-200 px-4 pb-4">
       {/* Synopsis */}
       {overview && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-600 mb-2">줄거리</h2>
+        <div className="py-4">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">줄거리</h2>
           <p className="text-sm text-gray-700 leading-relaxed">{overview}</p>
         </div>
       )}
 
       {/* Director */}
       {directors.length > 0 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-600 mb-2">감독</h2>
+        <div className="py-4">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">감독</h2>
           <div className="flex gap-2 flex-wrap">
             {directors.map((d) => (
               <Link
                 key={d.id}
                 href={`/person/${d.id}`}
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
               >
                 {d.name}
               </Link>
@@ -53,14 +53,14 @@ export function MovieDetailInfo({ overview, directors, cast }: MovieDetailInfoPr
 
       {/* Cast */}
       {cast.length > 0 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-600 mb-3">출연진</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="py-4">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">출연진</h2>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
             {cast.map((actor) => (
               <Link
                 key={actor.id}
                 href={`/person/${actor.id}`}
-                className="flex flex-col items-center gap-1 flex-shrink-0 w-[70px]"
+                className="flex flex-col items-center gap-1 flex-shrink-0 w-16"
               >
                 <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200">
                   {actor.profile_path ? (
