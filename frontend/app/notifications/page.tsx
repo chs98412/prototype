@@ -5,13 +5,16 @@ import { createClient } from '@/lib/supabase/client'
 import NotificationFeed from '@/components/notifications/NotificationFeed'
 import type { Notification } from '@/lib/types/notification'
 
+export const dynamic = 'force-dynamic'
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
+    const supabase = createClient()
+
     const fetchNotifications = async () => {
       try {
         setIsLoading(true)
@@ -36,26 +39,35 @@ export default function NotificationsPage() {
     fetchNotifications()
 
     // Realtime subscription
-    const channel = supabase
-      .channel('notifications:recipient_id=eq.' + supabase.auth.session()?.user?.id)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications'
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification
-          setNotifications((prev) => [newNotification, ...prev])
-        }
-      )
-      .subscribe()
+    const setupRealtime = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
 
-    return () => {
-      supabase.removeChannel(channel)
+      if (!userId) return
+
+      const channel = supabase
+        .channel('notifications:recipient_id=eq.' + userId)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications'
+          },
+          (payload) => {
+            const newNotification = payload.new as Notification
+            setNotifications((prev) => [newNotification, ...prev])
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     }
-  }, [supabase])
+
+    setupRealtime()
+  }, [])
 
   return (
     <div className="min-h-screen bg-white">
