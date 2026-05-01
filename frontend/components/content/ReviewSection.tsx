@@ -60,7 +60,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
     if (!content.trim() || saving) return
     setSaving(true)
     try {
-      await upsertReview({ tmdbId, mediaType, content: content.trim(), isSpoiler })
+      await upsertReview({ tmdbId, content: content.trim(), spoiler: isSpoiler })
       await fetchReviews()
       setEditing(false)
     } finally {
