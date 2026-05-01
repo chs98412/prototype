@@ -2,10 +2,10 @@
 
 import { updateGoal } from '@/lib/api/client'
 
-export async function setGoal(movieGoal: number, dramaGoal: number) {
+export async function setGoal(target: number) {
   const response = await updateGoal({
-    movie_goal: movieGoal,
-    drama_goal: dramaGoal,
+    movie_goal: target,
+    drama_goal: 0,
   })
 
   if (response.error) throw new Error(response.error)
