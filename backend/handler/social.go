@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/chs98412/prototype/backend/pkg/supabase"
@@ -140,7 +141,7 @@ func Unfollow(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-// GetFeed retrieves friend's activity feed (uses RPC)
+// GetFeed retrieves friend's activity feed (SQL query)
 func GetFeed(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -152,11 +153,17 @@ func GetFeed(c *gin.Context) {
 	offset := c.DefaultQuery("offset", "0")
 
 	db := supabase.NewClient()
-	result, err := db.RPC("get_friend_feed", map[string]interface{}{
-		"p_user_id": userID,
-		"p_limit":   limit,
-		"p_offset":  offset,
-	})
+	query := `
+		SELECT ur.* FROM user_records ur
+		WHERE ur.user_id IN (
+			SELECT following_id FROM user_follows
+			WHERE follower_id = $1
+		)
+		ORDER BY ur.watched_at DESC
+		LIMIT $2::int OFFSET $3::int
+	`
+
+	result, err := db.Query(fmt.Sprintf(query, userID, limit, offset))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -174,7 +181,7 @@ func GetFeed(c *gin.Context) {
 	})
 }
 
-// GetNotifications retrieves user's notifications (uses RPC)
+// GetNotifications retrieves user's notifications (SQL query)
 func GetNotifications(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -186,11 +193,14 @@ func GetNotifications(c *gin.Context) {
 	offset := c.DefaultQuery("offset", "0")
 
 	db := supabase.NewClient()
-	result, err := db.RPC("get_notifications", map[string]interface{}{
-		"p_user_id": userID,
-		"p_limit":   limit,
-		"p_offset":  offset,
-	})
+	query := fmt.Sprintf(`
+		SELECT * FROM notifications
+		WHERE recipient_id = '%s'
+		ORDER BY created_at DESC
+		LIMIT %s OFFSET %s
+	`, userID, limit, offset)
+
+	result, err := db.Query(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

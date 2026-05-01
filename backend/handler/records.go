@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -163,9 +164,19 @@ func GetRecordStats(c *gin.Context) {
 	}
 
 	db := supabase.NewClient()
-	result, err := db.RPC("get_record_stats", map[string]interface{}{
-		"p_user_id": userID,
-	})
+	query := fmt.Sprintf(`
+		SELECT
+			COUNT(*) as total_records,
+			COUNT(CASE WHEN record_type = 'movie' THEN 1 END) as movies_watched,
+			COUNT(CASE WHEN record_type = 'tv' THEN 1 END) as shows_watched,
+			AVG(CASE WHEN rating > 0 THEN rating ELSE NULL END) as avg_rating,
+			MAX(rating) as highest_rating,
+			COUNT(CASE WHEN rating > 0 THEN 1 END) as rated_count
+		FROM user_records
+		WHERE user_id = '%s'
+	`, userID)
+
+	result, err := db.Query(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

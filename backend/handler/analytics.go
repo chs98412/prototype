@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/chs98412/prototype/backend/pkg/supabase"
@@ -17,9 +18,18 @@ func GetHeatmap(c *gin.Context) {
 	}
 
 	db := supabase.NewClient()
-	result, err := db.RPC("get_activity_heatmap", map[string]interface{}{
-		"p_user_id": userID,
-	})
+	query := fmt.Sprintf(`
+		SELECT
+			EXTRACT(WEEK FROM watched_at) as week,
+			EXTRACT(DOW FROM watched_at) as day,
+			COUNT(*) as count
+		FROM user_records
+		WHERE user_id = '%s'
+		GROUP BY week, day
+		ORDER BY week, day
+	`, userID)
+
+	result, err := db.Query(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -43,9 +53,18 @@ func GetGenreRatings(c *gin.Context) {
 	}
 
 	db := supabase.NewClient()
-	result, err := db.RPC("get_genre_ratings", map[string]interface{}{
-		"p_user_id": userID,
-	})
+	query := fmt.Sprintf(`
+		SELECT
+			JSONB_ARRAY_ELEMENTS(genre_ids) as genre_id,
+			AVG(rating) as avg_rating,
+			COUNT(*) as count
+		FROM user_records
+		WHERE user_id = '%s' AND rating > 0
+		GROUP BY genre_id
+		ORDER BY avg_rating DESC
+	`, userID)
+
+	result, err := db.Query(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -83,10 +102,21 @@ func GetTasteMatch(c *gin.Context) {
 	}
 
 	db := supabase.NewClient()
-	result, err := db.RPC("get_taste_match", map[string]interface{}{
-		"p_user_id_1": userID,
-		"p_user_id_2": otherUserID,
-	})
+	query := fmt.Sprintf(`
+		SELECT
+			COUNT(DISTINCT CASE WHEN ur1.tmdb_id = ur2.tmdb_id THEN ur1.tmdb_id END) as common_titles,
+			AVG(CASE WHEN ur1.tmdb_id = ur2.tmdb_id THEN ABS(ur1.rating - ur2.rating) END) as avg_rating_diff,
+			ROUND(
+				100.0 * COUNT(DISTINCT CASE WHEN ur1.tmdb_id = ur2.tmdb_id THEN ur1.tmdb_id END)
+				/ GREATEST(COUNT(DISTINCT ur1.tmdb_id), COUNT(DISTINCT ur2.tmdb_id), 1)
+			, 2) as compatibility_score
+		FROM user_records ur1
+		CROSS JOIN user_records ur2
+		WHERE ur1.user_id = '%s'
+		AND ur2.user_id = '%s'
+	`, userID, otherUserID)
+
+	result, err := db.Query(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

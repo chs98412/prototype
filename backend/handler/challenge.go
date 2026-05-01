@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 
+	"github.com/chs98412/prototype/backend/pkg/supabase"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,34 +26,22 @@ func UpdateChallengeProgress(c *gin.Context) {
 		req.Delta = 1
 	}
 
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	db := supabase.NewClient()
+	query := fmt.Sprintf(`
+		INSERT INTO challenge_progress (user_id, challenge_id, progress)
+		SELECT
+			'%s' as user_id,
+			c.id as challenge_id,
+			%d as progress
+		FROM challenges c
+		WHERE c.tmdb_id = %d
+		ON CONFLICT (user_id, challenge_id)
+		DO UPDATE SET progress = challenge_progress.progress + %d
+	`, userID, req.Delta, req.TmdbID, req.Delta)
 
-	body, _ := json.Marshal(map[string]interface{}{
-		"p_user_id": userID,
-		"p_tmdb_id": req.TmdbID,
-		"p_delta":   req.Delta,
-	})
-
-	httpReq, err := http.NewRequest("POST", supabaseURL+"/rest/v1/rpc/update_challenge_progress", bytes.NewBuffer(body))
+	_, err := db.Query(query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "request error"})
-		return
-	}
-	httpReq.Header.Set("apikey", serviceKey)
-	httpReq.Header.Set("Authorization", "Bearer "+serviceKey)
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(httpReq)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "supabase error"})
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		body, _ := io.ReadAll(resp.Body)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("rpc error: %s", body)})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

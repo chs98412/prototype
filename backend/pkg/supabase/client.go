@@ -164,3 +164,22 @@ func (c *Client) Delete(table string, where string) (json.RawMessage, error) {
 
 	return respBody, nil
 }
+
+// Query executes a raw SQL query
+func (c *Client) Query(sql string) (json.RawMessage, error) {
+	body := map[string]interface{}{
+		"query": sql,
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	respBody, statusCode, err := c.makeRequest("POST", "/rest/v1/rpc/sql", jsonBody)
+	if err != nil {
+		return nil, err
+	}
+
+	if statusCode != http.StatusOK {
+		return nil, fmt.Errorf("query error (status %d): %s", statusCode, string(respBody))
+	}
+
+	return respBody, nil
+}
