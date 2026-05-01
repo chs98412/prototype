@@ -114,11 +114,11 @@ export async function clientApiCall<T>(
 // ============================================
 
 export async function getProfile() {
-  return apiCall('/v1/profile')
+  return apiCall<any>('/v1/profile')
 }
 
 export async function getUserProfile(userId: string) {
-  return apiCall(`/v1/profile/${userId}`)
+  return apiCall<any>(`/v1/profile/${userId}`)
 }
 
 export async function updateProfile(data: {
@@ -126,7 +126,7 @@ export async function updateProfile(data: {
   bio?: string
   avatar_url?: string
 }) {
-  return apiCall('/v1/profile', {
+  return apiCall<any>('/v1/profile', {
     method: 'PUT',
     body: data,
   })
@@ -137,7 +137,7 @@ export async function updateProfile(data: {
 // ============================================
 
 export async function getRecords(limit = 20, offset = 0) {
-  return apiCall(`/v1/records?limit=${limit}&offset=${offset}`)
+  return apiCall<any>(`/v1/records?limit=${limit}&offset=${offset}`)
 }
 
 export async function createRecord(data: {
@@ -145,26 +145,26 @@ export async function createRecord(data: {
   record_type: 'movie' | 'tv'
   rating: number
 }) {
-  return apiCall('/v1/records', {
+  return apiCall<any>('/v1/records', {
     method: 'POST',
     body: data,
   })
 }
 
 export async function deleteRecord(recordId: string) {
-  return apiCall(`/v1/records/${recordId}`, {
+  return apiCall<any>(`/v1/records/${recordId}`, {
     method: 'DELETE',
   })
 }
 
 export async function deleteRecordByTmdbId(tmdbId: number) {
-  return apiCall(`/v1/records/tmdb/${tmdbId}`, {
+  return apiCall<any>(`/v1/records/tmdb/${tmdbId}`, {
     method: 'DELETE',
   })
 }
 
 export async function getRecordStats() {
-  return apiCall('/v1/records/stats')
+  return apiCall<any>('/v1/records/stats')
 }
 
 // ============================================
@@ -172,11 +172,11 @@ export async function getRecordStats() {
 // ============================================
 
 export async function getReviews(limit = 20, offset = 0) {
-  return apiCall(`/v1/reviews?limit=${limit}&offset=${offset}`)
+  return apiCall<any>(`/v1/reviews?limit=${limit}&offset=${offset}`)
 }
 
 export async function getReviewById(reviewId: string) {
-  return apiCall(`/v1/reviews/${reviewId}`)
+  return apiCall<any>(`/v1/reviews/${reviewId}`)
 }
 
 export async function createReview(data: {
@@ -186,7 +186,7 @@ export async function createReview(data: {
   spoiler?: boolean
   rating?: number
 }) {
-  return apiCall('/v1/reviews', {
+  return apiCall<any>('/v1/reviews', {
     method: 'POST',
     body: data,
   })
@@ -201,20 +201,20 @@ export async function updateReview(
     rating?: number
   }
 ) {
-  return apiCall(`/v1/reviews/${reviewId}`, {
+  return apiCall<any>(`/v1/reviews/${reviewId}`, {
     method: 'PUT',
     body: data,
   })
 }
 
 export async function deleteReview(reviewId: string) {
-  return apiCall(`/v1/reviews/${reviewId}`, {
+  return apiCall<any>(`/v1/reviews/${reviewId}`, {
     method: 'DELETE',
   })
 }
 
 export async function getReviewsByTmdbId(tmdbId: number, limit = 20) {
-  return apiCall(`/v1/tmdb/${tmdbId}/reviews?limit=${limit}`)
+  return apiCall<any>(`/v1/tmdb/${tmdbId}/reviews?limit=${limit}`)
 }
 
 // ============================================
@@ -222,7 +222,7 @@ export async function getReviewsByTmdbId(tmdbId: number, limit = 20) {
 // ============================================
 
 export async function getReviewLikes(reviewId: string) {
-  return apiCall(`/v1/reviews/${reviewId}/likes`)
+  return apiCall<any>(`/v1/reviews/${reviewId}/likes`)
 }
 
 export async function checkReviewLike(
@@ -236,13 +236,13 @@ export async function checkReviewLike(
 }
 
 export async function likeReview(reviewId: string) {
-  return apiCall(`/v1/reviews/${reviewId}/like`, {
+  return apiCall<any>(`/v1/reviews/${reviewId}/like`, {
     method: 'POST',
   })
 }
 
 export async function unlikeReview(reviewId: string) {
-  return apiCall(`/v1/reviews/${reviewId}/like`, {
+  return apiCall<any>(`/v1/reviews/${reviewId}/like`, {
     method: 'DELETE',
   })
 }
@@ -252,38 +252,38 @@ export async function unlikeReview(reviewId: string) {
 // ============================================
 
 export async function getFollows(limit = 50) {
-  return apiCall(`/v1/follows?limit=${limit}`)
+  return apiCall<any>(`/v1/follows?limit=${limit}`)
 }
 
 export async function getFollowers(limit = 50) {
-  return apiCall(`/v1/followers?limit=${limit}`)
+  return apiCall<any>(`/v1/followers?limit=${limit}`)
 }
 
 export async function follow(userId: string) {
-  return apiCall(`/v1/follow/${userId}`, {
+  return apiCall<any>(`/v1/follow/${userId}`, {
     method: 'POST',
   })
 }
 
 export async function unfollow(userId: string) {
-  return apiCall(`/v1/follow/${userId}`, {
+  return apiCall<any>(`/v1/follow/${userId}`, {
     method: 'DELETE',
   })
 }
 
 export async function isFollowing(userId: string, token: string) {
-  return clientApiCall(`/v1/follow/${userId}/status`, {
+  return clientApiCall<any>(`/v1/follow/${userId}/status`, {
     method: 'GET',
     token,
   })
 }
 
 export async function getFeed(limit = 20, offset = 0) {
-  return apiCall(`/v1/feed?limit=${limit}&offset=${offset}`)
+  return apiCall<any>(`/v1/feed?limit=${limit}&offset=${offset}`)
 }
 
 export async function getNotifications(limit = 20, offset = 0) {
-  return apiCall(`/v1/notifications?limit=${limit}&offset=${offset}`)
+  return apiCall<any>(`/v1/notifications?limit=${limit}&offset=${offset}`)
 }
 
 // ============================================
@@ -291,35 +291,35 @@ export async function getNotifications(limit = 20, offset = 0) {
 // ============================================
 
 export async function getGoal() {
-  return apiCall('/v1/goals')
+  return apiCall<any>('/v1/goals')
 }
 
 export async function updateGoal(data: {
   movie_goal: number
   drama_goal: number
 }) {
-  return apiCall('/v1/goals', {
+  return apiCall<any>('/v1/goals', {
     method: 'PUT',
     body: data,
   })
 }
 
 export async function getChallenges(limit = 50) {
-  return apiCall(`/v1/challenges?limit=${limit}`)
+  return apiCall<any>(`/v1/challenges?limit=${limit}`)
 }
 
 export async function getUserChallenges(limit = 50, status = 'active') {
-  return apiCall(`/v1/user-challenges?limit=${limit}&status=${status}`)
+  return apiCall<any>(`/v1/user-challenges?limit=${limit}&status=${status}`)
 }
 
 export async function startChallenge(challengeId: string) {
-  return apiCall(`/v1/challenges/${challengeId}/start`, {
+  return apiCall<any>(`/v1/challenges/${challengeId}/start`, {
     method: 'POST',
   })
 }
 
 export async function abandonChallenge(progressId: string) {
-  return apiCall(`/v1/challenges/${progressId}/abandon`, {
+  return apiCall<any>(`/v1/challenges/${progressId}/abandon`, {
     method: 'DELETE',
   })
 }
@@ -329,13 +329,13 @@ export async function abandonChallenge(progressId: string) {
 // ============================================
 
 export async function getHeatmap() {
-  return apiCall('/v1/heatmap')
+  return apiCall<any>('/v1/heatmap')
 }
 
 export async function getGenreRatings() {
-  return apiCall('/v1/genres/ratings')
+  return apiCall<any>('/v1/genres/ratings')
 }
 
 export async function getTasteMatch(userId: string) {
-  return apiCall(`/v1/taste-match/${userId}`)
+  return apiCall<any>(`/v1/taste-match/${userId}`)
 }
