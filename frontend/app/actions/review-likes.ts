@@ -1,9 +1,22 @@
 'use server'
-import { checkReviewLike, likeReview, unlikeReview } from '@/lib/api/client'
+import { likeReview, unlikeReview } from '@/lib/api/client'
+import { createClient } from '@/lib/supabase/server'
 
-export async function toggleReviewLike(reviewId: string, token: string) {
-  const checkResponse = await checkReviewLike(reviewId, token)
-  const isLiked = checkResponse.data?.liked || false
+export async function toggleReviewLike(reviewId: string) {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) throw new Error('Unauthorized')
+
+  // Check current state
+  const { data: likes } = await supabase
+    .from('review_likes')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .eq('review_id', reviewId)
+    .maybeSingle()
+
+  const isLiked = !!likes
 
   if (isLiked) {
     const response = await unlikeReview(reviewId)
