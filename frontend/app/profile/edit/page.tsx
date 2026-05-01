@@ -41,6 +41,8 @@ export default function ProfileEditPage() {
       setLoading(false)
       setIsDirty(false)
     }
+    // Note: kept as direct Supabase for initial load since it's user's own profile
+    // write operations use Backend API via updateProfile action
     load()
   }, [router])
 
@@ -81,18 +83,10 @@ export default function ProfileEditPage() {
     if (saving || !displayName.trim()) return
     setSaving(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      await supabase
-        .from('user_profiles')
-        .update({
-          display_name: displayName,
-          bio: bio || null,
-          avatar_url: avatarUrl
-        })
-        .eq('user_id', user.id)
+      await updateProfile({
+        displayName: displayName.trim(),
+        bio: bio.trim() || undefined,
+      })
 
       setIsDirty(false)
       router.push('/profile')

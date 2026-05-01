@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getFeed } from '@/lib/api/client'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
 const PAGE_SIZE = 20
@@ -43,30 +43,29 @@ export function FriendFeed({ userId }: { userId: string }) {
   const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .rpc('get_friend_feed', { p_user_id: userId, p_limit: PAGE_SIZE, p_offset: 0 })
-      .then(({ data }) => {
-        const results = (data ?? []) as FeedItem[]
+    const loadFeed = async () => {
+      const response = await getFeed(PAGE_SIZE, 0)
+      if (!response.error && response.data) {
+        const results = (response.data ?? []) as FeedItem[]
         setItems(results)
         setHasMore(results.length === PAGE_SIZE)
         setOffset(results.length)
-        setLoading(false)
-      })
+      }
+      setLoading(false)
+    }
+    loadFeed()
   }, [userId])
 
-  function handleLoadMore() {
+  async function handleLoadMore() {
     setLoadingMore(true)
-    const supabase = createClient()
-    supabase
-      .rpc('get_friend_feed', { p_user_id: userId, p_limit: PAGE_SIZE, p_offset: offset })
-      .then(({ data }) => {
-        const results = (data ?? []) as FeedItem[]
-        setItems((prev) => [...prev, ...results])
-        setHasMore(results.length === PAGE_SIZE)
-        setOffset((prev) => prev + results.length)
-        setLoadingMore(false)
-      })
+    const response = await getFeed(PAGE_SIZE, offset)
+    if (!response.error && response.data) {
+      const results = (response.data ?? []) as FeedItem[]
+      setItems((prev) => [...prev, ...results])
+      setHasMore(results.length === PAGE_SIZE)
+      setOffset((prev) => prev + results.length)
+    }
+    setLoadingMore(false)
   }
 
   if (loading) {

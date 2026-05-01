@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getReviewsByTmdbId } from '@/lib/api/client'
 import { upsertReview, deleteReview } from '@/app/actions/reviews'
 
 type Review = {
@@ -41,31 +41,10 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
   const myReview = reviews.find((r) => r.user_id === userId) ?? null
 
   async function fetchReviews() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('reviews')
-      .select('id, user_id, content, is_spoiler, created_at, user_profiles(display_name, avatar_url)')
-      .eq('tmdb_id', tmdbId)
-      .eq('media_type', mediaType)
-      .order('created_at', { ascending: false })
-
-    const rawReviews = (data ?? []) as unknown as Review[]
-
-    const reviewIds = rawReviews.map((r) => r.id)
-    let likeCounts: Record<string, number> = {}
-    if (reviewIds.length > 0) {
-      const { data: likes } = await supabase
-        .from('review_likes')
-        .select('review_id')
-        .in('review_id', reviewIds)
-      if (likes) {
-        for (const like of likes) {
-          likeCounts[like.review_id] = (likeCounts[like.review_id] ?? 0) + 1
-        }
-      }
+    const response = await getReviewsByTmdbId(tmdbId, 20)
+    if (!response.error && response.data) {
+      setReviews(response.data as Review[])
     }
-
-    setReviews(rawReviews.map((r) => ({ ...r, like_count: likeCounts[r.id] ?? 0 })))
     setLoading(false)
   }
 
@@ -90,10 +69,10 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
   }
 
   async function handleDelete() {
-    if (saving) return
+    if (saving || !myReview) return
     setSaving(true)
     try {
-      await deleteReview({ tmdbId, mediaType })
+      await deleteReview({ reviewId: myReview.id })
       setReviews((prev) => prev.filter((r) => r.user_id !== userId))
     } finally {
       setSaving(false)

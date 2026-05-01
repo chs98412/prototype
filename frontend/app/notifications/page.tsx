@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getNotifications } from '@/lib/api/client'
 import NotificationFeed from '@/components/notifications/NotificationFeed'
 import type { Notification } from '@/lib/types/notification'
 
@@ -15,17 +16,14 @@ export default function NotificationsPage() {
     const fetchNotifications = async () => {
       try {
         setIsLoading(true)
-        const { data, error } = await supabase.rpc('get_notifications', {
-          limit: 20,
-          offset: 0
-        })
+        const response = await getNotifications(20, 0)
 
-        if (error) {
-          setError(error.message)
+        if (response.error) {
+          setError(response.error)
           return
         }
 
-        setNotifications(data || [])
+        setNotifications(response.data || [])
       } catch (err) {
         setError(err instanceof Error ? err.message : '알림 로드 실패')
       } finally {
