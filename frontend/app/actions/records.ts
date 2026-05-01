@@ -1,6 +1,6 @@
 'use server'
 
-import { createRecord, deleteRecord as deleteRecordApi } from '@/lib/api/client'
+import { createRecord, deleteRecordByTmdbId } from '@/lib/api/client'
 
 export type RecordStatus = 'watched' | 'watching' | 'want'
 
@@ -23,6 +23,6 @@ export async function upsertRecord(data: {
 }
 
 export async function deleteRecord(data: { tmdbId: number }) {
-  const response = await deleteRecordApi(data.tmdbId)
+  const response = await deleteRecordByTmdbId(data.tmdbId)
   if (response.error) throw new Error(response.error)
 }
