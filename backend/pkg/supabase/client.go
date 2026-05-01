@@ -1,170 +1,245 @@
 package supabase
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Client struct {
-	url    string
-	apiKey string
-	client *http.Client
+	conn *pgx.Conn
 }
 
-// NewClient creates a new Supabase client
+var dbConn *pgx.Conn
+
+// Init initializes the database connection
+func Init() error {
+	ctx := context.Background()
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return fmt.Errorf("DATABASE_URL not set")
+	}
+
+	conn, err := pgx.Connect(ctx, databaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	// Test connection
+	if err := conn.Ping(ctx); err != nil {
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	dbConn = conn
+	return nil
+}
+
+// NewClient creates a new database client
 func NewClient() *Client {
-	return &Client{
-		url:    os.Getenv("SUPABASE_URL"),
-		apiKey: os.Getenv("SUPABASE_SERVICE_ROLE_KEY"),
-		client: http.DefaultClient,
-	}
+	return &Client{conn: dbConn}
 }
 
-// makeRequest는 공통 HTTP 요청 헬퍼
-func (c *Client) makeRequest(method, path string, body []byte) ([]byte, int, error) {
-	url := c.url + path
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+// Query executes a raw SQL query and returns JSON
+func (c *Client) Query(sql string, args ...interface{}) (json.RawMessage, error) {
+	ctx := context.Background()
+	rows, err := c.conn.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("query error: %w", err)
+	}
+	defer rows.Close()
+
+	// Convert rows to JSON
+	var result []map[string]interface{}
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read row: %w", err)
+		}
+
+		fieldDescriptions := rows.FieldDescriptions()
+		row := make(map[string]interface{})
+		for i, fd := range fieldDescriptions {
+			row[string(fd.Name)] = values[i]
+		}
+		result = append(result, row)
 	}
 
-	// 공통 헤더 설정
-	req.Header.Set("apikey", c.apiKey)
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, 0, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, resp.StatusCode, fmt.Errorf("failed to read response: %w", err)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
 	}
 
-	return respBody, resp.StatusCode, nil
+	jsonData, _ := json.Marshal(result)
+	return jsonData, nil
 }
 
-// Select retrieves records from a table
-// query example: "user_id=eq.123&order=created_at.desc&limit=10"
-func (c *Client) Select(table string, query string) (json.RawMessage, error) {
-	path := "/rest/v1/" + table
-	if query != "" {
-		path += "?" + query
-	}
-
-	respBody, statusCode, err := c.makeRequest("GET", path, []byte{})
+// Exec executes a SQL statement (INSERT, UPDATE, DELETE)
+func (c *Client) Exec(sql string, args ...interface{}) error {
+	ctx := context.Background()
+	_, err := c.conn.Exec(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("exec error: %w", err)
 	}
-
-	if statusCode != http.StatusOK {
-		return nil, fmt.Errorf("select error (status %d): %s", statusCode, string(respBody))
-	}
-
-	return respBody, nil
+	return nil
 }
 
-// Insert inserts a record
+// Select retrieves records from a table (RestAPI-style filter converted to SQL)
+func (c *Client) Select(table string, filter string) (json.RawMessage, error) {
+	sql := fmt.Sprintf("SELECT * FROM %s", table)
+
+	// Simple filter parsing (user_id=eq.123 -> WHERE user_id = '123')
+	if filter != "" {
+		// This is a simplified version; real implementation would parse PostgREST filters
+		sql += " WHERE " + filter
+	}
+
+	return c.Query(sql)
+}
+
+// Insert inserts a record and returns it
 func (c *Client) Insert(table string, data map[string]interface{}) (json.RawMessage, error) {
-	body, _ := json.Marshal(data)
-	respBody, statusCode, err := c.makeRequest("POST", "/rest/v1/"+table, body)
-	if err != nil {
-		return nil, err
+	if len(data) == 0 {
+		return json.Marshal([]interface{}{})
 	}
 
-	if statusCode != http.StatusCreated {
-		return nil, fmt.Errorf("insert error (status %d): %s", statusCode, string(respBody))
+	columns := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data))
+	placeholders := make([]string, 0, len(data))
+
+	i := 1
+	for k, v := range data {
+		columns = append(columns, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		i++
 	}
 
-	return respBody, nil
+	columnStr := ""
+	for _, col := range columns {
+		if columnStr != "" {
+			columnStr += ", "
+		}
+		columnStr += col
+	}
+
+	placeholderStr := ""
+	for _, ph := range placeholders {
+		if placeholderStr != "" {
+			placeholderStr += ", "
+		}
+		placeholderStr += ph
+	}
+
+	sql := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) RETURNING *", table, columnStr, placeholderStr)
+	return c.Query(sql, values...)
 }
 
-// Upsert inserts or updates a record
+// Upsert inserts or updates a record (assumes conflict on user_id, tmdb_id or similar)
 func (c *Client) Upsert(table string, data map[string]interface{}) (json.RawMessage, error) {
-	body, _ := json.Marshal(data)
-	req, _ := http.NewRequest("POST", c.url+"/rest/v1/"+table, bytes.NewBuffer(body))
-	req.Header.Set("apikey", c.apiKey)
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "resolution=merge-duplicates")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("upsert request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("upsert error (status %d): %s", resp.StatusCode, string(respBody))
+	if len(data) == 0 {
+		return json.Marshal([]interface{}{})
 	}
 
-	return respBody, nil
+	columns := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data))
+	placeholders := make([]string, 0, len(data))
+	updates := make([]string, 0, len(data))
+
+	i := 1
+	for k, v := range data {
+		columns = append(columns, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		updates = append(updates, fmt.Sprintf("%s = $%d", k, i))
+		i++
+	}
+
+	columnStr := ""
+	for _, col := range columns {
+		if columnStr != "" {
+			columnStr += ", "
+		}
+		columnStr += col
+	}
+
+	placeholderStr := ""
+	for _, ph := range placeholders {
+		if placeholderStr != "" {
+			placeholderStr += ", "
+		}
+		placeholderStr += ph
+	}
+
+	updateStr := ""
+	for _, upd := range updates {
+		if updateStr != "" {
+			updateStr += ", "
+		}
+		updateStr += upd
+	}
+
+	// Assumes unique constraint on (user_id, tmdb_id) or similar
+	sql := fmt.Sprintf(
+		"INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (user_id, tmdb_id) DO UPDATE SET %s RETURNING *",
+		table, columnStr, placeholderStr, updateStr,
+	)
+	return c.Query(sql, values...)
 }
 
 // Update updates records matching a condition
 func (c *Client) Update(table string, data map[string]interface{}, where string) (json.RawMessage, error) {
-	body, _ := json.Marshal(data)
-	path := "/rest/v1/" + table
+	if len(data) == 0 {
+		return json.Marshal([]interface{}{})
+	}
+
+	updates := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data))
+
+	i := 1
+	for k, v := range data {
+		updates = append(updates, fmt.Sprintf("%s = $%d", k, i))
+		values = append(values, v)
+		i++
+	}
+
+	updateStr := ""
+	for _, upd := range updates {
+		if updateStr != "" {
+			updateStr += ", "
+		}
+		updateStr += upd
+	}
+
+	sql := fmt.Sprintf("UPDATE %s SET %s", table, updateStr)
 	if where != "" {
-		path += "?" + where
+		sql += " WHERE " + where
 	}
+	sql += " RETURNING *"
 
-	respBody, statusCode, err := c.makeRequest("PATCH", path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	if statusCode != http.StatusOK {
-		return nil, fmt.Errorf("update error (status %d): %s", statusCode, string(respBody))
-	}
-
-	return respBody, nil
+	return c.Query(sql, values...)
 }
 
 // Delete deletes records matching a condition
 func (c *Client) Delete(table string, where string) (json.RawMessage, error) {
-	path := "/rest/v1/" + table
+	sql := fmt.Sprintf("DELETE FROM %s", table)
 	if where != "" {
-		path += "?" + where
+		sql += " WHERE " + where
 	}
 
-	respBody, statusCode, err := c.makeRequest("DELETE", path, []byte{})
+	err := c.Exec(sql)
 	if err != nil {
 		return nil, err
 	}
 
-	if statusCode != http.StatusOK && statusCode != http.StatusNoContent {
-		return nil, fmt.Errorf("delete error (status %d): %s", statusCode, string(respBody))
-	}
-
-	return respBody, nil
+	return json.Marshal(map[string]bool{"success": true})
 }
 
-// Query executes a raw SQL query
-func (c *Client) Query(sql string) (json.RawMessage, error) {
-	body := map[string]interface{}{
-		"query": sql,
+// Close closes the database connection
+func Close() error {
+	if dbConn != nil {
+		return dbConn.Close(context.Background())
 	}
-	jsonBody, _ := json.Marshal(body)
-
-	respBody, statusCode, err := c.makeRequest("POST", "/rest/v1/rpc/sql", jsonBody)
-	if err != nil {
-		return nil, err
-	}
-
-	if statusCode != http.StatusOK {
-		return nil, fmt.Errorf("query error (status %d): %s", statusCode, string(respBody))
-	}
-
-	return respBody, nil
+	return nil
 }

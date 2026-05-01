@@ -1,17 +1,25 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/chs98412/prototype/backend/handler"
 	"github.com/chs98412/prototype/backend/middleware"
+	"github.com/chs98412/prototype/backend/pkg/supabase"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	// Initialize database connection
+	if err := supabase.Init(); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer supabase.Close()
+
 	r := gin.Default()
 
 	allowOrigins := []string{"http://localhost:3000"}
