@@ -1,21 +1,17 @@
 'use server'
-import { createClient } from '@/lib/supabase/server'
+import { checkReviewLike, likeReview, unlikeReview } from '@/lib/api/client'
 
-export async function toggleReviewLike(reviewId: string) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return false
-  const { data: existing } = await supabase
-    .from('review_likes')
-    .select('user_id')
-    .eq('user_id', session.user.id)
-    .eq('review_id', reviewId)
-    .maybeSingle()
-  if (existing) {
-    await supabase.from('review_likes').delete().match({ user_id: session.user.id, review_id: reviewId })
+export async function toggleReviewLike(reviewId: string, token: string) {
+  const checkResponse = await checkReviewLike(reviewId, token)
+  const isLiked = checkResponse.data?.liked || false
+
+  if (isLiked) {
+    const response = await unlikeReview(reviewId)
+    if (response.error) throw new Error(response.error)
     return false
   } else {
-    await supabase.from('review_likes').insert({ user_id: session.user.id, review_id: reviewId })
+    const response = await likeReview(reviewId)
+    if (response.error) throw new Error(response.error)
     return true
   }
 }
