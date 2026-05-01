@@ -229,7 +229,7 @@ export async function checkReviewLike(
   reviewId: string,
   token: string
 ) {
-  return clientApiCall(`/v1/reviews/${reviewId}/like/status`, {
+  return clientApiCall<{ liked: boolean }>(`/v1/reviews/${reviewId}/like/status`, {
     method: 'GET',
     token,
   })
