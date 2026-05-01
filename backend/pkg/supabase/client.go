@@ -52,21 +52,6 @@ func (c *Client) makeRequest(method, path string, body []byte) ([]byte, int, err
 	return respBody, resp.StatusCode, nil
 }
 
-// RPC calls a Supabase RPC function
-func (c *Client) RPC(name string, params map[string]interface{}) (json.RawMessage, error) {
-	body, _ := json.Marshal(params)
-	respBody, statusCode, err := c.makeRequest("POST", "/rest/v1/rpc/"+name, body)
-	if err != nil {
-		return nil, err
-	}
-
-	if statusCode != http.StatusOK && statusCode != http.StatusCreated {
-		return nil, fmt.Errorf("rpc error (status %d): %s", statusCode, string(respBody))
-	}
-
-	return respBody, nil
-}
-
 // Select retrieves records from a table
 // query example: "user_id=eq.123&order=created_at.desc&limit=10"
 func (c *Client) Select(table string, query string) (json.RawMessage, error) {
