@@ -64,7 +64,7 @@ export function RecordSection({ tmdbId, mediaType, isLoggedIn, title, posterPath
 
   function handleDelete() {
     setRecord(null)
-    startTransition(() => deleteRecord({ tmdbId, mediaType }))
+    startTransition(() => deleteRecord({ tmdbId }))
   }
 
   return (
