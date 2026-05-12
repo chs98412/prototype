@@ -6,6 +6,8 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import AlbumDetailHeader from '@/components/music/AlbumDetailHeader'
 import TrackRatingTable from '@/components/music/TrackRatingTable'
 import ReviewSection from '@/components/music/ReviewSection'
+import AlbumStatsCards from '@/components/music/AlbumStatsCards'
+import AlbumReviewDisplay from '@/components/music/AlbumReviewDisplay'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
@@ -28,6 +30,14 @@ interface Track {
   track_number: number
 }
 
+interface Review {
+  id: string
+  content: string
+  hasSpoiler: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 function BackArrowIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -46,6 +56,8 @@ export default function AlbumDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [ratings, setRatings] = useState<Map<string, number>>(new Map())
   const [avgRating, setAvgRating] = useState(0)
+  const [review, setReview] = useState<Review | null>(null)
+  const [listenDays, setListenDays] = useState(0)
 
   // 음반 상세 로드
   useEffect(() => {
@@ -83,6 +95,15 @@ export default function AlbumDetailPage() {
     setAvgRating(Math.round(avg * 10) / 10)
   }, [ratings])
 
+  // 청취 일수 계산 (임시)
+  useEffect(() => {
+    if (ratings.size > 0) {
+      setListenDays(Math.min(ratings.size, 30))
+    } else {
+      setListenDays(0)
+    }
+  }, [ratings])
+
   const handleRateTrack = async (trackId: string, rating: number) => {
     try {
       // TODO: Supabase RPC 호출 구현
@@ -112,9 +133,52 @@ export default function AlbumDetailPage() {
       //   has_spoiler: hasSpoiler
       // })
 
-      console.log('Review submitted:', { content, hasSpoiler })
+      setReview({
+        id: 'temp-' + Date.now(),
+        content,
+        hasSpoiler,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
     } catch (err) {
       console.error('Failed to submit review:', err)
+      throw err
+    }
+  }
+
+  const handleDeleteReview = async () => {
+    try {
+      // TODO: Supabase RPC 호출 구현
+      // const { error } = await supabase.rpc('delete_album_review', {
+      //   album_id: albumId
+      // })
+
+      setReview(null)
+    } catch (err) {
+      console.error('Failed to delete review:', err)
+      throw err
+    }
+  }
+
+  const handleEditReview = async (content: string, hasSpoiler: boolean) => {
+    try {
+      // TODO: Supabase RPC 호출 구현
+      // const { error } = await supabase.rpc('update_album_review', {
+      //   album_id: albumId,
+      //   content: content,
+      //   has_spoiler: hasSpoiler
+      // })
+
+      if (review) {
+        setReview({
+          ...review,
+          content,
+          hasSpoiler,
+          updatedAt: new Date()
+        })
+      }
+    } catch (err) {
+      console.error('Failed to update review:', err)
       throw err
     }
   }
@@ -197,8 +261,30 @@ export default function AlbumDetailPage() {
           />
         </div>
 
+        {/* 통계 카드 (곡이 평가된 경우만 표시) */}
+        {ratings.size > 0 && (
+          <AlbumStatsCards
+            stats={{
+              ratedTracks: ratings.size,
+              totalTracks: album.tracks.length,
+              avgRating: avgRating,
+              listenDays: listenDays,
+              lastListened: new Date()
+            }}
+          />
+        )}
+
         {/* 리뷰 섹션 */}
-        <ReviewSection onSubmitReview={handleSubmitReview} />
+        {review ? (
+          <AlbumReviewDisplay
+            review={review}
+            isOwnReview={true}
+            onDelete={handleDeleteReview}
+            onSubmitEdit={handleEditReview}
+          />
+        ) : (
+          <ReviewSection onSubmitReview={handleSubmitReview} />
+        )}
       </div>
 
       <BottomNav active="search" />
