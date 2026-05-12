@@ -131,44 +131,68 @@ GROUP BY user_id, album_id;
 
 ### EP04: 음악 평가 시스템
 
-#### EP04-S00: 기초 세팅
+#### EP04-S00: 기초 세팅 (Architect + Backend)
 - [ ] Spotify API 통합 (검색, 메타데이터 조회)
 - [ ] DB 스키마 설계 & 마이그레이션
 - [ ] Backend: Spotify 검색 엔드포인트
 
-#### EP04-S01: 음반 검색 & 추가
-- [ ] FE: 음반 검색 UI
+#### EP04-S01-Design: 음반 검색 UI 스펙 (Designer)
+- [ ] 검색 페이지 UX 플로우 (영화 검색 참고)
+- [ ] 음반 카드 디자인 (이미지, 제목, 아티스트, 출시일)
+- [ ] 곡목 리스트 UI (트랙 번호, 제목, 시간)
+- [ ] v0.dev 프롬프트 작성
+
+#### EP04-S01: 음반 검색 & 추가 (Developer)
+- [ ] FE: 음반 검색 UI 구현 (디자인 기반)
 - [ ] FE: 곡 목록 표시
 - [ ] BE: RPC `add_album` (Spotify 데이터 동기화)
 
-#### EP04-S02: 곡 평가 시스템
-- [ ] FE: 곡별 별점 입력 UI
+#### EP04-S02-Design: 곡 평가 UI 스펙 (Designer)
+- [ ] 음반 상세 페이지 레이아웃
+- [ ] 곡 평가 별점 UI (1-5)
+- [ ] 자동 계산 음반 평점 표시 방식
+- [ ] v0.dev 프롬프트
+
+#### EP04-S02: 곡 평가 시스템 (Developer)
+- [ ] FE: 곡별 별점 입력 UI 구현
 - [ ] FE: 곡 리뷰 작성
 - [ ] BE: RPC `rate_track` (기록 저장)
 - [ ] BE: RPC `get_album_rating` (자동 계산)
 
-#### EP04-S03: 음반 리뷰
-- [ ] FE: 음반 총평 UI (곡들의 집계 표시)
-- [ ] FE: 음반 리뷰 작성
-- [ ] BE: RPC `save_album_review`
+#### EP04-S03-Design: 리뷰 & 통계 UI 스펙 (Designer)
+- [ ] 음반 리뷰 입력 폼 디자인
+- [ ] 통계 섹션 레이아웃 (평가 곡, 평균, 청취 일수)
+- [ ] v0.dev 프롬프트
 
-#### EP04-S04: 음악 통계 & 히트맵
-- [ ] FE: 음악 히트맵 컴포넌트
+#### EP04-S03: 음반 리뷰 & 통계 (Developer)
+- [ ] FE: 음반 총평 UI 구현
+- [ ] FE: 음반 리뷰 작성/수정/삭제
+- [ ] BE: RPC `save_album_review`
+- [ ] 통계 계산 RPC
+
+#### EP04-S04-Design: 히트맵 & 대시보드 UI 스펙 (Designer)
+- [ ] 히트맵 그리드 디자인 (색상 강도)
+- [ ] 통계 카드 레이아웃
+- [ ] 모바일 반응형 스펙
+- [ ] v0.dev 프롬프트
+
+#### EP04-S04: 음악 통계 & 히트맵 (Developer)
+- [ ] FE: 음악 히트맵 컴포넌트 구현
 - [ ] BE: RPC `get_music_heatmap`
 - [ ] FE: 연간 음악 통계 대시보드
 
-#### EP04-S05: 음악 취향 분석
-- [ ] FE: 선호 장르 분석 (album genres 기반)
+#### EP04-S05: 음악 취향 분석 (Designer + Developer)
+- [ ] FE: 선호 장르 분석 UI
 - [ ] BE: RPC `get_genre_ratings_music`
 - [ ] FE: 취향 궁합 (음악 버전)
 
-#### EP04-S06: 친구 활동 피드 통합
+#### EP04-S06: 친구 활동 피드 통합 (Developer)
 - [ ] BE: RPC `get_friend_music_activity` (음악 활동)
 - [ ] FE: FriendFeed에 음악 활동 추가
 
-#### EP04-S07: 음반 컬렉션 (선택)
+#### EP04-S07: 음반 컬렉션 (Designer + Developer)
 - [ ] FE: "아티스트별 음반" 모아보기
-- [ ] FE: 음반 듣기 오버레이 (영화처럼)
+- [ ] FE: 정렬/필터링 UI
 
 ---
 
@@ -190,21 +214,25 @@ POST https://accounts.spotify.com/api/token
 
 ---
 
-## 📈 우선순위
+## 📈 우선순위 & 실행 순서
 
-**Phase 1 (필수):**
-1. EP04-S00: 기초 세팅
-2. EP04-S01: 음반 검색
-3. EP04-S02: 곡 평가
+**Phase 1 (필수) - Sprint 5-6:**
+1. EP04-S00: 기초 세팅 (Architect, Backend)
+2. EP04-S01-Design: 음반 검색 UI (Designer) ← **먼저**
+3. EP04-S01: 음반 검색 개발 (Developer)
+4. EP04-S02-Design: 곡 평가 UI (Designer) ← **먼저**
+5. EP04-S02: 곡 평가 개발 (Developer)
 
-**Phase 2 (중요):**
-4. EP04-S03: 음반 리뷰
-5. EP04-S04: 음악 히트맵
+**Phase 2 (중요) - Sprint 6-7:**
+6. EP04-S03-Design: 리뷰 & 통계 UI (Designer) ← **먼저**
+7. EP04-S03: 음반 리뷰 개발 (Developer)
+8. EP04-S04-Design: 히트맵 UI (Designer) ← **먼저**
+9. EP04-S04: 히트맵 개발 (Developer)
 
-**Phase 3 (선택):**
-6. EP04-S05: 취향 분석
-7. EP04-S06: 피드 통합
-8. EP04-S07: 컬렉션
+**Phase 3 (선택) - Sprint 8+:**
+10. EP04-S05: 취향 분석
+11. EP04-S06: 피드 통합
+12. EP04-S07: 컬렉션
 
 ---
 
