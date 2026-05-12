@@ -2,15 +2,16 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/chs98412/prototype/backend/pkg/spotify"
 	"github.com/chs98412/prototype/backend/pkg/supabase"
+	"github.com/gin-gonic/gin"
 )
 
 var spotifyClient *spotify.Client
@@ -26,7 +27,6 @@ func init() {
 
 	spotifyClient = spotify.NewClient(clientID, clientSecret)
 
-	// 초기 인증 시도
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := spotifyClient.Authenticate(ctx); err != nil {
 		log.Printf("Warning: Spotify authentication failed: %v\n", err)
@@ -57,7 +57,6 @@ type TrackData struct {
 	TrackNumber int    `json:"track_number"`
 }
 
-// SearchAlbums 음반 검색
 func SearchAlbums(c *gin.Context) {
 	if spotifyClient == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Spotify client not initialized"})
@@ -74,7 +73,6 @@ func SearchAlbums(c *gin.Context) {
 		req.Limit = 10
 	}
 
-	// Spotify API 호출
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -88,7 +86,6 @@ func SearchAlbums(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"albums": albums})
 }
 
-// GetAlbumDetail 음반 상세 정보 (곡목 포함)
 func GetAlbumDetail(c *gin.Context) {
 	if spotifyClient == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Spotify client not initialized"})
@@ -101,7 +98,6 @@ func GetAlbumDetail(c *gin.Context) {
 		return
 	}
 
-	// Spotify API 호출
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -112,7 +108,6 @@ func GetAlbumDetail(c *gin.Context) {
 		return
 	}
 
-	// 응답 포맷팅
 	artistName := ""
 	if len(album.Artists) > 0 {
 		artistName = album.Artists[0].Name
@@ -151,13 +146,11 @@ func GetAlbumDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, albumData)
 }
 
-// RateTrackRequest 곡 평가 요청
 type RateTrackRequest struct {
 	TrackSpotifyID string `json:"track_spotify_id" binding:"required"`
 	Rating         int    `json:"rating" binding:"required,min=0,max=5"`
 }
 
-// RateTrack 곡 평가
 func RateTrack(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -171,8 +164,13 @@ func RateTrack(c *gin.Context) {
 		return
 	}
 
-	sbClient := supabase.NewClient(userID)
-	if err := sbClient.RateTrack(req.TrackSpotifyID, req.Rating, userID); err != nil {
+	db := supabase.NewClient()
+	sql := `INSERT INTO track_records (user_id, track_spotify_id, rating, listened_at)
+		VALUES ($1, $2, $3, NOW())
+		ON CONFLICT (user_id, track_spotify_id)
+		DO UPDATE SET rating = $3, listened_at = NOW()`
+
+	if err := db.Exec(sql, userID, req.TrackSpotifyID, req.Rating); err != nil {
 		log.Printf("Rate track error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to rate track"})
 		return
@@ -181,69 +179,72 @@ func RateTrack(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-// SaveReviewRequest 리뷰 저장 요청
-type SaveReviewRequest struct {
+type SaveAlbumReviewRequest struct {
 	AlbumSpotifyID string `json:"album_spotify_id" binding:"required"`
 	Content        string `json:"content" binding:"required"`
 	HasSpoiler     bool   `json:"has_spoiler"`
 }
 
-// SaveReview 리뷰 저장
-func SaveReview(c *gin.Context) {
+func SaveAlbumReview(c *gin.Context) {
 	userID := c.GetString("userID")
-	authToken := c.GetString("authToken")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	var req SaveReviewRequest
+	var req SaveAlbumReviewRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	sbClient := supabase.NewClient(authToken)
-	review, err := sbClient.SaveReview(req.AlbumSpotifyID, req.Content, req.HasSpoiler, userID)
+	db := supabase.NewClient()
+	sql := `INSERT INTO album_reviews (user_id, album_spotify_id, content, has_spoiler)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, updated_at`
+
+	result, err := db.Query(sql, userID, req.AlbumSpotifyID, req.Content, req.HasSpoiler)
 	if err != nil {
-		log.Printf("Save review error: %v\n", err)
+		log.Printf("Save album review error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save review"})
 		return
 	}
 
-	c.JSON(http.StatusOK, review)
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(result, &rows); err != nil || len(rows) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	c.JSON(http.StatusOK, rows[0])
 }
 
-// UpdateReviewRequest 리뷰 수정 요청
-type UpdateReviewRequest struct {
+type UpdateAlbumReviewRequest struct {
 	Content    string `json:"content" binding:"required"`
 	HasSpoiler bool   `json:"has_spoiler"`
 }
 
-// UpdateReview 리뷰 수정
-func UpdateReview(c *gin.Context) {
+func UpdateAlbumReview(c *gin.Context) {
 	userID := c.GetString("userID")
-	authToken := c.GetString("authToken")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	reviewID := c.Param("id")
-	if reviewID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Review ID required"})
-		return
-	}
 
-	var req UpdateReviewRequest
+	var req UpdateAlbumReviewRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	sbClient := supabase.NewClient(authToken)
-	if err := sbClient.UpdateReview(reviewID, req.Content, req.HasSpoiler); err != nil {
-		log.Printf("Update review error: %v\n", err)
+	db := supabase.NewClient()
+	sql := `UPDATE album_reviews SET content = $1, has_spoiler = $2, updated_at = NOW()
+		WHERE id = $3 AND user_id = $4`
+
+	if err := db.Exec(sql, req.Content, req.HasSpoiler, reviewID, userID); err != nil {
+		log.Printf("Update album review error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update review"})
 		return
 	}
@@ -251,24 +252,20 @@ func UpdateReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-// DeleteReview 리뷰 삭제
-func DeleteReview(c *gin.Context) {
+func DeleteAlbumReview(c *gin.Context) {
 	userID := c.GetString("userID")
-	authToken := c.GetString("authToken")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	reviewID := c.Param("id")
-	if reviewID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Review ID required"})
-		return
-	}
 
-	sbClient := supabase.NewClient(authToken)
-	if err := sbClient.DeleteReview(reviewID); err != nil {
-		log.Printf("Delete review error: %v\n", err)
+	db := supabase.NewClient()
+	sql := `DELETE FROM album_reviews WHERE id = $1 AND user_id = $2`
+
+	if err := db.Exec(sql, reviewID, userID); err != nil {
+		log.Printf("Delete album review error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review"})
 		return
 	}
@@ -276,54 +273,73 @@ func DeleteReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-// GetReview 리뷰 조회
-func GetReview(c *gin.Context) {
+func GetAlbumReview(c *gin.Context) {
 	userID := c.GetString("userID")
-	authToken := c.GetString("authToken")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	albumSpotifyID := c.Param("albumId")
-	if albumSpotifyID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Album ID required"})
-		return
-	}
 
-	sbClient := supabase.NewClient(authToken)
-	review, err := sbClient.GetReview(albumSpotifyID, userID)
+	db := supabase.NewClient()
+	sql := fmt.Sprintf(`SELECT id, content, has_spoiler, created_at, updated_at
+		FROM album_reviews
+		WHERE album_spotify_id = '%s' AND user_id = '%s'
+		LIMIT 1`, albumSpotifyID, userID)
+
+	result, err := db.Query(sql)
 	if err != nil {
-		log.Printf("Get review error: %v\n", err)
+		log.Printf("Get album review error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get review"})
 		return
 	}
 
-	c.JSON(http.StatusOK, review)
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(result, &rows); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse response"})
+		return
+	}
+
+	if len(rows) == 0 {
+		c.JSON(http.StatusOK, nil)
+		return
+	}
+
+	c.JSON(http.StatusOK, rows[0])
 }
 
-// GetAlbumStats 음반 통계 조회
 func GetAlbumStats(c *gin.Context) {
 	userID := c.GetString("userID")
-	authToken := c.GetString("authToken")
 	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	albumSpotifyID := c.Param("albumId")
-	if albumSpotifyID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Album ID required"})
-		return
-	}
 
-	sbClient := supabase.NewClient(authToken)
-	stats, err := sbClient.GetAlbumStats(albumSpotifyID, userID)
+	db := supabase.NewClient()
+	sql := fmt.Sprintf(`SELECT
+		COUNT(*) as rated_tracks,
+		AVG(rating) as avg_rating,
+		COUNT(DISTINCT DATE(listened_at)) as listen_days,
+		MAX(listened_at) as last_listened
+		FROM track_records tr
+		JOIN album_tracks at ON tr.track_spotify_id = at.spotify_id
+		WHERE tr.user_id = '%s' AND at.album_spotify_id = '%s'`, userID, albumSpotifyID)
+
+	result, err := db.Query(sql)
 	if err != nil {
 		log.Printf("Get album stats error: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get album stats"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get stats"})
 		return
 	}
 
-	c.JSON(http.StatusOK, stats)
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(result, &rows); err != nil || len(rows) == 0 {
+		c.JSON(http.StatusOK, gin.H{"rated_tracks": 0, "avg_rating": 0, "listen_days": 0})
+		return
+	}
+
+	c.JSON(http.StatusOK, rows[0])
 }

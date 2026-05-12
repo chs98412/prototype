@@ -1,178 +1,194 @@
 package supabase
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
+	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type Client struct {
-	baseURL    string
-	apiKey     string
-	serviceKey string
-	userID     string
-	httpClient *http.Client
+	conn *pgx.Conn
 }
 
-func NewClient(userID string) *Client {
-	baseURL := os.Getenv("SUPABASE_URL")
-	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
-	apiKey := os.Getenv("SUPABASE_ANON_KEY")
+var dbConn *pgx.Conn
 
-	if baseURL == "" {
-		baseURL = "http://localhost:54321"
+func Init() error {
+	ctx := context.Background()
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return fmt.Errorf("DATABASE_URL not set")
 	}
 
-	if serviceKey == "" {
-		serviceKey = apiKey
+	conn, err := pgx.Connect(ctx, databaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	return &Client{
-		baseURL:    baseURL,
-		apiKey:     apiKey,
-		serviceKey: serviceKey,
-		userID:     userID,
-		httpClient: &http.Client{},
+	if err := conn.Ping(ctx); err != nil {
+		return fmt.Errorf("failed to ping database: %w", err)
 	}
+
+	dbConn = conn
+	return nil
 }
 
-func (c *Client) do(method, path string, body interface{}, params ...string) ([]byte, error) {
-	fullURL := c.baseURL + "/rest/v1" + path
+func NewClient() *Client {
+	return &Client{conn: dbConn}
+}
 
-	if len(params) > 0 && params[0] != "" {
-		fullURL += "?" + params[0]
+func (c *Client) Query(sql string, args ...interface{}) (json.RawMessage, error) {
+	ctx := context.Background()
+	rows, err := c.conn.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query error: %w", err)
 	}
+	defer rows.Close()
 
-	var bodyReader io.Reader
-	if body != nil {
-		jsonBody, err := json.Marshal(body)
+	var result []map[string]interface{}
+	for rows.Next() {
+		values, err := rows.Values()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read row: %w", err)
 		}
-		bodyReader = bytes.NewReader(jsonBody)
+
+		fieldDescriptions := rows.FieldDescriptions()
+		row := make(map[string]interface{})
+		for i, fd := range fieldDescriptions {
+			row[string(fd.Name)] = values[i]
+		}
+		result = append(result, row)
 	}
 
-	req, err := http.NewRequest(method, fullURL, bodyReader)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
+	jsonData, _ := json.Marshal(result)
+	return jsonData, nil
+}
+
+func (c *Client) Exec(sql string, args ...interface{}) error {
+	ctx := context.Background()
+	_, err := c.conn.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("exec error: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) Select(table string, filter string) (json.RawMessage, error) {
+	sql := fmt.Sprintf("SELECT * FROM %s", table)
+	if filter != "" {
+		sql += " WHERE " + filter
+	}
+	return c.Query(sql)
+}
+
+func (c *Client) Insert(table string, data map[string]interface{}) (json.RawMessage, error) {
+	if len(data) == 0 {
+		return json.Marshal([]interface{}{})
+	}
+
+	columns := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data))
+	placeholders := make([]string, 0, len(data))
+
+	i := 1
+	for k, v := range data {
+		columns = append(columns, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		i++
+	}
+
+	sql := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) RETURNING *",
+		table,
+		strings.Join(columns, ", "),
+		strings.Join(placeholders, ", "),
+	)
+	return c.Query(sql, values...)
+}
+
+func (c *Client) Upsert(table string, data map[string]interface{}, conflictColumns ...string) (json.RawMessage, error) {
+	if len(data) == 0 {
+		return json.Marshal([]interface{}{})
+	}
+
+	columns := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data))
+	placeholders := make([]string, 0, len(data))
+	updates := make([]string, 0, len(data))
+
+	i := 1
+	for k, v := range data {
+		columns = append(columns, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		updates = append(updates, fmt.Sprintf("%s = $%d", k, i))
+		i++
+	}
+
+	conflict := "user_id, tmdb_id"
+	if len(conflictColumns) > 0 {
+		conflict = strings.Join(conflictColumns, ", ")
+	}
+
+	sql := fmt.Sprintf(
+		"INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (%s) DO UPDATE SET %s RETURNING *",
+		table,
+		strings.Join(columns, ", "),
+		strings.Join(placeholders, ", "),
+		conflict,
+		strings.Join(updates, ", "),
+	)
+	return c.Query(sql, values...)
+}
+
+func (c *Client) Update(table string, data map[string]interface{}, where string) (json.RawMessage, error) {
+	if len(data) == 0 {
+		return json.Marshal([]interface{}{})
+	}
+
+	updates := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data))
+
+	i := 1
+	for k, v := range data {
+		updates = append(updates, fmt.Sprintf("%s = $%d", k, i))
+		values = append(values, v)
+		i++
+	}
+
+	sql := fmt.Sprintf("UPDATE %s SET %s", table, strings.Join(updates, ", "))
+	if where != "" {
+		sql += " WHERE " + where
+	}
+	sql += " RETURNING *"
+
+	return c.Query(sql, values...)
+}
+
+func (c *Client) Delete(table string, where string) (json.RawMessage, error) {
+	sql := fmt.Sprintf("DELETE FROM %s", table)
+	if where != "" {
+		sql += " WHERE " + where
+	}
+
+	err := c.Exec(sql)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", c.apiKey)
-	req.Header.Set("Authorization", "Bearer "+c.serviceKey)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("supabase error: %s (status: %d)", string(respBody), resp.StatusCode)
-	}
-
-	return respBody, nil
+	return json.Marshal(map[string]bool{"success": true})
 }
 
-func (c *Client) RateTrack(trackSpotifyID string, rating int, userID string) error {
-	body := map[string]interface{}{
-		"track_spotify_id": trackSpotifyID,
-		"rating":           rating,
-		"user_id":          userID,
-		"listened_at":      "now()",
+func Close() error {
+	if dbConn != nil {
+		return dbConn.Close(context.Background())
 	}
-
-	_, err := c.do("POST", "/track_records", body, "")
-	return err
-}
-
-func (c *Client) SaveReview(albumSpotifyID, content string, hasSpoiler bool, userID string) (map[string]interface{}, error) {
-	body := map[string]interface{}{
-		"album_spotify_id": albumSpotifyID,
-		"content":          content,
-		"has_spoiler":      hasSpoiler,
-		"user_id":          userID,
-	}
-
-	resp, err := c.do("POST", "/album_reviews", body, "")
-	if err != nil {
-		return nil, err
-	}
-
-	var result []map[string]interface{}
-	if err := json.Unmarshal(resp, &result); err != nil {
-		return nil, err
-	}
-
-	if len(result) > 0 {
-		return result[0], nil
-	}
-	return nil, nil
-}
-
-func (c *Client) UpdateReview(reviewID string, content string, hasSpoiler bool) error {
-	body := map[string]interface{}{
-		"content":     content,
-		"has_spoiler": hasSpoiler,
-	}
-
-	_, err := c.do("PATCH", "/album_reviews", body, fmt.Sprintf("id=eq.%s", url.QueryEscape(reviewID)))
-	return err
-}
-
-func (c *Client) DeleteReview(reviewID string) error {
-	_, err := c.do("DELETE", "/album_reviews", nil, fmt.Sprintf("id=eq.%s", url.QueryEscape(reviewID)))
-	return err
-}
-
-func (c *Client) GetReview(albumSpotifyID, userID string) (map[string]interface{}, error) {
-	query := fmt.Sprintf("album_spotify_id=eq.%s&user_id=eq.%s", url.QueryEscape(albumSpotifyID), url.QueryEscape(userID))
-	resp, err := c.do("GET", "/album_reviews", nil, query)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []map[string]interface{}
-	if err := json.Unmarshal(resp, &result); err != nil {
-		return nil, err
-	}
-
-	if len(result) > 0 {
-		return result[0], nil
-	}
-	return nil, nil
-}
-
-func (c *Client) GetAlbumStats(albumSpotifyID, userID string) (map[string]interface{}, error) {
-	query := fmt.Sprintf("album_spotify_id=eq.%s&user_id=eq.%s", url.QueryEscape(albumSpotifyID), url.QueryEscape(userID))
-	resp, err := c.do("GET", "/user_album_stats", nil, query)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []map[string]interface{}
-	if err := json.Unmarshal(resp, &result); err != nil {
-		return nil, err
-	}
-
-	if len(result) > 0 {
-		return result[0], nil
-	}
-
-	return map[string]interface{}{
-		"rated_tracks":  0,
-		"total_tracks":  0,
-		"avg_rating":    0,
-		"listen_days":   0,
-		"last_listened": nil,
-	}, nil
+	return nil
 }
