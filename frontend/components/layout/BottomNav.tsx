@@ -3,7 +3,7 @@
 import Link from 'next/link'
 
 interface BottomNavProps {
-  active: 'home' | 'search' | 'profile'
+  active: 'home' | 'search' | 'music' | 'profile'
 }
 
 function HomeIcon() {
@@ -33,9 +33,19 @@ function ProfileIcon() {
   )
 }
 
+function MusicIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13a4 4 0 1 1-4 4 4 4 0 0 1 4-4" />
+      <circle cx="6" cy="21" r="2" />
+    </svg>
+  )
+}
+
 const tabs = [
   { id: 'home' as const, href: '/home', Icon: HomeIcon },
   { id: 'search' as const, href: '/search', Icon: SearchIcon },
+  { id: 'music' as const, href: '/music/search', Icon: MusicIcon },
   { id: 'profile' as const, href: '/profile', Icon: ProfileIcon },
 ]
 
