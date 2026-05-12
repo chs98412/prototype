@@ -36,6 +36,10 @@ func main() {
 
 	r.GET("/health", handler.Health)
 
+	// 음악 API (인증 미필요 - 공개 API)
+	r.POST("/v1/music/search", handler.SearchAlbums)
+	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
