@@ -106,12 +106,24 @@ export default function AlbumDetailPage() {
 
   const handleRateTrack = async (trackId: string, rating: number) => {
     try {
-      // TODO: Supabase RPC 호출 구현
-      // const { error } = await supabase.rpc('rate_track', {
-      //   track_id: trackId,
-      //   rating: rating,
-      //   listened_at: new Date()
-      // })
+      const spotifyTrackId = album?.tracks.find(t => t.id === trackId)?.spotify_id
+      if (!spotifyTrackId) return
+
+      const response = await fetch(`${API_BASE}/v1/music/ratings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : '') || ''}`
+        },
+        body: JSON.stringify({
+          track_spotify_id: spotifyTrackId,
+          rating: rating
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to rate track')
+      }
 
       setRatings(prev => {
         const next = new Map(prev)
@@ -126,19 +138,30 @@ export default function AlbumDetailPage() {
 
   const handleSubmitReview = async (content: string, hasSpoiler: boolean) => {
     try {
-      // TODO: Supabase RPC 호출 구현
-      // const { error } = await supabase.rpc('save_album_review', {
-      //   album_id: albumId,
-      //   content: content,
-      //   has_spoiler: hasSpoiler
-      // })
+      const response = await fetch(`${API_BASE}/v1/music/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : '') || ''}`
+        },
+        body: JSON.stringify({
+          album_spotify_id: album?.spotify_id,
+          content: content,
+          has_spoiler: hasSpoiler
+        })
+      })
 
+      if (!response.ok) {
+        throw new Error('Failed to submit review')
+      }
+
+      const data = await response.json()
       setReview({
-        id: 'temp-' + Date.now(),
+        id: data.id || 'temp-' + Date.now(),
         content,
         hasSpoiler,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date(data.created_at || new Date()),
+        updatedAt: new Date(data.updated_at || new Date())
       })
     } catch (err) {
       console.error('Failed to submit review:', err)
@@ -148,10 +171,18 @@ export default function AlbumDetailPage() {
 
   const handleDeleteReview = async () => {
     try {
-      // TODO: Supabase RPC 호출 구현
-      // const { error } = await supabase.rpc('delete_album_review', {
-      //   album_id: albumId
-      // })
+      if (!review) return
+
+      const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete review')
+      }
 
       setReview(null)
     } catch (err) {
@@ -162,21 +193,30 @@ export default function AlbumDetailPage() {
 
   const handleEditReview = async (content: string, hasSpoiler: boolean) => {
     try {
-      // TODO: Supabase RPC 호출 구현
-      // const { error } = await supabase.rpc('update_album_review', {
-      //   album_id: albumId,
-      //   content: content,
-      //   has_spoiler: hasSpoiler
-      // })
+      if (!review) return
 
-      if (review) {
-        setReview({
-          ...review,
-          content,
-          hasSpoiler,
-          updatedAt: new Date()
+      const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : '') || ''}`
+        },
+        body: JSON.stringify({
+          content: content,
+          has_spoiler: hasSpoiler
         })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update review')
       }
+
+      setReview({
+        ...review,
+        content,
+        hasSpoiler,
+        updatedAt: new Date()
+      })
     } catch (err) {
       console.error('Failed to update review:', err)
       throw err

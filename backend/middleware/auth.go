@@ -40,6 +40,7 @@ func Auth() gin.HandlerFunc {
 		}
 
 		c.Set("userID", claims["sub"])
+		c.Set("authToken", tokenStr)
 		c.Next()
 	}
 }
