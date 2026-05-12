@@ -1,245 +1,178 @@
 package supabase
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
-
-	"github.com/jackc/pgx/v5"
 )
 
 type Client struct {
-	conn *pgx.Conn
+	baseURL    string
+	apiKey     string
+	serviceKey string
+	userID     string
+	httpClient *http.Client
 }
 
-var dbConn *pgx.Conn
+func NewClient(userID string) *Client {
+	baseURL := os.Getenv("SUPABASE_URL")
+	serviceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	apiKey := os.Getenv("SUPABASE_ANON_KEY")
 
-// Init initializes the database connection
-func Init() error {
-	ctx := context.Background()
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		return fmt.Errorf("DATABASE_URL not set")
+	if baseURL == "" {
+		baseURL = "http://localhost:54321"
 	}
 
-	conn, err := pgx.Connect(ctx, databaseURL)
-	if err != nil {
-		return fmt.Errorf("failed to connect to database: %w", err)
+	if serviceKey == "" {
+		serviceKey = apiKey
 	}
 
-	// Test connection
-	if err := conn.Ping(ctx); err != nil {
-		return fmt.Errorf("failed to ping database: %w", err)
+	return &Client{
+		baseURL:    baseURL,
+		apiKey:     apiKey,
+		serviceKey: serviceKey,
+		userID:     userID,
+		httpClient: &http.Client{},
 	}
-
-	dbConn = conn
-	return nil
 }
 
-// NewClient creates a new database client
-func NewClient() *Client {
-	return &Client{conn: dbConn}
-}
+func (c *Client) do(method, path string, body interface{}, params ...string) ([]byte, error) {
+	fullURL := c.baseURL + "/rest/v1" + path
 
-// Query executes a raw SQL query and returns JSON
-func (c *Client) Query(sql string, args ...interface{}) (json.RawMessage, error) {
-	ctx := context.Background()
-	rows, err := c.conn.Query(ctx, sql, args...)
-	if err != nil {
-		return nil, fmt.Errorf("query error: %w", err)
+	if len(params) > 0 && params[0] != "" {
+		fullURL += "?" + params[0]
 	}
-	defer rows.Close()
 
-	// Convert rows to JSON
-	var result []map[string]interface{}
-	for rows.Next() {
-		values, err := rows.Values()
+	var bodyReader io.Reader
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read row: %w", err)
+			return nil, err
 		}
-
-		fieldDescriptions := rows.FieldDescriptions()
-		row := make(map[string]interface{})
-		for i, fd := range fieldDescriptions {
-			row[string(fd.Name)] = values[i]
-		}
-		result = append(result, row)
+		bodyReader = bytes.NewReader(jsonBody)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("row iteration error: %w", err)
-	}
-
-	jsonData, _ := json.Marshal(result)
-	return jsonData, nil
-}
-
-// Exec executes a SQL statement (INSERT, UPDATE, DELETE)
-func (c *Client) Exec(sql string, args ...interface{}) error {
-	ctx := context.Background()
-	_, err := c.conn.Exec(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("exec error: %w", err)
-	}
-	return nil
-}
-
-// Select retrieves records from a table (RestAPI-style filter converted to SQL)
-func (c *Client) Select(table string, filter string) (json.RawMessage, error) {
-	sql := fmt.Sprintf("SELECT * FROM %s", table)
-
-	// Simple filter parsing (user_id=eq.123 -> WHERE user_id = '123')
-	if filter != "" {
-		// This is a simplified version; real implementation would parse PostgREST filters
-		sql += " WHERE " + filter
-	}
-
-	return c.Query(sql)
-}
-
-// Insert inserts a record and returns it
-func (c *Client) Insert(table string, data map[string]interface{}) (json.RawMessage, error) {
-	if len(data) == 0 {
-		return json.Marshal([]interface{}{})
-	}
-
-	columns := make([]string, 0, len(data))
-	values := make([]interface{}, 0, len(data))
-	placeholders := make([]string, 0, len(data))
-
-	i := 1
-	for k, v := range data {
-		columns = append(columns, k)
-		values = append(values, v)
-		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
-		i++
-	}
-
-	columnStr := ""
-	for _, col := range columns {
-		if columnStr != "" {
-			columnStr += ", "
-		}
-		columnStr += col
-	}
-
-	placeholderStr := ""
-	for _, ph := range placeholders {
-		if placeholderStr != "" {
-			placeholderStr += ", "
-		}
-		placeholderStr += ph
-	}
-
-	sql := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) RETURNING *", table, columnStr, placeholderStr)
-	return c.Query(sql, values...)
-}
-
-// Upsert inserts or updates a record (assumes conflict on user_id, tmdb_id or similar)
-func (c *Client) Upsert(table string, data map[string]interface{}) (json.RawMessage, error) {
-	if len(data) == 0 {
-		return json.Marshal([]interface{}{})
-	}
-
-	columns := make([]string, 0, len(data))
-	values := make([]interface{}, 0, len(data))
-	placeholders := make([]string, 0, len(data))
-	updates := make([]string, 0, len(data))
-
-	i := 1
-	for k, v := range data {
-		columns = append(columns, k)
-		values = append(values, v)
-		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
-		updates = append(updates, fmt.Sprintf("%s = $%d", k, i))
-		i++
-	}
-
-	columnStr := ""
-	for _, col := range columns {
-		if columnStr != "" {
-			columnStr += ", "
-		}
-		columnStr += col
-	}
-
-	placeholderStr := ""
-	for _, ph := range placeholders {
-		if placeholderStr != "" {
-			placeholderStr += ", "
-		}
-		placeholderStr += ph
-	}
-
-	updateStr := ""
-	for _, upd := range updates {
-		if updateStr != "" {
-			updateStr += ", "
-		}
-		updateStr += upd
-	}
-
-	// Assumes unique constraint on (user_id, tmdb_id) or similar
-	sql := fmt.Sprintf(
-		"INSERT INTO %s (%s) VALUES (%s) ON CONFLICT (user_id, tmdb_id) DO UPDATE SET %s RETURNING *",
-		table, columnStr, placeholderStr, updateStr,
-	)
-	return c.Query(sql, values...)
-}
-
-// Update updates records matching a condition
-func (c *Client) Update(table string, data map[string]interface{}, where string) (json.RawMessage, error) {
-	if len(data) == 0 {
-		return json.Marshal([]interface{}{})
-	}
-
-	updates := make([]string, 0, len(data))
-	values := make([]interface{}, 0, len(data))
-
-	i := 1
-	for k, v := range data {
-		updates = append(updates, fmt.Sprintf("%s = $%d", k, i))
-		values = append(values, v)
-		i++
-	}
-
-	updateStr := ""
-	for _, upd := range updates {
-		if updateStr != "" {
-			updateStr += ", "
-		}
-		updateStr += upd
-	}
-
-	sql := fmt.Sprintf("UPDATE %s SET %s", table, updateStr)
-	if where != "" {
-		sql += " WHERE " + where
-	}
-	sql += " RETURNING *"
-
-	return c.Query(sql, values...)
-}
-
-// Delete deletes records matching a condition
-func (c *Client) Delete(table string, where string) (json.RawMessage, error) {
-	sql := fmt.Sprintf("DELETE FROM %s", table)
-	if where != "" {
-		sql += " WHERE " + where
-	}
-
-	err := c.Exec(sql)
+	req, err := http.NewRequest(method, fullURL, bodyReader)
 	if err != nil {
 		return nil, err
 	}
 
-	return json.Marshal(map[string]bool{"success": true})
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("apikey", c.apiKey)
+	req.Header.Set("Authorization", "Bearer "+c.serviceKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("supabase error: %s (status: %d)", string(respBody), resp.StatusCode)
+	}
+
+	return respBody, nil
 }
 
-// Close closes the database connection
-func Close() error {
-	if dbConn != nil {
-		return dbConn.Close(context.Background())
+func (c *Client) RateTrack(trackSpotifyID string, rating int, userID string) error {
+	body := map[string]interface{}{
+		"track_spotify_id": trackSpotifyID,
+		"rating":           rating,
+		"user_id":          userID,
+		"listened_at":      "now()",
 	}
-	return nil
+
+	_, err := c.do("POST", "/track_records", body, "")
+	return err
+}
+
+func (c *Client) SaveReview(albumSpotifyID, content string, hasSpoiler bool, userID string) (map[string]interface{}, error) {
+	body := map[string]interface{}{
+		"album_spotify_id": albumSpotifyID,
+		"content":          content,
+		"has_spoiler":      hasSpoiler,
+		"user_id":          userID,
+	}
+
+	resp, err := c.do("POST", "/album_reviews", body, "")
+	if err != nil {
+		return nil, err
+	}
+
+	var result []map[string]interface{}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, err
+	}
+
+	if len(result) > 0 {
+		return result[0], nil
+	}
+	return nil, nil
+}
+
+func (c *Client) UpdateReview(reviewID string, content string, hasSpoiler bool) error {
+	body := map[string]interface{}{
+		"content":     content,
+		"has_spoiler": hasSpoiler,
+	}
+
+	_, err := c.do("PATCH", "/album_reviews", body, fmt.Sprintf("id=eq.%s", url.QueryEscape(reviewID)))
+	return err
+}
+
+func (c *Client) DeleteReview(reviewID string) error {
+	_, err := c.do("DELETE", "/album_reviews", nil, fmt.Sprintf("id=eq.%s", url.QueryEscape(reviewID)))
+	return err
+}
+
+func (c *Client) GetReview(albumSpotifyID, userID string) (map[string]interface{}, error) {
+	query := fmt.Sprintf("album_spotify_id=eq.%s&user_id=eq.%s", url.QueryEscape(albumSpotifyID), url.QueryEscape(userID))
+	resp, err := c.do("GET", "/album_reviews", nil, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []map[string]interface{}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, err
+	}
+
+	if len(result) > 0 {
+		return result[0], nil
+	}
+	return nil, nil
+}
+
+func (c *Client) GetAlbumStats(albumSpotifyID, userID string) (map[string]interface{}, error) {
+	query := fmt.Sprintf("album_spotify_id=eq.%s&user_id=eq.%s", url.QueryEscape(albumSpotifyID), url.QueryEscape(userID))
+	resp, err := c.do("GET", "/user_album_stats", nil, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []map[string]interface{}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, err
+	}
+
+	if len(result) > 0 {
+		return result[0], nil
+	}
+
+	return map[string]interface{}{
+		"rated_tracks":  0,
+		"total_tracks":  0,
+		"avg_rating":    0,
+		"listen_days":   0,
+		"last_listened": nil,
+	}, nil
 }

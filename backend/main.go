@@ -101,6 +101,14 @@ func main() {
 		// Gamification
 		v1.POST("/streaks/log", handler.LogStreak)
 		v1.POST("/challenges/progress", handler.UpdateChallengeProgress)
+
+		// 음악 API (인증 필요)
+		v1.POST("/music/ratings", handler.RateTrack)
+		v1.POST("/music/reviews", handler.SaveReview)
+		v1.PUT("/music/reviews/:id", handler.UpdateReview)
+		v1.DELETE("/music/reviews/:id", handler.DeleteReview)
+		v1.GET("/music/albums/:albumId/reviews", handler.GetReview)
+		v1.GET("/music/albums/:albumId/stats", handler.GetAlbumStats)
 	}
 
 	port := os.Getenv("PORT")

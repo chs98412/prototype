@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/chs98412/prototype/backend/pkg/spotify"
+	"github.com/chs98412/prototype/backend/pkg/supabase"
 )
 
 var spotifyClient *spotify.Client
@@ -147,4 +149,181 @@ func GetAlbumDetail(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, albumData)
+}
+
+// RateTrackRequest 곡 평가 요청
+type RateTrackRequest struct {
+	TrackSpotifyID string `json:"track_spotify_id" binding:"required"`
+	Rating         int    `json:"rating" binding:"required,min=0,max=5"`
+}
+
+// RateTrack 곡 평가
+func RateTrack(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var req RateTrackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sbClient := supabase.NewClient(userID)
+	if err := sbClient.RateTrack(req.TrackSpotifyID, req.Rating, userID); err != nil {
+		log.Printf("Rate track error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to rate track"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// SaveReviewRequest 리뷰 저장 요청
+type SaveReviewRequest struct {
+	AlbumSpotifyID string `json:"album_spotify_id" binding:"required"`
+	Content        string `json:"content" binding:"required"`
+	HasSpoiler     bool   `json:"has_spoiler"`
+}
+
+// SaveReview 리뷰 저장
+func SaveReview(c *gin.Context) {
+	userID := c.GetString("userID")
+	authToken := c.GetString("authToken")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var req SaveReviewRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sbClient := supabase.NewClient(authToken)
+	review, err := sbClient.SaveReview(req.AlbumSpotifyID, req.Content, req.HasSpoiler, userID)
+	if err != nil {
+		log.Printf("Save review error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save review"})
+		return
+	}
+
+	c.JSON(http.StatusOK, review)
+}
+
+// UpdateReviewRequest 리뷰 수정 요청
+type UpdateReviewRequest struct {
+	Content    string `json:"content" binding:"required"`
+	HasSpoiler bool   `json:"has_spoiler"`
+}
+
+// UpdateReview 리뷰 수정
+func UpdateReview(c *gin.Context) {
+	userID := c.GetString("userID")
+	authToken := c.GetString("authToken")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	reviewID := c.Param("id")
+	if reviewID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Review ID required"})
+		return
+	}
+
+	var req UpdateReviewRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sbClient := supabase.NewClient(authToken)
+	if err := sbClient.UpdateReview(reviewID, req.Content, req.HasSpoiler); err != nil {
+		log.Printf("Update review error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update review"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// DeleteReview 리뷰 삭제
+func DeleteReview(c *gin.Context) {
+	userID := c.GetString("userID")
+	authToken := c.GetString("authToken")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	reviewID := c.Param("id")
+	if reviewID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Review ID required"})
+		return
+	}
+
+	sbClient := supabase.NewClient(authToken)
+	if err := sbClient.DeleteReview(reviewID); err != nil {
+		log.Printf("Delete review error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// GetReview 리뷰 조회
+func GetReview(c *gin.Context) {
+	userID := c.GetString("userID")
+	authToken := c.GetString("authToken")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	albumSpotifyID := c.Param("albumId")
+	if albumSpotifyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Album ID required"})
+		return
+	}
+
+	sbClient := supabase.NewClient(authToken)
+	review, err := sbClient.GetReview(albumSpotifyID, userID)
+	if err != nil {
+		log.Printf("Get review error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get review"})
+		return
+	}
+
+	c.JSON(http.StatusOK, review)
+}
+
+// GetAlbumStats 음반 통계 조회
+func GetAlbumStats(c *gin.Context) {
+	userID := c.GetString("userID")
+	authToken := c.GetString("authToken")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	albumSpotifyID := c.Param("albumId")
+	if albumSpotifyID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Album ID required"})
+		return
+	}
+
+	sbClient := supabase.NewClient(authToken)
+	stats, err := sbClient.GetAlbumStats(albumSpotifyID, userID)
+	if err != nil {
+		log.Printf("Get album stats error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get album stats"})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
 }
