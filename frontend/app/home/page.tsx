@@ -14,18 +14,20 @@ export default async function HomePage() {
 
   const year = new Date().getFullYear()
 
-  const [streakResult, goalResult, watchedResult] = user
+  const [streakResult, goalResult, watchedResult, recentMusicResult] = user
     ? await Promise.all([
         supabase.from('user_streaks').select('current_streak').eq('user_id', user.id).maybeSingle(),
         supabase.from('user_goals').select('target_count').eq('user_id', user.id).eq('year', year).maybeSingle(),
         supabase.from('user_records').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'watched'),
+        supabase.from('album_reviews').select('album_spotify_id, content, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(3),
       ])
-    : [{ data: null }, { data: null }, { count: 0 }]
+    : [{ data: null }, { data: null }, { count: 0 }, { data: [] }]
 
   const currentStreak = (streakResult as { data: { current_streak: number } | null }).data?.current_streak ?? 0
   const isMilestone = STREAK_MILESTONES.includes(currentStreak)
   const goalTarget = (goalResult as { data: { target_count: number } | null }).data?.target_count ?? null
   const watchedCount = (watchedResult as { count: number | null }).count ?? 0
+  const recentMusic = (recentMusicResult as { data: { album_spotify_id: string; content: string; created_at: string }[] | null }).data ?? []
 
   return (
     <main className="flex flex-col min-h-screen bg-background pb-16">
@@ -54,7 +56,7 @@ export default async function HomePage() {
           <YearlyGoal currentCount={watchedCount} initialTarget={goalTarget} />
         )}
 
-        {/* Search shortcut */}
+        {/* Search shortcuts */}
         <Link
           href="/search"
           className="flex items-center gap-2 w-full h-12 px-4 rounded-sm border border-border bg-surface text-muted text-[13px] tracking-wide"
@@ -64,6 +66,34 @@ export default async function HomePage() {
           </svg>
           영화, 시리즈 검색...
         </Link>
+        <Link
+          href="/music/search"
+          className="flex items-center gap-2 w-full h-12 px-4 rounded-sm border border-border bg-surface text-muted text-[13px] tracking-wide"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18V5l12-2v13a4 4 0 1 1-4 4 4 4 0 0 1 4-4" /><circle cx="6" cy="21" r="2" />
+          </svg>
+          음반 검색...
+        </Link>
+
+        {/* 최근 평가한 음반 */}
+        {recentMusic.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-text font-semibold text-[15px]">최근 평가한 음반</h2>
+            {recentMusic.map((item) => (
+              <Link
+                key={item.album_spotify_id}
+                href={`/music/albums/${item.album_spotify_id}`}
+                className="flex items-center gap-3 px-4 py-3 rounded-sm border border-border bg-surface"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted flex-shrink-0">
+                  <path d="M9 18V5l12-2v13a4 4 0 1 1-4 4 4 4 0 0 1 4-4" /><circle cx="6" cy="21" r="2" />
+                </svg>
+                <p className="text-sm text-text truncate">{item.content}</p>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Friend feed */}
         {user && (

@@ -30,6 +30,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
     { count: followingCount },
     { data: statsRecords = [] },
     { data: watchedRecords = [] },
+    musicReviewsResult,
   ] = await Promise.all([
     supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', userId),
     supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
@@ -41,7 +42,15 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
       .eq('status', 'watched')
       .order('updated_at', { ascending: false })
       .limit(40),
+    supabase
+      .from('album_reviews')
+      .select('album_spotify_id, content, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(8),
   ])
+
+  const musicReviews = (musicReviewsResult as { data: { album_spotify_id: string; content: string; created_at: string }[] | null } | null)?.data ?? []
 
   const isFollowing = me && !isSelf
     ? !!(await supabase.from('user_follows').select('follower_id').eq('follower_id', me.id).eq('following_id', userId).maybeSingle()).data
@@ -67,7 +76,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
         <div className="flex flex-col items-center px-4 mt-6">
           <p className="text-text font-bold text-xl">{profile.display_name ?? '유저'}</p>
 
-          <div className="grid grid-cols-2 gap-6 mt-4 text-center">
+          <div className="grid grid-cols-3 gap-4 mt-4 text-center">
             <div>
               <p className="text-text font-bold text-lg">{watchedMovies}</p>
               <p className="text-muted text-[12px]">영화</p>
@@ -75,6 +84,10 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
             <div>
               <p className="text-text font-bold text-lg">{totalCount}</p>
               <p className="text-muted text-[12px]">기록</p>
+            </div>
+            <div>
+              <p className="text-text font-bold text-lg">{musicReviews.length}</p>
+              <p className="text-muted text-[12px]">음반 평가</p>
             </div>
             <div>
               <p className="text-text font-bold text-lg">{followingCount ?? 0}</p>
@@ -129,6 +142,27 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
             </div>
           )}
         </div>
+
+        {/* 음반 평가 섹션 */}
+        {musicReviews.length > 0 && (
+          <div className="mt-8 px-4">
+            <h2 className="font-bold text-[16px] text-text mb-3">내가 뭘 들었게?</h2>
+            <div className="flex flex-col gap-2">
+              {musicReviews.map((item) => (
+                <Link
+                  key={item.album_spotify_id}
+                  href={`/music/albums/${item.album_spotify_id}`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-sm border border-border bg-surface"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted flex-shrink-0">
+                    <path d="M9 18V5l12-2v13a4 4 0 1 1-4 4 4 4 0 0 1 4-4" /><circle cx="6" cy="21" r="2" />
+                  </svg>
+                  <p className="text-sm text-text truncate">{item.content}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <BottomNav active="profile" />
       </main>
