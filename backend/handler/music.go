@@ -5,12 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/chs98412/prototype/backend/pkg/spotify"
 	"github.com/chs98412/prototype/backend/pkg/supabase"
+	"github.com/gin-gonic/gin"
 )
 
 var spotifyClient *spotify.Client
