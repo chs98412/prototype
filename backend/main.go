@@ -46,8 +46,6 @@ func main() {
 		v1.POST("/music/reviews", handler.SaveReview)
 		v1.PUT("/music/reviews/:id", handler.UpdateReview)
 		v1.DELETE("/music/reviews/:id", handler.DeleteReview)
-		v1.GET("/music/albums/:albumId/reviews", handler.GetReview)
-		v1.GET("/music/albums/:albumId/stats", handler.GetAlbumStats)
 	}
 
 	port := os.Getenv("PORT")
