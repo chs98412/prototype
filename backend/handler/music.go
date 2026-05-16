@@ -1,40 +1,17 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/chs98412/prototype/backend/pkg/spotify"
+	"github.com/chs98412/prototype/backend/pkg/itunes"
 	"github.com/chs98412/prototype/backend/pkg/supabase"
 	"github.com/gin-gonic/gin"
 )
 
-var spotifyClient *spotify.Client
-
-func init() {
-	clientID := os.Getenv("SPOTIFY_CLIENT_ID")
-	clientSecret := os.Getenv("SPOTIFY_CLIENT_SECRET")
-
-	if clientID == "" || clientSecret == "" {
-		log.Println("⚠️  WARNING: SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET not set")
-		return
-	}
-
-	spotifyClient = spotify.NewClient(clientID, clientSecret)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	log.Println("🔐 Attempting Spotify authentication...")
-	if err := spotifyClient.Authenticate(ctx); err != nil {
-		log.Printf("❌ Spotify authentication failed: %v\n", err)
-	} else {
-		log.Println("✅ Spotify authentication successful")
-	}
-	cancel()
-}
+var itunesClient = itunes.NewClient()
 
 type AlbumSearchRequest struct {
 	Query string `json:"query" binding:"required"`
@@ -42,7 +19,7 @@ type AlbumSearchRequest struct {
 }
 
 type AlbumData struct {
-	SpotifyID   string      `json:"spotify_id"`
+	ID          string      `json:"spotify_id"` // 프론트엔드 호환성 유지
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	ImageURL    string      `json:"image_url"`
@@ -52,7 +29,7 @@ type AlbumData struct {
 }
 
 type TrackData struct {
-	SpotifyID   string `json:"spotify_id"`
+	ID          string `json:"spotify_id"` // 프론트엔드 호환성 유지
 	Title       string `json:"title"`
 	Artist      string `json:"artist"`
 	DurationMs  int    `json:"duration_ms"`
@@ -61,12 +38,6 @@ type TrackData struct {
 
 func SearchAlbums(c *gin.Context) {
 	start := time.Now()
-
-	if spotifyClient == nil {
-		log.Println("❌ SearchAlbums: Spotify client not initialized")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Spotify client not initialized"})
-		return
-	}
 
 	var req AlbumSearchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -81,84 +52,70 @@ func SearchAlbums(c *gin.Context) {
 
 	log.Printf("🔍 SearchAlbums: query='%s', limit=%d\n", req.Query, req.Limit)
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
-	albums, err := spotifyClient.SearchAlbums(ctx, req.Query, req.Limit)
+	albums, err := itunesClient.SearchAlbums(req.Query, req.Limit)
 	if err != nil {
 		log.Printf("❌ SearchAlbums failed after %.2fs: %v\n", time.Since(start).Seconds(), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search failed"})
 		return
 	}
 
-	log.Printf("✅ SearchAlbums: found %d albums in %.2fs\n", len(albums), time.Since(start).Seconds())
-	c.JSON(http.StatusOK, gin.H{"albums": albums})
+	result := make([]AlbumData, len(albums))
+	for i, a := range albums {
+		result[i] = AlbumData{
+			ID:          a.ID,
+			Title:       a.Title,
+			Artist:      a.Artist,
+			ImageURL:    a.ImageURL,
+			ReleaseDate: a.ReleaseDate,
+			Genres:      a.Genres,
+		}
+	}
+
+	log.Printf("✅ SearchAlbums: found %d albums in %.2fs\n", len(result), time.Since(start).Seconds())
+	c.JSON(http.StatusOK, gin.H{"albums": result})
 }
 
 func GetAlbumDetail(c *gin.Context) {
 	start := time.Now()
 
-	if spotifyClient == nil {
-		log.Println("❌ GetAlbumDetail: Spotify client not initialized")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Spotify client not initialized"})
-		return
-	}
-
-	spotifyID := c.Param("id")
-	if spotifyID == "" {
+	albumID := c.Param("id")
+	if albumID == "" {
 		log.Println("❌ GetAlbumDetail: Album ID required")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Album ID required"})
 		return
 	}
 
-	log.Printf("📀 GetAlbumDetail: spotifyID=%s\n", spotifyID)
+	log.Printf("📀 GetAlbumDetail: id=%s\n", albumID)
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
-	album, tracks, err := spotifyClient.GetAlbumWithTracks(ctx, spotifyID)
+	album, tracks, err := itunesClient.GetAlbumWithTracks(albumID)
 	if err != nil {
 		log.Printf("❌ GetAlbumDetail failed after %.2fs: %v\n", time.Since(start).Seconds(), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch album"})
 		return
 	}
 
-	artistName := ""
-	if len(album.Artists) > 0 {
-		artistName = album.Artists[0].Name
-	}
-
-	imageURL := ""
-	if len(album.Images) > 0 {
-		imageURL = album.Images[0].URL
-	}
-
 	trackData := make([]TrackData, len(tracks))
-	for i, track := range tracks {
-		trackArtist := ""
-		if len(track.Artists) > 0 {
-			trackArtist = track.Artists[0].Name
-		}
+	for i, t := range tracks {
 		trackData[i] = TrackData{
-			SpotifyID:   track.ID,
-			Title:       track.Name,
-			Artist:      trackArtist,
-			DurationMs:  track.Duration,
-			TrackNumber: track.TrackNumber,
+			ID:          t.ID,
+			Title:       t.Title,
+			Artist:      t.Artist,
+			DurationMs:  t.DurationMs,
+			TrackNumber: t.TrackNumber,
 		}
 	}
 
 	albumData := AlbumData{
-		SpotifyID:   album.ID,
-		Title:       album.Name,
-		Artist:      artistName,
-		ImageURL:    imageURL,
+		ID:          album.ID,
+		Title:       album.Title,
+		Artist:      album.Artist,
+		ImageURL:    album.ImageURL,
 		ReleaseDate: album.ReleaseDate,
 		Genres:      album.Genres,
 		Tracks:      trackData,
 	}
 
-	log.Printf("✅ GetAlbumDetail: '%s' (%d tracks) in %.2fs\n", album.Name, len(trackData), time.Since(start).Seconds())
+	log.Printf("✅ GetAlbumDetail: '%s' (%d tracks) in %.2fs\n", album.Title, len(trackData), time.Since(start).Seconds())
 	c.JSON(http.StatusOK, albumData)
 }
 
@@ -273,7 +230,7 @@ func UpdateAlbumReview(c *gin.Context) {
 		return
 	}
 
-	log.Printf("✏️  UpdateAlbumReview: reviewID=%s, hasSpoiler=%v, user=%.8s\n", reviewID, req.HasSpoiler, userID)
+	log.Printf("✏️  UpdateAlbumReview: reviewID=%s, user=%.8s\n", reviewID, userID)
 
 	db := supabase.NewClient()
 	sql := `UPDATE album_reviews SET content = $1, has_spoiler = $2, updated_at = NOW()
