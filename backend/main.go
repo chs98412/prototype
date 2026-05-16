@@ -22,7 +22,10 @@ func main() {
 
 	r := gin.Default()
 
-	allowOrigins := []string{"http://localhost:3000"}
+	allowOrigins := []string{
+		"http://localhost:3000",
+		"https://prototype-eta-ruby.vercel.app",
+	}
 	if o := os.Getenv("ALLOWED_ORIGINS"); o != "" {
 		allowOrigins = append(allowOrigins, strings.Split(o, ",")...)
 	}
