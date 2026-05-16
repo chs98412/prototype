@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { getClientToken } from '@/lib/supabase/getToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import AlbumDetailHeader from '@/components/music/AlbumDetailHeader'
 import TrackRatingTable from '@/components/music/TrackRatingTable'
@@ -91,7 +92,7 @@ export default function AlbumDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
+          'Authorization': `Bearer ${await getClientToken()}`,
         },
         body: JSON.stringify({ track_spotify_id: trackSpotifyId, rating }),
       })
@@ -108,7 +109,7 @@ export default function AlbumDetailPage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
+        'Authorization': `Bearer ${await getClientToken()}`,
       },
       body: JSON.stringify({ album_spotify_id: album?.spotify_id, content, has_spoiler: hasSpoiler }),
     })
@@ -127,7 +128,7 @@ export default function AlbumDetailPage() {
     if (!review) return
     const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}` },
+      headers: { 'Authorization': `Bearer ${await getClientToken()}` },
     })
     if (!response.ok) throw new Error('Failed to delete review')
     setReview(null)
@@ -139,7 +140,7 @@ export default function AlbumDetailPage() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
+        'Authorization': `Bearer ${await getClientToken()}`,
       },
       body: JSON.stringify({ content, has_spoiler: hasSpoiler }),
     })

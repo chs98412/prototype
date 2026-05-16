@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
+import { getClientToken } from '@/lib/supabase/getToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StarRating } from '@/components/content/StarRating'
 
@@ -107,7 +108,7 @@ export default function TrackDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
+          Authorization: `Bearer ${await getClientToken()}`,
         },
         body: JSON.stringify({ track_spotify_id: trackId, rating: newRating }),
       })
