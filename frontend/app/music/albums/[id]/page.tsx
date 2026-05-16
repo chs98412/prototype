@@ -22,7 +22,6 @@ interface Album {
 }
 
 interface Track {
-  id: string
   spotify_id: string
   title: string
   artist: string
@@ -57,19 +56,13 @@ export default function AlbumDetailPage() {
   const [ratings, setRatings] = useState<Map<string, number>>(new Map())
   const [avgRating, setAvgRating] = useState(0)
   const [review, setReview] = useState<Review | null>(null)
-  const [listenDays, setListenDays] = useState(0)
 
-  // 음반 상세 로드
   useEffect(() => {
     const loadAlbum = async () => {
       try {
         setIsLoading(true)
         const response = await fetch(`${API_BASE}/v1/music/albums/${albumId}`)
-
-        if (!response.ok) {
-          throw new Error('음반 정보를 불러올 수 없습니다')
-        }
-
+        if (!response.ok) throw new Error('음반 정보를 불러올 수 없습니다')
         const data = await response.json()
         setAlbum(data)
         setError(null)
@@ -79,57 +72,31 @@ export default function AlbumDetailPage() {
         setIsLoading(false)
       }
     }
-
     loadAlbum()
   }, [albumId])
 
-  // 평균 평점 계산
   useEffect(() => {
-    if (ratings.size === 0) {
-      setAvgRating(0)
-      return
-    }
-
+    if (ratings.size === 0) { setAvgRating(0); return }
     const sum = Array.from(ratings.values()).reduce((a, b) => a + b, 0)
-    const avg = sum / ratings.size
-    setAvgRating(Math.round(avg * 10) / 10)
+    setAvgRating(Math.round((sum / ratings.size) * 10) / 10)
   }, [ratings])
 
-  // 청취 일수 계산 (임시)
-  useEffect(() => {
-    if (ratings.size > 0) {
-      setListenDays(Math.min(ratings.size, 30))
-    } else {
-      setListenDays(0)
-    }
-  }, [ratings])
+  const ratedCount = ratings.size
+  const totalTracks = album?.tracks.length ?? 0
+  const allTracksRated = totalTracks > 0 && ratedCount === totalTracks
 
-  const handleRateTrack = async (trackId: string, rating: number) => {
+  const handleRateTrack = async (trackSpotifyId: string, rating: number) => {
     try {
-      const spotifyTrackId = album?.tracks.find(t => t.id === trackId)?.spotify_id
-      if (!spotifyTrackId) return
-
       const response = await fetch(`${API_BASE}/v1/music/ratings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : '') || ''}`
+          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
         },
-        body: JSON.stringify({
-          track_spotify_id: spotifyTrackId,
-          rating: rating
-        })
+        body: JSON.stringify({ track_spotify_id: trackSpotifyId, rating }),
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to rate track')
-      }
-
-      setRatings(prev => {
-        const next = new Map(prev)
-        next.set(trackId, rating)
-        return next
-      })
+      if (!response.ok) throw new Error('Failed to rate track')
+      setRatings(prev => new Map(prev).set(trackSpotifyId, rating))
     } catch (err) {
       console.error('Failed to rate track:', err)
       throw err
@@ -137,99 +104,54 @@ export default function AlbumDetailPage() {
   }
 
   const handleSubmitReview = async (content: string, hasSpoiler: boolean) => {
-    try {
-      const response = await fetch(`${API_BASE}/v1/music/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : '') || ''}`
-        },
-        body: JSON.stringify({
-          album_spotify_id: album?.spotify_id,
-          content: content,
-          has_spoiler: hasSpoiler
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to submit review')
-      }
-
-      const data = await response.json()
-      setReview({
-        id: data.id || 'temp-' + Date.now(),
-        content,
-        hasSpoiler,
-        createdAt: new Date(data.created_at || new Date()),
-        updatedAt: new Date(data.updated_at || new Date())
-      })
-    } catch (err) {
-      console.error('Failed to submit review:', err)
-      throw err
-    }
+    const response = await fetch(`${API_BASE}/v1/music/reviews`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
+      },
+      body: JSON.stringify({ album_spotify_id: album?.spotify_id, content, has_spoiler: hasSpoiler }),
+    })
+    if (!response.ok) throw new Error('Failed to submit review')
+    const data = await response.json()
+    setReview({
+      id: data.id || 'temp-' + Date.now(),
+      content,
+      hasSpoiler,
+      createdAt: new Date(data.created_at || new Date()),
+      updatedAt: new Date(data.updated_at || new Date()),
+    })
   }
 
   const handleDeleteReview = async () => {
-    try {
-      if (!review) return
-
-      const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete review')
-      }
-
-      setReview(null)
-    } catch (err) {
-      console.error('Failed to delete review:', err)
-      throw err
-    }
+    if (!review) return
+    const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}` },
+    })
+    if (!response.ok) throw new Error('Failed to delete review')
+    setReview(null)
   }
 
   const handleEditReview = async (content: string, hasSpoiler: boolean) => {
-    try {
-      if (!review) return
-
-      const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') : '') || ''}`
-        },
-        body: JSON.stringify({
-          content: content,
-          has_spoiler: hasSpoiler
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update review')
-      }
-
-      setReview({
-        ...review,
-        content,
-        hasSpoiler,
-        updatedAt: new Date()
-      })
-    } catch (err) {
-      console.error('Failed to update review:', err)
-      throw err
-    }
+    if (!review) return
+    const response = await fetch(`${API_BASE}/v1/music/reviews/${review.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('sb-auth-token') || '' : ''}`,
+      },
+      body: JSON.stringify({ content, has_spoiler: hasSpoiler }),
+    })
+    if (!response.ok) throw new Error('Failed to update review')
+    setReview({ ...review, content, hasSpoiler, updatedAt: new Date() })
   }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10 flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-900">
-            <BackArrowIcon />
-          </button>
+          <button onClick={() => router.back()} className="text-gray-900"><BackArrowIcon /></button>
           <span className="text-gray-400">로드 중...</span>
         </div>
         <div className="flex-1 flex items-center justify-center">
@@ -244,19 +166,14 @@ export default function AlbumDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10 flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-900">
-            <BackArrowIcon />
-          </button>
+          <button onClick={() => router.back()} className="text-gray-900"><BackArrowIcon /></button>
           <span className="text-gray-900 text-sm">오류</span>
         </div>
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
             <p className="text-gray-900 font-semibold mb-2">음반을 불러올 수 없습니다</p>
             <p className="text-gray-500 text-sm mb-4">{error}</p>
-            <button
-              onClick={() => router.back()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold"
-            >
+            <button onClick={() => router.back()} className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold">
               뒤로가기
             </button>
           </div>
@@ -268,31 +185,38 @@ export default function AlbumDetailPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* 스티키 헤더 */}
+      {/* 헤더 */}
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10 flex items-center gap-3">
         <button onClick={() => router.back()} className="flex-shrink-0 text-gray-900 hover:text-gray-700">
           <BackArrowIcon />
         </button>
-        <span className="text-sm font-semibold text-gray-900 truncate">
-          {album.title}
+        <span className="text-sm font-semibold text-gray-900 truncate flex-1">{album.title}</span>
+        {/* 진행도 배지 */}
+        <span className={`flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${
+          allTracksRated ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+        }`}>
+          {ratedCount}/{totalTracks}
         </span>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* 음반 헤더 */}
         <AlbumDetailHeader
           album={album}
           avgRating={avgRating}
-          ratedTracksCount={ratings.size}
-          totalTracksCount={album.tracks.length}
+          ratedTracksCount={ratedCount}
+          totalTracksCount={totalTracks}
         />
 
-        {/* 곡 평가 테이블 */}
+        {/* 곡목 평가 */}
         <div>
-          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-sm font-semibold text-gray-900">
-              곡목 ({album.tracks.length}곡)
-            </h2>
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900">곡목 ({totalTracks}곡)</h2>
+            {!allTracksRated && totalTracks > 0 && (
+              <span className="text-xs text-gray-400">{totalTracks - ratedCount}곡 미평가</span>
+            )}
+            {allTracksRated && (
+              <span className="text-xs text-green-600 font-semibold">모두 평가됨</span>
+            )}
           </div>
           <TrackRatingTable
             tracks={album.tracks}
@@ -301,15 +225,15 @@ export default function AlbumDetailPage() {
           />
         </div>
 
-        {/* 통계 카드 (곡이 평가된 경우만 표시) */}
-        {ratings.size > 0 && (
+        {/* 통계 (곡이 평가된 경우만) */}
+        {ratedCount > 0 && (
           <AlbumStatsCards
             stats={{
-              ratedTracks: ratings.size,
-              totalTracks: album.tracks.length,
-              avgRating: avgRating,
-              listenDays: listenDays,
-              lastListened: new Date()
+              ratedTracks: ratedCount,
+              totalTracks,
+              avgRating,
+              listenDays: Math.min(ratedCount, 30),
+              lastListened: new Date(),
             }}
           />
         )}
@@ -323,7 +247,12 @@ export default function AlbumDetailPage() {
             onSubmitEdit={handleEditReview}
           />
         ) : (
-          <ReviewSection onSubmitReview={handleSubmitReview} />
+          <ReviewSection
+            onSubmitReview={handleSubmitReview}
+            allTracksRated={allTracksRated}
+            totalTracks={totalTracks}
+            ratedCount={ratedCount}
+          />
         )}
       </div>
 

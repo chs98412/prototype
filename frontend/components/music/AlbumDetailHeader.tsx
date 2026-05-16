@@ -67,17 +67,25 @@ export default function AlbumDetailHeader({
           </h1>
           <p className="text-sm text-gray-500 mb-3">{album.artist}</p>
 
-          {/* 평점 */}
+          {/* 평점 & 진행도 */}
           {ratedTracksCount > 0 && (
-            <div className="inline-block bg-yellow-50 px-3 py-2 rounded-lg mb-3 w-fit">
+            <div className="inline-block bg-yellow-50 px-3 py-2 rounded-lg mb-2 w-fit">
               <p className="text-sm font-semibold text-gray-900">
                 {renderStars(avgRating)} {avgRating.toFixed(1)}/5.0
               </p>
-              <p className="text-xs text-gray-600">
-                {ratedTracksCount}곡 평가
-              </p>
             </div>
           )}
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${ratedTracksCount === totalTracksCount ? 'bg-green-500' : 'bg-blue-400'}`}
+                style={{ width: totalTracksCount > 0 ? `${(ratedTracksCount / totalTracksCount) * 100}%` : '0%' }}
+              />
+            </div>
+            <span className="text-xs text-gray-500 flex-shrink-0">
+              {ratedTracksCount}/{totalTracksCount}곡
+            </span>
+          </div>
 
           {/* 메타데이터 */}
           <p className="text-xs text-gray-500">

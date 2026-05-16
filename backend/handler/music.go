@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/chs98412/prototype/backend/pkg/itunes"
@@ -19,7 +20,7 @@ type AlbumSearchRequest struct {
 }
 
 type AlbumData struct {
-	ID          string      `json:"spotify_id"` // 프론트엔드 호환성 유지
+	ID          string      `json:"spotify_id"`
 	Title       string      `json:"title"`
 	Artist      string      `json:"artist"`
 	ImageURL    string      `json:"image_url"`
@@ -29,11 +30,27 @@ type AlbumData struct {
 }
 
 type TrackData struct {
-	ID          string `json:"spotify_id"` // 프론트엔드 호환성 유지
+	ID          string `json:"spotify_id"`
 	Title       string `json:"title"`
 	Artist      string `json:"artist"`
 	DurationMs  int    `json:"duration_ms"`
 	TrackNumber int    `json:"track_number"`
+}
+
+type SearchTrackData struct {
+	ID         string `json:"spotify_id"`
+	Title      string `json:"title"`
+	Artist     string `json:"artist"`
+	AlbumTitle string `json:"album_title"`
+	AlbumID    string `json:"album_id"`
+	DurationMs int    `json:"duration_ms"`
+	ImageURL   string `json:"image_url"`
+}
+
+type ArtistData struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Genre string `json:"genre"`
 }
 
 func SearchAlbums(c *gin.Context) {
@@ -41,27 +58,64 @@ func SearchAlbums(c *gin.Context) {
 
 	var req AlbumSearchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("❌ SearchAlbums: Invalid request - %v\n", err)
+		log.Printf("❌ Search: Invalid request - %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if req.Limit == 0 {
-		req.Limit = 10
+		req.Limit = 20
 	}
 
-	log.Printf("🔍 SearchAlbums: query='%s', limit=%d\n", req.Query, req.Limit)
+	log.Printf("🔍 Search: query='%s', limit=%d\n", req.Query, req.Limit)
 
-	albums, err := itunesClient.SearchAlbums(req.Query, req.Limit)
-	if err != nil {
-		log.Printf("❌ SearchAlbums failed after %.2fs: %v\n", time.Since(start).Seconds(), err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search failed"})
-		return
-	}
+	var (
+		albums  []itunes.Album
+		tracks  []itunes.Track
+		artists []itunes.Artist
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+	)
 
-	result := make([]AlbumData, len(albums))
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		result, err := itunesClient.SearchAlbums(req.Query, req.Limit)
+		if err != nil {
+			log.Printf("⚠️  album search error: %v\n", err)
+			return
+		}
+		mu.Lock()
+		albums = result
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		result, err := itunesClient.SearchTracks(req.Query, req.Limit)
+		if err != nil {
+			log.Printf("⚠️  track search error: %v\n", err)
+			return
+		}
+		mu.Lock()
+		tracks = result
+		mu.Unlock()
+	}()
+	go func() {
+		defer wg.Done()
+		result, err := itunesClient.SearchArtists(req.Query, 10)
+		if err != nil {
+			log.Printf("⚠️  artist search error: %v\n", err)
+			return
+		}
+		mu.Lock()
+		artists = result
+		mu.Unlock()
+	}()
+	wg.Wait()
+
+	albumResults := make([]AlbumData, len(albums))
 	for i, a := range albums {
-		result[i] = AlbumData{
+		albumResults[i] = AlbumData{
 			ID:          a.ID,
 			Title:       a.Title,
 			Artist:      a.Artist,
@@ -71,8 +125,35 @@ func SearchAlbums(c *gin.Context) {
 		}
 	}
 
-	log.Printf("✅ SearchAlbums: found %d albums in %.2fs\n", len(result), time.Since(start).Seconds())
-	c.JSON(http.StatusOK, gin.H{"albums": result})
+	trackResults := make([]SearchTrackData, len(tracks))
+	for i, t := range tracks {
+		trackResults[i] = SearchTrackData{
+			ID:         t.ID,
+			Title:      t.Title,
+			Artist:     t.Artist,
+			AlbumTitle: t.AlbumTitle,
+			AlbumID:    t.AlbumID,
+			DurationMs: t.DurationMs,
+			ImageURL:   t.ImageURL,
+		}
+	}
+
+	artistResults := make([]ArtistData, len(artists))
+	for i, a := range artists {
+		artistResults[i] = ArtistData{
+			ID:    a.ID,
+			Name:  a.Name,
+			Genre: a.Genre,
+		}
+	}
+
+	log.Printf("✅ Search: %d albums, %d tracks, %d artists in %.2fs\n",
+		len(albumResults), len(trackResults), len(artistResults), time.Since(start).Seconds())
+	c.JSON(http.StatusOK, gin.H{
+		"albums":  albumResults,
+		"tracks":  trackResults,
+		"artists": artistResults,
+	})
 }
 
 func GetAlbumDetail(c *gin.Context) {
