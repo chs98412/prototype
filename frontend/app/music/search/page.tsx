@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { BottomNav } from '@/components/layout/BottomNav'
 import AlbumSearchBar from '@/components/music/AlbumSearchBar'
 import AlbumGridView from '@/components/music/AlbumGridView'
@@ -53,25 +53,6 @@ export default function MusicSearchPage() {
   const [activeTab, setActiveTab] = useState<Tab>('songs-albums')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
-
-    if (query.trim().length < 2) {
-      setAlbums([])
-      setTracks([])
-      setArtists([])
-      setError(null)
-      return
-    }
-
-    searchTimeoutRef.current = setTimeout(() => performSearch(query), 500)
-
-    return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
-    }
-  }, [query])
 
   const performSearch = async (searchQuery: string) => {
     setIsLoading(true)
@@ -116,7 +97,12 @@ export default function MusicSearchPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <AlbumSearchBar query={query} onQueryChange={setQuery} isLoading={isLoading} />
+      <AlbumSearchBar
+        query={query}
+        onQueryChange={setQuery}
+        onSearch={() => performSearch(query)}
+        isLoading={isLoading}
+      />
 
       {/* 탭 */}
       {(hasResults || isLoading) && (

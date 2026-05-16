@@ -108,48 +108,36 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResult[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     inputRef.current?.focus()
-    // Load saved view mode from localStorage
     const savedMode = localStorage.getItem('searchViewMode') as 'list' | 'grid' | null
-    if (savedMode) {
-      setViewMode(savedMode)
-    }
+    if (savedMode) setViewMode(savedMode)
   }, [])
 
   useEffect(() => {
     localStorage.setItem('searchViewMode', viewMode)
   }, [viewMode])
 
-  useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (!query.trim()) {
-      setResults(null)
-      setLoading(false)
-      return
-    }
+  const handleSearch = async () => {
+    if (!query.trim()) return
     setLoading(true)
-    timerRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
-        const data = await res.json()
-        setResults(data.results ?? [])
-      } catch {
-        setResults([])
-      } finally {
-        setLoading(false)
-      }
-    }, 300)
-    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [query])
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      setResults(data.results ?? [])
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const showInitial = !query.trim()
-  const showLoading = query.trim() && loading
-  const showEmpty = query.trim() && !loading && results?.length === 0
-  const showResults = query.trim() && !loading && results && results.length > 0
+  const showInitial = !results
+  const showLoading = loading
+  const showEmpty = !loading && results?.length === 0
+  const showResults = !loading && results && results.length > 0
 
   return (
     <main className="flex flex-col min-h-screen bg-background pb-14">
@@ -157,7 +145,7 @@ export default function SearchPage() {
         <div className="flex items-center gap-2">
           {query && (
             <button
-              onClick={() => setQuery('')}
+              onClick={() => { setQuery(''); setResults(null) }}
               className="text-text flex-shrink-0 p-1"
               aria-label="검색어 지우기"
             >
@@ -170,10 +158,13 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="영화, 시리즈 검색..."
               className="flex-1 bg-transparent text-text text-[15px] outline-none placeholder:text-muted"
             />
-            <SearchIcon />
+            <button onClick={handleSearch} aria-label="검색">
+              <SearchIcon />
+            </button>
           </div>
           <button
             onClick={() => setViewMode((v) => v === 'list' ? 'grid' : 'list')}
