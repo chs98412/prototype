@@ -23,15 +23,11 @@ interface Track {
 interface AlbumGridViewProps {
   albums: Album[]
   isLoading: boolean
-  onAddAlbum?: (album: Album) => Promise<void>
-  addedAlbumIds?: Set<string>
 }
 
 export default function AlbumGridView({
   albums,
   isLoading,
-  onAddAlbum,
-  addedAlbumIds = new Set(),
 }: AlbumGridViewProps) {
   if (isLoading) {
     return (
@@ -62,8 +58,6 @@ export default function AlbumGridView({
         <AlbumCard
           key={album.spotify_id}
           album={album}
-          isAdded={addedAlbumIds.has(album.spotify_id)}
-          onAdd={onAddAlbum ? () => onAddAlbum(album) : undefined}
         />
       ))}
     </div>

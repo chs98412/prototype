@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import AlbumTrackList from './AlbumTrackList'
 
 interface Album {
@@ -24,34 +25,27 @@ interface Track {
 
 interface AlbumCardProps {
   album: Album
-  isAdded?: boolean
-  onAdd?: () => Promise<void>
 }
 
-export default function AlbumCard({ album, isAdded = false, onAdd }: AlbumCardProps) {
+export default function AlbumCard({ album }: AlbumCardProps) {
+  const router = useRouter()
   const [isExpanded, setIsExpanded] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
 
-  const year = new Date(album.release_date).getFullYear()
+  const year = album.release_date ? new Date(album.release_date).getFullYear() : ''
   const genres = album.genres && album.genres.length > 0 ? album.genres.slice(0, 2).join(', ') : '기타'
 
-  const handleAdd = async () => {
-    if (!onAdd || isAdded) return
-
-    setIsLoading(true)
-    try {
-      await onAdd()
-    } catch (error) {
-      console.error('Failed to add album:', error)
-    } finally {
-      setIsLoading(false)
-    }
+  const handleGoToDetail = () => {
+    router.push(`/music/albums/${album.spotify_id}`)
   }
 
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-200">
-      {/* 이미지 */}
-      <div className="relative bg-gray-100" style={{ aspectRatio: '1' }}>
+      {/* 이미지 (클릭시 상세 페이지) */}
+      <div
+        className="relative bg-gray-100 cursor-pointer"
+        style={{ aspectRatio: '1' }}
+        onClick={handleGoToDetail}
+      >
         {album.image_url ? (
           <Image
             src={album.image_url}
@@ -69,7 +63,10 @@ export default function AlbumCard({ album, isAdded = false, onAdd }: AlbumCardPr
 
       {/* 정보 */}
       <div className="p-3">
-        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1">
+        <h3
+          className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 cursor-pointer hover:text-blue-600"
+          onClick={handleGoToDetail}
+        >
           {album.title}
         </h3>
         <p className="text-xs text-gray-500 line-clamp-1 mb-2">
@@ -79,24 +76,21 @@ export default function AlbumCard({ album, isAdded = false, onAdd }: AlbumCardPr
           {year} · {genres}
         </p>
 
-        {/* 추가 버튼 */}
-        <button
-          onClick={() => {
-            if (!isExpanded) {
-              setIsExpanded(true)
-            } else {
-              handleAdd()
-            }
-          }}
-          disabled={isAdded || isLoading}
-          className={`w-full h-10 rounded-lg font-semibold text-sm transition-colors ${
-            isAdded
-              ? 'bg-gray-200 text-gray-500 cursor-default'
-              : 'bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white'
-          }`}
-        >
-          {isLoading ? '추가 중...' : isAdded ? '✓ 추가됨' : '곡목 보기'}
-        </button>
+        {/* 버튼 */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex-1 h-9 rounded-lg font-semibold text-xs border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            곡목
+          </button>
+          <button
+            onClick={handleGoToDetail}
+            className="flex-1 h-9 rounded-lg font-semibold text-xs bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+          >
+            평가하기
+          </button>
+        </div>
       </div>
 
       {/* 곡목 리스트 (펼쳐질 때) */}
@@ -105,8 +99,7 @@ export default function AlbumCard({ album, isAdded = false, onAdd }: AlbumCardPr
           tracks={album.tracks}
           isExpanded={true}
           onToggle={() => setIsExpanded(false)}
-          onAddAlbum={handleAdd}
-          isLoading={isLoading}
+          onAddAlbum={handleGoToDetail}
         />
       )}
     </div>

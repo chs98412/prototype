@@ -15,7 +15,6 @@ interface AlbumTrackListProps {
   isExpanded: boolean
   onToggle: () => void
   onAddAlbum: () => void
-  isLoading?: boolean
 }
 
 function ChevronIcon({ expanded }: { expanded: boolean }) {
@@ -56,7 +55,6 @@ export default function AlbumTrackList({
   isExpanded,
   onToggle,
   onAddAlbum,
-  isLoading = false,
 }: AlbumTrackListProps) {
   const [showAll, setShowAll] = useState(false)
   const displayTracks = showAll ? tracks : tracks.slice(0, 5)
@@ -106,10 +104,9 @@ export default function AlbumTrackList({
 
           <button
             onClick={onAddAlbum}
-            disabled={isLoading}
-            className="w-full mt-4 h-10 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-semibold rounded-lg transition-colors text-sm"
+            className="w-full mt-4 h-10 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors text-sm"
           >
-            {isLoading ? '추가 중...' : '음반 추가'}
+            평가하기
           </button>
         </div>
       )}

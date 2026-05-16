@@ -32,7 +32,6 @@ export default function MusicSearchPage() {
   const [albums, setAlbums] = useState<Album[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [addedAlbumIds, setAddedAlbumIds] = useState<Set<string>>(new Set())
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // 검색 쿼리 변경 시
@@ -112,19 +111,6 @@ export default function MusicSearchPage() {
     }
   }
 
-  const handleAddAlbum = async (album: Album) => {
-    try {
-      // Supabase RPC 호출 (나중에 구현)
-      // await supabase.rpc('add_album_to_collection', { ... })
-
-      setAddedAlbumIds(prev => new Set([...prev, album.spotify_id]))
-
-      // 실제로는 여기서 DB에 저장하고, 성공하면 UI 업데이트
-    } catch (err) {
-      console.error('Failed to add album:', err)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <AlbumSearchBar
@@ -143,8 +129,6 @@ export default function MusicSearchPage() {
         <AlbumGridView
           albums={albums}
           isLoading={isLoading}
-          onAddAlbum={handleAddAlbum}
-          addedAlbumIds={addedAlbumIds}
         />
       </div>
 
