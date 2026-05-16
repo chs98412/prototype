@@ -74,6 +74,15 @@ export default function TrackDetailPage() {
   const [rating, setRating] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [token, setToken] = useState('')
+
+  useEffect(() => {
+    const loadToken = async () => {
+      const t = await getClientToken()
+      setToken(t)
+    }
+    loadToken()
+  }, [])
 
   useEffect(() => {
     if (!albumId) {
@@ -101,6 +110,10 @@ export default function TrackDetailPage() {
   }, [trackId, albumId])
 
   const handleRate = async (newRating: number) => {
+    if (!token) {
+      console.error('No auth token available')
+      return
+    }
     setIsSaving(true)
     setSaved(false)
     try {
@@ -108,7 +121,7 @@ export default function TrackDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${await getClientToken()}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ track_spotify_id: trackId, rating: newRating }),
       })

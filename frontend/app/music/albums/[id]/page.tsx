@@ -57,6 +57,15 @@ export default function AlbumDetailPage() {
   const [ratings, setRatings] = useState<Map<string, number>>(new Map())
   const [avgRating, setAvgRating] = useState(0)
   const [review, setReview] = useState<Review | null>(null)
+  const [token, setToken] = useState('')
+
+  useEffect(() => {
+    const loadToken = async () => {
+      const t = await getClientToken()
+      setToken(t)
+    }
+    loadToken()
+  }, [])
 
   useEffect(() => {
     const loadAlbum = async () => {
@@ -92,7 +101,7 @@ export default function AlbumDetailPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await getClientToken()}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ track_spotify_id: trackSpotifyId, rating }),
       })
@@ -109,7 +118,7 @@ export default function AlbumDetailPage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await getClientToken()}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ album_spotify_id: album?.spotify_id, content, has_spoiler: hasSpoiler }),
     })
@@ -140,7 +149,7 @@ export default function AlbumDetailPage() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await getClientToken()}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ content, has_spoiler: hasSpoiler }),
     })
