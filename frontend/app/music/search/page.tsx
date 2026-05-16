@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { BottomNav } from '@/components/layout/BottomNav'
 import AlbumSearchBar from '@/components/music/AlbumSearchBar'
-import AlbumGridView from '@/components/music/AlbumGridView'
-import TrackSearchResults from '@/components/music/TrackSearchResults'
+import AlbumCard from '@/components/music/AlbumCard'
+import TrackCard from '@/components/music/TrackCard'
 import ArtistSearchResults from '@/components/music/ArtistSearchResults'
 
 interface Album {
@@ -53,10 +53,13 @@ export default function MusicSearchPage() {
   const [activeTab, setActiveTab] = useState<Tab>('songs-albums')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasSearched, setHasSearched] = useState(false)
 
   const performSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return
     setIsLoading(true)
     setError(null)
+    setHasSearched(true)
 
     try {
       const response = await fetch(`${API_BASE}/v1/music/search`, {
@@ -69,7 +72,7 @@ export default function MusicSearchPage() {
 
       const data = await response.json()
 
-      // 앨범은 상세 정보(트랙 목록)를 병렬 로드
+      // 앨범 트랙 목록 병렬 로드
       const albumsWithTracks = await Promise.all(
         (data.albums || []).map(async (album: Album) => {
           try {
@@ -93,7 +96,15 @@ export default function MusicSearchPage() {
     }
   }
 
-  const hasResults = albums.length > 0 || tracks.length > 0
+  // 곡과 앨범을 교차 배치 (인기도 순서 유지)
+  const mixedItems: Array<{ type: 'track'; data: SearchTrack } | { type: 'album'; data: Album }> = []
+  const maxLen = Math.max(albums.length, tracks.length)
+  for (let i = 0; i < maxLen; i++) {
+    if (i < tracks.length) mixedItems.push({ type: 'track', data: tracks[i] })
+    if (i < albums.length) mixedItems.push({ type: 'album', data: albums[i] })
+  }
+
+  const hasResults = mixedItems.length > 0 || artists.length > 0
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -115,7 +126,7 @@ export default function MusicSearchPage() {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            곡 & 앨범
+            곡 & 앨범 {mixedItems.length > 0 && `(${mixedItems.length})`}
           </button>
           <button
             onClick={() => setActiveTab('artists')}
@@ -137,18 +148,51 @@ export default function MusicSearchPage() {
           </div>
         )}
 
+        {/* 곡 & 앨범 탭 */}
         {activeTab === 'songs-albums' && (
           <>
-            <TrackSearchResults tracks={tracks} />
-            {tracks.length > 0 && albums.length > 0 && (
-              <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">앨범</h2>
+            {isLoading && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3 pb-20">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="rounded-lg overflow-hidden border border-gray-100">
+                    <div className="bg-gray-200 animate-pulse" style={{ aspectRatio: '1' }} />
+                    <div className="p-2.5 space-y-1.5">
+                      <div className="h-3 bg-gray-200 rounded animate-pulse w-4/5" />
+                      <div className="h-2.5 bg-gray-200 rounded animate-pulse w-3/5" />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            <AlbumGridView albums={albums} isLoading={isLoading} />
+
+            {!isLoading && mixedItems.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3 pb-20">
+                {mixedItems.map((item) =>
+                  item.type === 'track' ? (
+                    <TrackCard key={`track-${item.data.spotify_id}`} track={item.data} />
+                  ) : (
+                    <AlbumCard key={`album-${item.data.spotify_id}`} album={item.data} />
+                  )
+                )}
+              </div>
+            )}
+
+            {!isLoading && hasSearched && mixedItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center min-h-[40vh] px-4">
+                <p className="text-gray-500 text-sm">곡이나 앨범을 찾을 수 없습니다.</p>
+              </div>
+            )}
+
+            {!hasSearched && (
+              <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 text-center">
+                <p className="text-gray-600 font-semibold">음악을 검색해보세요</p>
+                <p className="text-gray-400 text-sm mt-1">곡 제목, 앨범명, 아티스트명으로 검색</p>
+              </div>
+            )}
           </>
         )}
 
+        {/* 아티스트 탭 */}
         {activeTab === 'artists' && (
           <ArtistSearchResults artists={artists} />
         )}

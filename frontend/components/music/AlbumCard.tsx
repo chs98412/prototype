@@ -23,6 +23,16 @@ interface Track {
   track_number: number
 }
 
+function ListIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  )
+}
+
 interface AlbumCardProps {
   album: Album
 }
@@ -32,19 +42,15 @@ export default function AlbumCard({ album }: AlbumCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const year = album.release_date ? new Date(album.release_date).getFullYear() : ''
-  const genres = album.genres && album.genres.length > 0 ? album.genres.slice(0, 2).join(', ') : '기타'
-
-  const handleGoToDetail = () => {
-    router.push(`/music/albums/${album.spotify_id}`)
-  }
+  const genre = album.genres?.[0] ?? '기타'
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-200">
-      {/* 이미지 (클릭시 상세 페이지) */}
+    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+      {/* 이미지 — 클릭 시 상세 */}
       <div
         className="relative bg-gray-100 cursor-pointer"
         style={{ aspectRatio: '1' }}
-        onClick={handleGoToDetail}
+        onClick={() => router.push(`/music/albums/${album.spotify_id}`)}
       >
         {album.image_url ? (
           <Image
@@ -56,50 +62,45 @@ export default function AlbumCard({ album }: AlbumCardProps) {
           />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400 text-sm">No Image</span>
+            <span className="text-gray-400 text-xs">No Image</span>
           </div>
         )}
-      </div>
-
-      {/* 정보 */}
-      <div className="p-3">
-        <h3
-          className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 cursor-pointer hover:text-blue-600"
-          onClick={handleGoToDetail}
-        >
-          {album.title}
-        </h3>
-        <p className="text-xs text-gray-500 line-clamp-1 mb-2">
-          {album.artist}
-        </p>
-        <p className="text-xs text-gray-400 line-clamp-1 mb-3">
-          {year} · {genres}
-        </p>
-
-        {/* 버튼 */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-1 h-9 rounded-lg font-semibold text-xs border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            곡목
-          </button>
-          <button
-            onClick={handleGoToDetail}
-            className="flex-1 h-9 rounded-lg font-semibold text-xs bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-          >
-            평가하기
-          </button>
+        {/* 앨범 배지 */}
+        <div className="absolute top-1.5 left-1.5 bg-black bg-opacity-60 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
+          앨범
         </div>
       </div>
 
-      {/* 곡목 리스트 (펼쳐질 때) */}
+      {/* 정보 */}
+      <div
+        className="px-2.5 pt-2 pb-1 cursor-pointer"
+        onClick={() => router.push(`/music/albums/${album.spotify_id}`)}
+      >
+        <h3 className="font-bold text-xs text-gray-900 line-clamp-1">{album.title}</h3>
+        <p className="text-[11px] text-gray-500 truncate mt-0.5">{album.artist}</p>
+        <p className="text-[10px] text-gray-400 truncate">{year}{year && genre ? ' · ' : ''}{genre}</p>
+      </div>
+
+      {/* 곡목 토글 버튼 */}
+      <div className="px-2.5 pb-2">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded transition-colors ${
+            isExpanded ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+          }`}
+        >
+          <ListIcon />
+          <span>{album.tracks.length > 0 ? `${album.tracks.length}곡` : '곡목'}</span>
+        </button>
+      </div>
+
+      {/* 곡목 미리보기 */}
       {isExpanded && (
         <AlbumTrackList
           tracks={album.tracks}
           isExpanded={true}
           onToggle={() => setIsExpanded(false)}
-          onAddAlbum={handleGoToDetail}
+          onAddAlbum={() => router.push(`/music/albums/${album.spotify_id}`)}
         />
       )}
     </div>
