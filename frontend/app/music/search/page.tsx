@@ -84,18 +84,18 @@ export default function MusicSearchPage() {
       const albumsWithTracks = await Promise.all(
         (data.albums || []).map(async (album: any) => {
           try {
-            const detailResponse = await fetch(`${API_BASE}/v1/music/albums/${album.id}`)
+            const detailResponse = await fetch(`${API_BASE}/v1/music/albums/${album.spotify_id}`)
             if (detailResponse.ok) {
               return await detailResponse.json()
             }
           } catch (err) {
-            console.error(`Failed to fetch album details for ${album.id}:`, err)
+            console.error(`Failed to fetch album details for ${album.spotify_id}:`, err)
           }
           return {
-            spotify_id: album.id,
-            title: album.name,
-            artist: album.artists?.[0]?.name || 'Unknown',
-            image_url: album.images?.[0]?.url || '',
+            spotify_id: album.spotify_id,
+            title: album.title,
+            artist: album.artist,
+            image_url: album.image_url || '',
             release_date: album.release_date || '',
             genres: album.genres || [],
             tracks: [],
