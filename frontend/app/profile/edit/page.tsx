@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
-import { updateProfile } from '@/app/actions/profile'
+import { getProfile, updateProfile } from '@/lib/api/fetch'
 
 export default function ProfileEditPage() {
   const router = useRouter()
@@ -19,18 +18,9 @@ export default function ProfileEditPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.replace('/login')
-        return
-      }
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('display_name, bio, avatar_url')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (profile) {
+      const response = await getProfile()
+      if (!response.error && response.data) {
+        const profile = response.data
         setDisplayName(profile.display_name ?? '')
         setBio(profile.bio ?? '')
         setAvatarUrl(profile.avatar_url ?? null)
@@ -77,20 +67,14 @@ export default function ProfileEditPage() {
     if (saving) return
     setSaving(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      await supabase
-        .from('user_profiles')
-        .update({
-          display_name: displayName,
-          bio: bio || null,
-          avatar_url: avatarUrl
-        })
-        .eq('user_id', user.id)
-
-      router.push('/profile')
+      const response = await updateProfile({
+        display_name: displayName,
+        bio: bio || undefined,
+        avatar_url: avatarUrl || undefined
+      })
+      if (!response.error) {
+        router.push('/profile')
+      }
     } catch (err) {
       console.error('Failed to save profile:', err)
     } finally {

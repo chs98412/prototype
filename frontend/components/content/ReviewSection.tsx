@@ -2,18 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { upsertReview, deleteReview } from '@/app/actions/reviews'
-
-type Review = {
-  id: string
-  user_id: string
-  content: string
-  is_spoiler: boolean
-  created_at: string
-  like_count?: number
-  user_profiles: { display_name: string | null; avatar_url: string | null } | null
-}
+import { getReviewsByTmdbId, upsertReview, deleteReview, likeReview, unlikeReview, type Review } from '@/lib/api/fetch'
 
 function relativeTime(dateStr: string): string {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000
@@ -41,31 +30,10 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
   const myReview = reviews.find((r) => r.user_id === userId) ?? null
 
   async function fetchReviews() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('reviews')
-      .select('id, user_id, content, is_spoiler, created_at, user_profiles(display_name, avatar_url)')
-      .eq('tmdb_id', tmdbId)
-      .eq('media_type', mediaType)
-      .order('created_at', { ascending: false })
-
-    const rawReviews = (data ?? []) as unknown as Review[]
-
-    const reviewIds = rawReviews.map((r) => r.id)
-    let likeCounts: Record<string, number> = {}
-    if (reviewIds.length > 0) {
-      const { data: likes } = await supabase
-        .from('review_likes')
-        .select('review_id')
-        .in('review_id', reviewIds)
-      if (likes) {
-        for (const like of likes) {
-          likeCounts[like.review_id] = (likeCounts[like.review_id] ?? 0) + 1
-        }
-      }
+    const response = await getReviewsByTmdbId(tmdbId)
+    if (!response.error && response.data) {
+      setReviews(response.data)
     }
-
-    setReviews(rawReviews.map((r) => ({ ...r, like_count: likeCounts[r.id] ?? 0 })))
     setLoading(false)
   }
 
