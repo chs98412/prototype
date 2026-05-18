@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getFeed, type FeedItem } from '@/lib/api/fetch'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
 const PAGE_SIZE = 20
@@ -22,19 +22,6 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(diff / 86400)}일 전`
 }
 
-type FeedItem = {
-  tmdb_id: number
-  media_type: string
-  status: string
-  rating: number | null
-  title: string | null
-  poster_path: string | null
-  updated_at: string
-  friend_id: string
-  display_name: string | null
-  avatar_url: string | null
-}
-
 export function FriendFeed({ userId }: { userId: string }) {
   const [items, setItems] = useState<FeedItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,30 +30,29 @@ export function FriendFeed({ userId }: { userId: string }) {
   const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .rpc('get_friend_feed', { p_user_id: userId, p_limit: PAGE_SIZE, p_offset: 0 })
-      .then(({ data }) => {
-        const results = (data ?? []) as FeedItem[]
+    const loadFeed = async () => {
+      const response = await getFeed(PAGE_SIZE, 0)
+      if (!response.error && response.data) {
+        const results = response.data
         setItems(results)
         setHasMore(results.length === PAGE_SIZE)
         setOffset(results.length)
-        setLoading(false)
-      })
+      }
+      setLoading(false)
+    }
+    loadFeed()
   }, [userId])
 
-  function handleLoadMore() {
+  async function handleLoadMore() {
     setLoadingMore(true)
-    const supabase = createClient()
-    supabase
-      .rpc('get_friend_feed', { p_user_id: userId, p_limit: PAGE_SIZE, p_offset: offset })
-      .then(({ data }) => {
-        const results = (data ?? []) as FeedItem[]
-        setItems((prev) => [...prev, ...results])
-        setHasMore(results.length === PAGE_SIZE)
-        setOffset((prev) => prev + results.length)
-        setLoadingMore(false)
-      })
+    const response = await getFeed(PAGE_SIZE, offset)
+    if (!response.error && response.data) {
+      const results = response.data
+      setItems((prev) => [...prev, ...results])
+      setHasMore(results.length === PAGE_SIZE)
+      setOffset((prev) => prev + results.length)
+    }
+    setLoadingMore(false)
   }
 
   if (loading) {
