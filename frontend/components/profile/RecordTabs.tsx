@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getRecords, type Record } from '@/lib/api/fetch'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
 
@@ -15,33 +15,21 @@ const TABS: { id: Status; label: string }[] = [
   { id: 'want', label: '보고 싶음' },
 ]
 
-type RecordItem = {
-  tmdb_id: number
-  media_type: string
-  status: string
-  rating: number | null
-  title: string | null
-  poster_path: string | null
-}
-
 export function RecordTabs({ userId, showAllTabs }: { userId: string; showAllTabs: boolean }) {
   const [activeTab, setActiveTab] = useState<Status>('watched')
-  const [records, setRecords] = useState<RecordItem[]>([])
+  const [records, setRecords] = useState<Record[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(true)
-    const supabase = createClient()
-    supabase
-      .from('user_records')
-      .select('tmdb_id, media_type, status, rating, title, poster_path')
-      .eq('user_id', userId)
-      .eq('status', activeTab)
-      .order('updated_at', { ascending: false })
-      .then(({ data }) => {
-        setRecords((data ?? []) as RecordItem[])
-        setLoading(false)
-      })
+    const loadRecords = async () => {
+      setLoading(true)
+      const response = await getRecords(activeTab, 100, 0)
+      if (!response.error && response.data) {
+        setRecords(response.data)
+      }
+      setLoading(false)
+    }
+    loadRecords()
   }, [userId, activeTab])
 
   return (
@@ -78,26 +66,13 @@ export function RecordTabs({ userId, showAllTabs }: { userId: string; showAllTab
             return (
               <Link key={key} href={`/content/${r.media_type}/${r.tmdb_id}`} className="flex flex-col gap-1">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-surface">
-                  {r.poster_path ? (
-                    <Image
-                      src={`${IMG_BASE}/w185${r.poster_path}`}
-                      alt={r.title ?? ''}
-                      fill
-                      className="object-cover"
-                      sizes="30vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl">🎬</div>
-                  )}
+                  <div className="w-full h-full flex items-center justify-center text-2xl bg-border">🎬</div>
                   {r.rating != null && activeTab === 'watched' && (
                     <div className="absolute bottom-1 right-1 bg-black/60 rounded px-1 py-0.5">
                       <span className="text-white text-[10px] font-bold">⭐{r.rating}</span>
                     </div>
                   )}
                 </div>
-                {r.title && (
-                  <p className="text-text text-[11px] font-medium leading-tight line-clamp-2">{r.title}</p>
-                )}
               </Link>
             )
           })}

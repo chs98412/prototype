@@ -50,6 +50,15 @@ func main() {
 		v1.DELETE("/records/tmdb/:tmdbId", handler.DeleteRecordByTmdbID)
 		v1.GET("/records/stats", handler.GetRecordStats)
 
+		// Reviews
+		v1.GET("/reviews", handler.GetReviews)
+		v1.GET("/reviews/:id", handler.GetReviewByID)
+		v1.POST("/reviews", handler.UpsertReview)
+		v1.PUT("/reviews/:id", handler.UpdateReviewAPI)
+		v1.DELETE("/reviews/:id", handler.DeleteReviewAPI)
+		v1.POST("/reviews/:id/like", handler.LikeReview)
+		v1.DELETE("/reviews/:id/like", handler.UnlikeReview)
+
 		// Social
 		v1.GET("/feed", handler.GetFeed)
 		v1.GET("/follows", handler.GetFollows)
@@ -57,6 +66,18 @@ func main() {
 		v1.POST("/follow/:userId", handler.Follow)
 		v1.DELETE("/follow/:userId", handler.Unfollow)
 		v1.GET("/follow/:userId/status", handler.IsFollowing)
+
+		// Analytics
+		v1.GET("/heatmap", handler.GetHeatmap)
+		v1.GET("/taste-match/:userId", handler.GetTasteMatch)
+		v1.GET("/genres/ratings", handler.GetGenreRatings)
+
+		// Notifications
+		v1.GET("/notifications", handler.GetNotifications)
+
+		// Goals
+		v1.GET("/goal", handler.GetGoal)
+		v1.PUT("/goal", handler.SetGoal)
 
 		// Streaks & Challenges
 		v1.POST("/streaks/log", handler.LogStreak)

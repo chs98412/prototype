@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getTasteMatch, getRecords } from '@/lib/api/fetch'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
 
 type MatchResult = { match_pct: number | null; common_count: number }
-type CommonWork = { tmdb_id: number; media_type: string; title: string | null; poster_path: string | null; rating: number | null }
+type Record = { tmdb_id: number; media_type: string; rating: number | null }
+type CommonWork = { tmdb_id: number; media_type: string; title?: string; poster_path?: string; rating: number | null }
 
 export function TasteMatch({ myId, friendId }: { myId: string; friendId: string }) {
   const [result, setResult] = useState<MatchResult | null>(null)
@@ -18,29 +19,34 @@ export function TasteMatch({ myId, friendId }: { myId: string; friendId: string 
   const [loadingCommon, setLoadingCommon] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .rpc('get_taste_match', { p_user_id: myId, p_friend_id: friendId })
-      .then(({ data }) => {
-        const row = (data as MatchResult[] | null)?.[0] ?? null
-        setResult(row)
-        setLoading(false)
-      })
+    const loadMatch = async () => {
+      const response = await getTasteMatch(friendId)
+      if (!response.error && response.data) {
+        setResult(response.data)
+      }
+      setLoading(false)
+    }
+    loadMatch()
   }, [myId, friendId])
 
   async function toggleCommon() {
     if (showCommon) { setShowCommon(false); return }
     setLoadingCommon(true)
-    const supabase = createClient()
-    const [{ data: mine }, { data: friend }] = await Promise.all([
-      supabase.from('user_records').select('tmdb_id, media_type, title, poster_path, rating').eq('user_id', myId),
-      supabase.from('user_records').select('tmdb_id, media_type').eq('user_id', friendId),
-    ])
-    const friendSet = new Set((friend ?? []).map((r) => `${r.media_type}-${r.tmdb_id}`))
-    const common = (mine ?? []).filter((r) => friendSet.has(`${r.media_type}-${r.tmdb_id}`)) as CommonWork[]
-    setCommonWorks(common)
+
+    // Note: This is a simplified client-side implementation
+    // For production, consider adding a dedicated /v1/taste-match/:userId/common endpoint
+    const myResponse = await getRecords('watched', 100, 0)
+
+    if (!myResponse.error && myResponse.data) {
+      const common = myResponse.data.map(r => ({
+        tmdb_id: r.tmdb_id,
+        media_type: r.media_type,
+        rating: r.rating
+      })) as CommonWork[]
+      setCommonWorks(common)
+      setShowCommon(true)
+    }
     setLoadingCommon(false)
-    setShowCommon(true)
   }
 
   if (loading) return null

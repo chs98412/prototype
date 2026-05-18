@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getHeatmap, type HeatmapData } from '@/lib/api/fetch'
 
-type HeatmapRow = { activity_date: string; cnt: number }
+type HeatmapRow = HeatmapData
 
 const CELL_COLORS = [
   'bg-border',         // 0
@@ -52,17 +52,18 @@ export function ActivityHeatmap({ userId }: { userId: string }) {
   const [tooltip, setTooltip] = useState<{ date: string; cnt: number } | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .rpc('get_activity_heatmap', { p_user_id: userId, p_year: year })
-      .then(({ data }) => {
+    const loadHeatmap = async () => {
+      const response = await getHeatmap()
+      if (!response.error && response.data) {
         const map = new Map<string, number>()
-        ;(data ?? []).forEach((row: HeatmapRow) => {
-          map.set(row.activity_date.slice(0, 10), Number(row.cnt))
+        response.data.forEach((row) => {
+          map.set(row.activity_date.slice(0, 10), row.cnt)
         })
         setDataMap(map)
-        setLoading(false)
-      })
+      }
+      setLoading(false)
+    }
+    loadHeatmap()
   }, [userId, year])
 
   if (loading) {
