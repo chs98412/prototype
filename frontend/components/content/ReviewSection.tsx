@@ -49,7 +49,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
     if (!content.trim() || saving) return
     setSaving(true)
     try {
-      await upsertReview({ tmdbId, mediaType, content: content.trim(), isSpoiler })
+      await upsertReview({ tmdb_id: tmdbId, content: content.trim(), is_spoiler: isSpoiler })
       await fetchReviews()
       setEditing(false)
     } finally {
@@ -58,10 +58,10 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
   }
 
   async function handleDelete() {
-    if (saving) return
+    if (saving || !myReview) return
     setSaving(true)
     try {
-      await deleteReview({ tmdbId, mediaType })
+      await deleteReview(myReview.id)
       setReviews((prev) => prev.filter((r) => r.user_id !== userId))
     } finally {
       setSaving(false)

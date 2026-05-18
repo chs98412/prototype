@@ -18,7 +18,7 @@ export async function apiFetch<T>(
 ): Promise<ApiResponse<T>> {
   try {
     const method = options.method || 'GET'
-    const headers: Record<string, string> = {
+    const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
     }
 

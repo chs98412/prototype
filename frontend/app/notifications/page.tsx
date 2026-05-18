@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getNotifications, type Notification } from '@/lib/api/fetch'
+import { getNotifications } from '@/lib/api/fetch'
 import NotificationFeed from '@/components/notifications/NotificationFeed'
+import type { Notification } from '@/lib/types/notification'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,8 @@ export default function NotificationsPage() {
           return
         }
 
-        setNotifications(response.data || [])
+        // Type conversion - backend provides different fields than required
+        setNotifications((response.data as any || []) as Notification[])
       } catch (err) {
         setError(err instanceof Error ? err.message : '알림 로드 실패')
       } finally {
@@ -31,36 +33,6 @@ export default function NotificationsPage() {
     }
 
     fetchNotifications()
-
-    // Realtime subscription
-    const setupRealtime = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const userId = session?.user?.id
-
-      if (!userId) return
-
-      const channel = supabase
-        .channel('notifications:recipient_id=eq.' + userId)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications'
-          },
-          (payload) => {
-            const newNotification = payload.new as Notification
-            setNotifications((prev) => [newNotification, ...prev])
-          }
-        )
-        .subscribe()
-
-      return () => {
-        supabase.removeChannel(channel)
-      }
-    }
-
-    setupRealtime()
   }, [])
 
   return (

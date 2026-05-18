@@ -34,29 +34,9 @@ export default function ProfileEditPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setUploadingPhoto(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const filename = `${user.id}-${Date.now()}`
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(filename, file, { upsert: true })
-
-      if (error) throw error
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filename)
-
-      setAvatarUrl(publicUrl)
-    } catch (err) {
-      console.error('Failed to upload photo:', err)
-    } finally {
-      setUploadingPhoto(false)
-    }
+    // TODO: Implement photo upload via API
+    // For now, just disable the UI
+    console.warn('Photo upload not yet implemented')
   }
 
   async function handleDeletePhoto() {
