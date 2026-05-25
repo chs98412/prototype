@@ -1,19 +1,33 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getToken'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+
+async function apiFetch(endpoint: string, method: string) {
+  const token = await getServerToken()
+  if (!token) throw new Error('Unauthorized - no token available')
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(error.error || `API Error: ${response.status}`)
+  }
+
+  return response.json()
+}
 
 export async function followUser(followingId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  await supabase.from('user_follows').insert({ follower_id: user.id, following_id: followingId })
+  return apiFetch(`/v1/follow/${followingId}`, 'POST')
 }
 
 export async function unfollowUser(followingId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  await supabase.from('user_follows').delete().match({ follower_id: user.id, following_id: followingId })
+  return apiFetch(`/v1/follow/${followingId}`, 'DELETE')
 }

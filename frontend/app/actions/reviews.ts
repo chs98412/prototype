@@ -1,6 +1,29 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getToken'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+
+async function apiFetch(endpoint: string, method: string, body?: any) {
+  const token = await getServerToken()
+  if (!token) throw new Error('Unauthorized - no token available')
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(error.error || `API Error: ${response.status}`)
+  }
+
+  return response.json()
+}
 
 export async function upsertReview(data: {
   tmdbId: number
@@ -8,35 +31,25 @@ export async function upsertReview(data: {
   content: string
   isSpoiler: boolean
 }) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Unauthorized')
-
-  const { error } = await supabase.from('reviews').upsert(
-    {
-      user_id: session.user.id,
-      tmdb_id: data.tmdbId,
-      media_type: data.mediaType,
-      content: data.content,
-      is_spoiler: data.isSpoiler,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,tmdb_id,media_type' },
-  )
-  if (error) throw error
+  return apiFetch('/v1/reviews', 'POST', {
+    tmdb_id: data.tmdbId,
+    content: data.content,
+    is_spoiler: data.isSpoiler,
+  })
 }
 
 export async function deleteReview(data: {
   tmdbId: number
   mediaType: 'movie' | 'tv'
 }) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Unauthorized')
+  // Fetch the review first to get its ID, then delete it
+  const reviewsRes = await apiFetch(`/v1/reviews?limit=100&offset=0`, 'GET')
+  const reviews = reviewsRes.data || []
+  const review = reviews.find((r: any) => r.tmdb_id === data.tmdbId)
 
-  const { error } = await supabase
-    .from('reviews')
-    .delete()
-    .match({ user_id: session.user.id, tmdb_id: data.tmdbId, media_type: data.mediaType })
-  if (error) throw error
+  if (review) {
+    return apiFetch(`/v1/reviews/${review.id}`, 'DELETE')
+  }
+
+  throw new Error('Review not found')
 }

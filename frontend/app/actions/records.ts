@@ -1,8 +1,31 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getToken'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export type RecordStatus = 'watched' | 'watching' | 'want'
+
+async function apiFetch(endpoint: string, method: string, body?: any) {
+  const token = await getServerToken()
+  if (!token) throw new Error('Unauthorized - no token available')
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(error.error || `API Error: ${response.status}`)
+  }
+
+  return response.json()
+}
 
 export async function upsertRecord(data: {
   tmdbId: number
@@ -13,41 +36,22 @@ export async function upsertRecord(data: {
   posterPath?: string
   genreIds?: number[]
 }) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Unauthorized')
+  await apiFetch('/v1/records', 'POST', {
+    tmdb_id: data.tmdbId,
+    media_type: data.mediaType,
+    status: data.status,
+    rating: data.status === 'watched' ? (data.rating ?? null) : null,
+  })
 
-  const { error } = await supabase.from('user_records').upsert(
-    {
-      user_id: session.user.id,
-      tmdb_id: data.tmdbId,
-      media_type: data.mediaType,
-      status: data.status,
-      rating: data.status === 'watched' ? (data.rating ?? null) : null,
-      title: data.title ?? null,
-      poster_path: data.posterPath ?? null,
-      genre_ids: data.genreIds ?? null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,tmdb_id,media_type' },
-  )
-
-  if (error) throw error
-
-  // "봄" 상태일 때만 스트릭·도전과제 업데이트 (비동기, 실패해도 기록 저장은 유지)
+  // Log streak and update challenges when watched
   if (data.status === 'watched') {
-    const apiUrl = process.env.API_URL
-    if (apiUrl) {
-      const headers = { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
-      await Promise.allSettled([
-        fetch(`${apiUrl}/v1/streaks/log`, { method: 'POST', headers }),
-        fetch(`${apiUrl}/v1/challenges/progress`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ tmdb_id: data.tmdbId, delta: 1 }),
-        }),
-      ])
-    }
+    await Promise.allSettled([
+      apiFetch('/v1/streaks/log', 'POST'),
+      apiFetch('/v1/challenges/progress', 'POST', {
+        tmdb_id: data.tmdbId,
+        delta: 1,
+      }),
+    ]).catch(() => {})
   }
 }
 
@@ -55,24 +59,11 @@ export async function deleteRecord(data: {
   tmdbId: number
   mediaType: 'movie' | 'tv'
 }) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Unauthorized')
+  await apiFetch(`/v1/records/tmdb/${data.tmdbId}`, 'DELETE')
 
-  const { error } = await supabase
-    .from('user_records')
-    .delete()
-    .match({ user_id: session.user.id, tmdb_id: data.tmdbId, media_type: data.mediaType })
-
-  if (error) throw error
-
-  // 도전과제 진척도 -1
-  const apiUrl = process.env.API_URL
-  if (apiUrl) {
-    await fetch(`${apiUrl}/v1/challenges/progress`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tmdb_id: data.tmdbId, delta: -1 }),
-    }).catch(() => {})
-  }
+  // Update challenge progress
+  await apiFetch('/v1/challenges/progress', 'POST', {
+    tmdb_id: data.tmdbId,
+    delta: -1,
+  }).catch(() => {})
 }
