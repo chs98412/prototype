@@ -85,9 +85,9 @@ export async function measureParallelOperations<T extends readonly unknown[]>(
   const startTime = performance.now()
 
   try {
-    const results = await Promise.all(
+    const results = (await Promise.all(
       operations.map(({ fn }) => fn())
-    ) as T
+    )) as unknown as T
 
     const duration = performance.now() - startTime
     logger.info(`병렬 작업 완료 (${operations.length}개)`, {
@@ -117,7 +117,7 @@ export function collectWebVitals() {
     try {
       const observer = new PerformanceObserver((list) => {
         const entries = list.getEntries()
-        const lastEntry = entries[entries.length - 1]
+        const lastEntry = entries[entries.length - 1] as any
         logger.logPerformanceMetric('LCP (Largest Contentful Paint)', lastEntry.renderTime || lastEntry.loadTime)
       })
       observer.observe({ entryTypes: ['largest-contentful-paint'] })
@@ -131,7 +131,7 @@ export function collectWebVitals() {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          logger.logPerformanceMetric('FID (First Input Delay)', entry.processingDuration)
+          logger.logPerformanceMetric('FID (First Input Delay)', (entry as any).processingDuration)
         }
       })
       observer.observe({ entryTypes: ['first-input'] })

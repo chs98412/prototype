@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getFeed } from '@/lib/api/social'
+import type { FeedItem } from '@/lib/types/social'
 import { IMG_BASE } from '@/lib/config'
+
 const PAGE_SIZE = 20
 
 const STATUS_LABELS: Record<string, string> = {
@@ -19,19 +21,6 @@ function relativeTime(dateStr: string): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}분 전`
   if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`
   return `${Math.floor(diff / 86400)}일 전`
-}
-
-type FeedItem = {
-  tmdb_id: number
-  media_type: string
-  status: string
-  rating: number | null
-  title: string | null
-  poster_path: string | null
-  updated_at: string
-  friend_id: string
-  display_name: string | null
-  avatar_url: string | null
 }
 
 export function FriendFeed({ userId }: { userId: string }) {
@@ -89,7 +78,7 @@ export function FriendFeed({ userId }: { userId: string }) {
     <div className="flex flex-col gap-3">
       {items.map((item, i) => (
         <Link
-          key={`${item.friend_id}-${item.media_type}-${item.tmdb_id}-${i}`}
+          key={`${item.user_id}-${item.media_type}-${item.tmdb_id}-${i}`}
           href={`/content/${item.media_type}/${item.tmdb_id}`}
           className="flex gap-3 bg-surface rounded-2xl p-3 active:bg-border transition-colors"
         >

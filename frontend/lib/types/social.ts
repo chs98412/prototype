@@ -10,11 +10,9 @@ export type Follow = {
 }
 
 export type FeedItem = Record & {
-  user: {
-    id: string
-    display_name?: string
-    avatar_url?: string
-  }
+  friend_id?: string
+  display_name?: string | null
+  avatar_url?: string | null
 }
 
 export type FollowResponse = { success: boolean; following: boolean }
