@@ -7,9 +7,30 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/chs98412/prototype/backend/db"
 )
+
+type Challenge struct {
+	ID            string `json:"id"`
+	Title         string `json:"title"`
+	Description   string `json:"description"`
+	RequiredCount int    `json:"required_count"`
+	BadgeEmoji    string `json:"badge_emoji"`
+}
+
+type ChallengeProgress struct {
+	ChallengeID string `json:"challenge_id"`
+	CurrentCount int    `json:"current_count"`
+	CompletedAt string `json:"completed_at"`
+}
+
+type ChallengeWithProgress struct {
+	Challenge Challenge          `json:"challenge"`
+	Progress  *ChallengeProgress `json:"progress"`
+}
 
 type progressRequest struct {
 	TmdbID int `json:"tmdb_id" binding:"required"`
@@ -60,4 +81,72 @@ func UpdateChallengeProgress(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func GetChallenges(c *gin.Context) {
+	userID := c.GetString("userID")
+
+	// Get all challenges
+	challengeQuery := `
+	SELECT id, title, description, required_count, badge_emoji
+	FROM challenges
+	ORDER BY created_at
+	`
+
+	rows, err := db.DB.Query(challengeQuery)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch challenges"})
+		return
+	}
+	defer rows.Close()
+
+	var challenges []Challenge
+	for rows.Next() {
+		var ch Challenge
+		if err := rows.Scan(&ch.ID, &ch.Title, &ch.Description, &ch.RequiredCount, &ch.BadgeEmoji); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan challenges"})
+			return
+		}
+		challenges = append(challenges, ch)
+	}
+
+	// If no user ID, return just challenges
+	if userID == "" {
+		c.JSON(http.StatusOK, challenges)
+		return
+	}
+
+	// Get user's progress for each challenge
+	progressMap := make(map[string]*ChallengeProgress)
+	if userID != "" {
+		progressQuery := `
+		SELECT challenge_id, current_count, completed_at
+		FROM user_challenge_progress
+		WHERE user_id = $1
+		`
+
+		progRows, err := db.DB.Query(progressQuery, userID)
+		if err == nil {
+			defer progRows.Close()
+
+			for progRows.Next() {
+				var p ChallengeProgress
+				if err := progRows.Scan(&p.ChallengeID, &p.CurrentCount, &p.CompletedAt); err == nil {
+					progressMap[p.ChallengeID] = &p
+				}
+			}
+		}
+	}
+
+	// Combine challenges with progress
+	var result []ChallengeWithProgress
+	for _, ch := range challenges {
+		cwp := ChallengeWithProgress{
+			Challenge: ch,
+			Progress:  progressMap[ch.ID],
+		}
+		result = append(result, cwp)
+	}
+
+	c.JSON(http.StatusOK, result)
 }

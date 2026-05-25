@@ -309,6 +309,33 @@ export async function deleteNotification(notificationId: string) {
 }
 
 // ============================================
+// Challenges API
+// ============================================
+
+export interface Challenge {
+  id: string
+  title: string
+  description: string
+  required_count: number
+  badge_emoji: string
+}
+
+export interface ChallengeProgress {
+  challenge_id: string
+  current_count: number
+  completed_at: string | null
+}
+
+export interface ChallengeWithProgress {
+  challenge: Challenge
+  progress: ChallengeProgress | null
+}
+
+export async function getChallenges() {
+  return apiFetch<ChallengeWithProgress[]>('/v1/challenges')
+}
+
+// ============================================
 // Goals API
 // ============================================
 

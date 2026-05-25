@@ -45,6 +45,7 @@ func main() {
 	r.GET("/v1/reviews", handler.GetReviews)
 	r.GET("/v1/reviews/:id", handler.GetReviewByID)
 	r.GET("/v1/tmdb/:tmdbId/reviews", handler.GetReviewsByTmdbID)
+	r.GET("/v1/challenges", handler.GetChallenges)
 
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
@@ -95,6 +96,7 @@ func main() {
 		v1.PUT("/goal", handler.SetGoal)
 
 		// Streaks & Challenges
+		v1.GET("/challenges", handler.GetChallenges)
 		v1.POST("/streaks/log", handler.LogStreak)
 		v1.POST("/challenges/progress", handler.UpdateChallengeProgress)
 

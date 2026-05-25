@@ -1,20 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/layout/BottomNav'
 import Link from 'next/link'
-
-type Challenge = {
-  id: string
-  title: string
-  description: string
-  required_count: number
-  badge_emoji: string
-}
-
-type Progress = {
-  challenge_id: string
-  current_count: number
-  completed_at: string | null
-}
+import { getChallenges } from '@/lib/api/fetch'
 
 type Tab = 'all' | 'in_progress' | 'done'
 
@@ -26,22 +12,16 @@ export default async function ChallengesPage({
   const { tab = 'all' } = await searchParams
   const activeTab = (tab as Tab) ?? 'all'
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: challengesWithProgress = [] } = await getChallenges()
 
-  const { data: challenges = [] } = await supabase
-    .from('challenges')
-    .select('id, title, description, required_count, badge_emoji')
-    .order('created_at')
+  const progressMap = new Map<string, any>()
+  challengesWithProgress?.forEach((cw) => {
+    if (cw.progress) {
+      progressMap.set(cw.challenge.id, cw.progress)
+    }
+  })
 
-  const progressMap = new Map<string, Progress>()
-  if (user) {
-    const { data: progresses = [] } = await supabase
-      .from('user_challenge_progress')
-      .select('challenge_id, current_count, completed_at')
-      .eq('user_id', user.id)
-    progresses?.forEach((p) => progressMap.set(p.challenge_id, p))
-  }
+  const challenges = challengesWithProgress?.map(cw => cw.challenge) ?? []
 
   const filtered = (challenges ?? []).filter((c) => {
     const p = progressMap.get(c.id)
@@ -109,27 +89,25 @@ export default async function ChallengesPage({
                   </div>
                   <p className="text-muted text-[13px] mt-0.5 leading-snug">{challenge.description}</p>
 
-                  {user && (
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[12px] text-muted">{current} / {challenge.required_count}</span>
-                        <span className="text-[12px] text-muted">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-surface overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[12px] text-muted">{current} / {challenge.required_count}</span>
+                      <span className="text-[12px] text-muted">{pct}%</span>
                     </div>
-                  )}
+                    <div className="h-1.5 rounded-full bg-surface overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )
         })}
 
-        {!user && (
+        {challenges.length > 0 && progressMap.size === 0 && (
           <div className="mt-4 p-4 rounded-2xl bg-surface text-center">
             <p className="text-muted text-sm">
               <Link href="/login" className="text-primary font-semibold">로그인</Link>하면 진척도를 확인할 수 있어요
