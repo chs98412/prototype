@@ -20,15 +20,8 @@ type ReviewResponse struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-type CreateReviewRequest struct {
-	TMDBID  int    `json:"tmdb_id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	Spoiler bool   `json:"spoiler"`
-	Rating  int    `json:"rating"`
-}
-
 // GetReviews retrieves reviews (all or user-specific)
+// DEPRECATED: Use ReviewHandler.GetReviews instead
 func GetReviews(c *gin.Context) {
 	userID := c.GetString("userID")
 
@@ -85,6 +78,7 @@ func GetReviewByID(c *gin.Context) {
 }
 
 // CreateReview creates a new review (upsert)
+// DEPRECATED: Use ReviewHandler.CreateReview instead
 func CreateReview(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -92,32 +86,33 @@ func CreateReview(c *gin.Context) {
 		return
 	}
 
-	var req CreateReviewRequest
+	var req map[string]interface{}
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
-	if req.TMDBID == 0 {
+	tmdbID, ok := req["tmdb_id"].(float64)
+	if !ok || tmdbID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "tmdb_id is required"})
 		return
 	}
-	if req.Title == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "title is required"})
-		return
-	}
-	if req.Content == "" {
+	content, ok := req["content"].(string)
+	if !ok || content == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "content is required"})
 		return
 	}
 
+	spoiler := false
+	if v, ok := req["spoiler"].(bool); ok {
+		spoiler = v
+	}
+
 	data := map[string]interface{}{
 		"user_id": userID,
-		"tmdb_id": req.TMDBID,
-		"title":   req.Title,
-		"content": req.Content,
-		"spoiler": req.Spoiler,
-		"rating":  req.Rating,
+		"tmdb_id": int(tmdbID),
+		"content": content,
+		"spoiler": spoiler,
 	}
 
 	db := supabase.NewClient()
@@ -142,6 +137,7 @@ func CreateReview(c *gin.Context) {
 }
 
 // UpdateReview updates a review
+// DEPRECATED: Use ReviewHandler.UpdateReview instead
 func UpdateReview(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -151,7 +147,7 @@ func UpdateReview(c *gin.Context) {
 
 	reviewID := c.Param("reviewId")
 
-	var req CreateReviewRequest
+	var req map[string]interface{}
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -173,11 +169,12 @@ func UpdateReview(c *gin.Context) {
 	}
 
 	// Update
-	data := map[string]interface{}{
-		"title":   req.Title,
-		"content": req.Content,
-		"spoiler": req.Spoiler,
-		"rating":  req.Rating,
+	data := map[string]interface{}{}
+	if v, ok := req["content"].(string); ok && v != "" {
+		data["content"] = v
+	}
+	if v, ok := req["spoiler"].(bool); ok {
+		data["spoiler"] = v
 	}
 
 	result, err = db.Update("reviews", data, "id=eq."+reviewID)

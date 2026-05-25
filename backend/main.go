@@ -59,6 +59,10 @@ func main() {
 	recordService := service.NewRecordService(recordRepo)
 	recordHandler := handler.NewRecordHandler(recordService)
 
+	reviewRepo := repository.NewReviewRepository(db)
+	reviewService := service.NewReviewService(reviewRepo)
+	reviewHandler := handler.NewReviewHandler(reviewService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -78,12 +82,12 @@ func main() {
 		v1.GET("/records/stats", recordHandler.GetRecordStats)
 
 		// Reviews
-		v1.GET("/reviews", handler.GetReviews)
-		v1.GET("/reviews/:reviewId", handler.GetReviewByID)
-		v1.POST("/reviews", handler.CreateReview)
-		v1.PUT("/reviews/:reviewId", handler.UpdateReview)
-		v1.DELETE("/reviews/:reviewId", handler.DeleteReview)
-		v1.GET("/tmdb/:tmdbId/reviews", handler.GetReviewsByTMDB)
+		v1.GET("/reviews", reviewHandler.GetReviews)
+		v1.GET("/reviews/:reviewId", reviewHandler.GetReviewByID)
+		v1.POST("/reviews", reviewHandler.CreateReview)
+		v1.PUT("/reviews/:reviewId", reviewHandler.UpdateReview)
+		v1.DELETE("/reviews/:reviewId", reviewHandler.DeleteReview)
+		v1.GET("/tmdb/:tmdbId/reviews", reviewHandler.GetReviewsByTMDB)
 
 		// Review Likes
 		v1.GET("/reviews/:reviewId/likes", handler.GetReviewLikes)
