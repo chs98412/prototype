@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { BackButton } from '@/components/content/BackButton'
 import type { Metadata } from 'next'
 
@@ -87,6 +88,7 @@ export default async function PersonPage({ params }: { params: Promise<Params> }
 
   const { person, credits } = data
 
+  const user = await getCurrentUser()
   const token = await getServerToken()
 
   // 유저의 시청 기록 조회

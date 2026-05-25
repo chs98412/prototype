@@ -6,6 +6,7 @@ import { RecordSection } from '@/components/content/RecordSection'
 import { ReviewSection } from '@/components/content/ReviewSection'
 import { MovieDetailHeader } from '@/components/content/MovieDetailHeader'
 import { MovieDetailInfo } from '@/components/content/MovieDetailInfo'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import type { Metadata } from 'next'
 
 export const revalidate = 86400
@@ -63,7 +64,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
   const content = await fetchContent(type, id)
   if (!content) notFound()
 
-  const token = process.env.NEXT_PUBLIC_API_URL ? '' : ''
+  const user = await getCurrentUser()
 
   // 관련 도전과제 조회 (프론트엔드에서 필터링)
   const tmdbId = Number(id)

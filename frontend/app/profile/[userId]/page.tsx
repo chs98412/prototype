@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { BackButton } from '@/components/content/BackButton'
@@ -24,6 +25,7 @@ type ProfileData = {
 export default async function ProfileDetailPage({ params }: { params: Promise<Params> }) {
   const { userId } = await params
 
+  const currentUser = await getCurrentUser()
   const token = await getServerToken()
 
   const profileRes = await fetch(`${API_URL}/v1/profile/${userId}`, {
@@ -39,7 +41,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
   })
   const records = recordsRes.ok ? (await recordsRes.json()).data ?? [] : []
 
-  const isSelf = false // You would need to get the current user's ID from token
+  const isSelf = currentUser?.id === userId
   const isFollowing = profile.is_following ?? false
   const followerCount = profile.follower_count ?? 0
   const followingCount = profile.following_count ?? 0
@@ -206,7 +208,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
       )}
 
       <div className="flex justify-center mt-3">
-        {me ? (
+        {currentUser ? (
           <FollowButton targetUserId={userId} initialFollowing={isFollowing} />
         ) : (
           <Link href="/login" className="px-5 py-2 rounded-full text-sm font-semibold bg-text text-white">
