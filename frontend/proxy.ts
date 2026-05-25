@@ -4,6 +4,7 @@ const PROTECTED_ROUTES = ['/home', '/profile']
 const AUTH_ROUTES = ['/', '/login']
 
 export async function proxy(request: NextRequest) {
+  const startTime = Date.now()
   const token = request.cookies.get('auth_token')?.value
   const pathname = request.nextUrl.pathname
 
@@ -15,7 +16,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/home', request.url))
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next()
+
+  // 요청 처리 시간 추적
+  const duration = Date.now() - startTime
+  response.headers.set('x-response-time', `${duration}ms`)
+  response.headers.set('x-page', pathname)
+
+  return response
 }
 
 export const config = {

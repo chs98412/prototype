@@ -4,16 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getReviewsByTmdbId } from '@/lib/api/reviews'
 import { upsertReview, deleteReview } from '@/app/actions/reviews'
-
-type Review = {
-  id: string
-  user_id: string
-  content: string
-  is_spoiler: boolean
-  created_at: string
-  like_count?: number
-  user_profiles: { display_name: string | null; avatar_url: string | null } | null
-}
+import type { Review } from '@/lib/types/reviews'
 
 function relativeTime(dateStr: string): string {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000
@@ -52,7 +43,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
 
   function startEdit() {
     setContent(myReview?.content ?? '')
-    setIsSpoiler(myReview?.is_spoiler ?? false)
+    setIsSpoiler(myReview?.spoiler ?? false)
     setEditing(true)
   }
 
@@ -172,7 +163,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
                   )}
                 </div>
 
-                {r.is_spoiler && !spoilerVisible ? (
+                {r.spoiler && !spoilerVisible ? (
                   <div className="flex flex-col items-center gap-2 py-4 bg-surface">
                     <p className="text-muted text-[12px]">스포일러가 포함된 리뷰입니다</p>
                     <button
