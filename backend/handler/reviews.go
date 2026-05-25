@@ -12,11 +12,13 @@ type ReviewItem struct {
 	ID        string      `json:"id"`
 	UserID    string      `json:"user_id"`
 	TmdbID    int         `json:"tmdb_id"`
+	MediaType string      `json:"media_type"`
 	Content   string      `json:"content"`
 	IsSpoiler bool        `json:"is_spoiler"`
 	CreatedAt string      `json:"created_at"`
 	UpdatedAt string      `json:"updated_at"`
 	LikeCount int         `json:"like_count"`
+	UserLiked bool        `json:"user_liked"`
 	User      *Profile    `json:"user_profiles"`
 }
 
@@ -37,7 +39,7 @@ func GetReviews(c *gin.Context) {
 	}
 
 	query := `
-	SELECT r.id, r.user_id, r.tmdb_id, r.content, r.is_spoiler, r.created_at, r.updated_at,
+	SELECT r.id, r.user_id, r.tmdb_id, r.media_type, r.content, r.is_spoiler, r.created_at, r.updated_at,
 		COUNT(DISTINCT l.user_id) as like_count,
 		p.user_id, p.display_name, p.avatar_url
 	FROM reviews r
@@ -64,7 +66,7 @@ func GetReviews(c *gin.Context) {
 		var avatarURL *string
 
 		err := rows.Scan(
-			&review.ID, &review.UserID, &review.TmdbID, &review.Content, &review.IsSpoiler,
+			&review.ID, &review.UserID, &review.TmdbID, &review.MediaType, &review.Content, &review.IsSpoiler,
 			&review.CreatedAt, &review.UpdatedAt, &review.LikeCount,
 			&userID, &displayName, &avatarURL,
 		)
@@ -89,10 +91,12 @@ func GetReviews(c *gin.Context) {
 
 func GetReviewByID(c *gin.Context) {
 	reviewID := c.Param("id")
+	currentUserID := c.GetString("userID")
 
 	query := `
-	SELECT r.id, r.user_id, r.tmdb_id, r.content, r.is_spoiler, r.created_at, r.updated_at,
+	SELECT r.id, r.user_id, r.tmdb_id, r.media_type, r.content, r.is_spoiler, r.created_at, r.updated_at,
 		COUNT(DISTINCT l.user_id) as like_count,
+		CASE WHEN EXISTS(SELECT 1 FROM review_likes WHERE review_id = r.id AND user_id = $2) THEN true ELSE false END as user_liked,
 		p.user_id, p.display_name, p.avatar_url
 	FROM reviews r
 	LEFT JOIN review_likes l ON l.review_id = r.id
@@ -106,9 +110,9 @@ func GetReviewByID(c *gin.Context) {
 	var displayName *string
 	var avatarURL *string
 
-	err := db.DB.QueryRow(query, reviewID).Scan(
-		&review.ID, &review.UserID, &review.TmdbID, &review.Content, &review.IsSpoiler,
-		&review.CreatedAt, &review.UpdatedAt, &review.LikeCount,
+	err := db.DB.QueryRow(query, reviewID, currentUserID).Scan(
+		&review.ID, &review.UserID, &review.TmdbID, &review.MediaType, &review.Content, &review.IsSpoiler,
+		&review.CreatedAt, &review.UpdatedAt, &review.LikeCount, &review.UserLiked,
 		&userID, &displayName, &avatarURL,
 	)
 	if err != nil {
@@ -138,7 +142,7 @@ func GetReviewsByTmdbID(c *gin.Context) {
 	}
 
 	query := `
-	SELECT r.id, r.user_id, r.tmdb_id, r.content, r.is_spoiler, r.created_at, r.updated_at,
+	SELECT r.id, r.user_id, r.tmdb_id, r.media_type, r.content, r.is_spoiler, r.created_at, r.updated_at,
 		COUNT(DISTINCT l.user_id) as like_count,
 		p.user_id, p.display_name, p.avatar_url
 	FROM reviews r
@@ -165,7 +169,7 @@ func GetReviewsByTmdbID(c *gin.Context) {
 		var avatarURL *string
 
 		err := rows.Scan(
-			&review.ID, &review.UserID, &review.TmdbID, &review.Content, &review.IsSpoiler,
+			&review.ID, &review.UserID, &review.TmdbID, &review.MediaType, &review.Content, &review.IsSpoiler,
 			&review.CreatedAt, &review.UpdatedAt, &review.LikeCount,
 			&userID, &displayName, &avatarURL,
 		)

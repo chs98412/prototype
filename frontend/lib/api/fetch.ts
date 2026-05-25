@@ -142,11 +142,13 @@ export interface Review {
   id: string
   user_id: string
   tmdb_id: number
+  media_type?: string
   content: string
   is_spoiler: boolean
   created_at: string
   updated_at: string
   like_count?: number
+  user_liked?: boolean
   user_profiles?: {
     display_name: string | null
     avatar_url: string | null

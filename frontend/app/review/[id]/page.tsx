@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getReviewById } from '@/lib/api/fetch'
 import { LikeButton } from '@/components/review/LikeButton'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
@@ -11,47 +11,36 @@ type Params = { id: string }
 export default async function ReviewPage({ params }: { params: Promise<Params> }) {
   const { id } = await params
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: review } = await supabase
-    .from('reviews')
-    .select('id, user_id, content, is_spoiler, created_at, tmdb_id, media_type, user_profiles(display_name)')
-    .eq('id', id)
-    .maybeSingle()
+  const { data: review } = await getReviewById(id)
 
   if (!review) notFound()
 
-  const profile = review.user_profiles as unknown as { display_name: string | null } | null
+  const profile = review.user_profiles as unknown as { display_name: string | null } | null || null
 
   const apiKey = process.env.TMDB_API_KEY
   let posterPath: string | null = null
   let contentTitle: string | null = null
 
   if (apiKey) {
-    const endpoint = review.media_type === 'movie'
-      ? `${TMDB_BASE}/movie/${review.tmdb_id}?api_key=${apiKey}&language=ko-KR`
-      : `${TMDB_BASE}/tv/${review.tmdb_id}?api_key=${apiKey}&language=ko-KR`
     try {
-      const res = await fetch(endpoint, { next: { revalidate: 3600 } })
-      if (res.ok) {
-        const data = await res.json()
-        posterPath = data.poster_path ?? null
-        contentTitle = (data.title ?? data.name) as string | null
+      const endpoint = review.tmdb_id ? (
+        `${TMDB_BASE}/movie/${review.tmdb_id}?api_key=${apiKey}&language=ko-KR`
+      ) : null
+
+      if (endpoint) {
+        const res = await fetch(endpoint, { next: { revalidate: 3600 } })
+        if (res.ok) {
+          const data = await res.json()
+          posterPath = data.poster_path ?? null
+          contentTitle = (data.title ?? data.name) as string | null
+        }
       }
     } catch {
     }
   }
 
-  const [{ count: likeCount }, likeCheck] = await Promise.all([
-    supabase.from('review_likes').select('*', { count: 'exact', head: true }).eq('review_id', id),
-    user
-      ? supabase.from('review_likes').select('user_id').eq('review_id', id).eq('user_id', user.id).maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
-
-  const initialLiked = !!likeCheck.data
-  const initialCount = likeCount ?? 0
+  const initialLiked = review.user_liked ?? false
+  const initialCount = review.like_count ?? 0
 
   const previewTitle = review.content.slice(0, 80)
 
@@ -84,7 +73,7 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
             reviewId={id}
             initialLiked={initialLiked}
             initialCount={initialCount}
-            userId={user?.id ?? null}
+            userId="user"
           />
         </div>
 
