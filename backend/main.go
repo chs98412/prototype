@@ -88,6 +88,12 @@ func main() {
 	streakService := service.NewStreakService(streakRepo)
 	streakHandler := handler.NewStreakHandler(streakService)
 
+	feedRepo := repository.NewFeedRepository(db)
+	feedService := service.NewFeedService(feedRepo)
+	notifRepo := repository.NewNotificationRepository(db)
+	notifService := service.NewNotificationService(notifRepo)
+	socialHandler := handler.NewSocialHandler(feedService, notifService)
+
 	// Public endpoints
 	r.GET("/health", authHandler.Health)
 	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
@@ -135,8 +141,8 @@ func main() {
 		v1.GET("/follow/:userId/status", followHandler.IsFollowing)
 
 		// Feed & Notifications
-		v1.GET("/feed", handler.GetFeed)
-		v1.GET("/notifications", handler.GetNotifications)
+		v1.GET("/feed", socialHandler.GetFeed)
+		v1.GET("/notifications", socialHandler.GetNotifications)
 
 		// Goals & Challenges
 		v1.GET("/goals", goalHandler.GetGoal)
