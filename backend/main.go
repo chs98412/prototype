@@ -71,6 +71,10 @@ func main() {
 	challengeService := service.NewChallengeService(challengeRepo)
 	challengeHandler := handler.NewChallengeHandler(challengeService)
 
+	goalRepo := repository.NewGoalRepository(db)
+	goalService := service.NewGoalService(goalRepo)
+	goalHandler := handler.NewGoalHandler(goalService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -115,8 +119,8 @@ func main() {
 		v1.GET("/notifications", handler.GetNotifications)
 
 		// Goals & Challenges
-		v1.GET("/goals", handler.GetGoal)
-		v1.PUT("/goals", handler.UpdateGoal)
+		v1.GET("/goals", goalHandler.GetGoal)
+		v1.PUT("/goals", goalHandler.UpdateGoal)
 		v1.GET("/challenges", challengeHandler.GetChallenges)
 		v1.GET("/user-challenges", challengeHandler.GetUserChallenges)
 		v1.POST("/challenges/:challengeId/start", challengeHandler.StartChallenge)
