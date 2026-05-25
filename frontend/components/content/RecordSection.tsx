@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { upsertRecord, deleteRecord, type RecordStatus } from '@/app/actions/records'
+import { upsertRecord, deleteRecord, getRecords, type Record } from '@/lib/api/fetch'
 import { StarRating } from './StarRating'
 
 interface RecordSectionProps {
@@ -15,9 +14,9 @@ interface RecordSectionProps {
   genreIds?: number[]
 }
 
-type UserRecord = { status: RecordStatus; rating: number | null }
+type UserRecord = { status: 'watched' | 'watching' | 'want'; rating: number | null }
 
-const STATUSES: { id: RecordStatus; label: string; emoji: string }[] = [
+const STATUSES: { id: 'watched' | 'watching' | 'want'; label: string; emoji: string }[] = [
   { id: 'watched', label: '봄', emoji: '✅' },
   { id: 'watching', label: '보는 중', emoji: '▶️' },
   { id: 'want', label: '보고 싶음', emoji: '🔖' },
@@ -32,20 +31,21 @@ export function RecordSection({ tmdbId, mediaType, isLoggedIn, title, posterPath
   useEffect(() => {
     if (!isLoggedIn) return
 
-    const supabase = createClient()
-    supabase
-      .from('user_records')
-      .select('status, rating')
-      .eq('tmdb_id', tmdbId)
-      .eq('media_type', mediaType)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setRecord(data as UserRecord)
-        setLoadingRecord(false)
-      })
+    const loadRecord = async () => {
+      // Get all records for this user, then find the matching one
+      const response = await getRecords(undefined, 1000, 0)
+      if (!response.error && response.data) {
+        const found = response.data.find(r => r.tmdb_id === tmdbId && r.media_type === mediaType)
+        if (found) {
+          setRecord({ status: found.status as any, rating: found.rating })
+        }
+      }
+      setLoadingRecord(false)
+    }
+    loadRecord()
   }, [tmdbId, mediaType, isLoggedIn])
 
-  function handleStatus(status: RecordStatus) {
+  function handleStatus(status: 'watched' | 'watching' | 'want') {
     if (!isLoggedIn) { router.push('/login'); return }
 
     const next: UserRecord = {
@@ -53,18 +53,31 @@ export function RecordSection({ tmdbId, mediaType, isLoggedIn, title, posterPath
       rating: status === 'watched' ? (record?.rating ?? null) : null,
     }
     setRecord(next)
-    startTransition(() => upsertRecord({ tmdbId, mediaType, status, rating: next.rating ?? undefined, title, posterPath, genreIds }))
+    startTransition(async () => {
+      await upsertRecord({ tmdb_id: tmdbId, media_type: mediaType as any, status, rating: next.rating ?? undefined })
+    })
   }
 
   function handleRating(rating: number) {
     const next: UserRecord = { status: 'watched', rating }
     setRecord(next)
-    startTransition(() => upsertRecord({ tmdbId, mediaType, status: 'watched', rating, title, posterPath, genreIds }))
+    startTransition(async () => {
+      await upsertRecord({ tmdb_id: tmdbId, media_type: mediaType as any, status: 'watched', rating })
+    })
   }
 
   function handleDelete() {
+    if (!record) return
     setRecord(null)
-    startTransition(() => deleteRecord({ tmdbId, mediaType }))
+    startTransition(async () => {
+      const response = await getRecords(undefined, 1000, 0)
+      if (!response.error && response.data) {
+        const found = response.data.find(r => r.tmdb_id === tmdbId && r.media_type === mediaType)
+        if (found) {
+          await deleteRecord(found.id)
+        }
+      }
+    })
   }
 
   return (
