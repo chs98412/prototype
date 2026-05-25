@@ -1,33 +1,44 @@
-import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'
-import { FriendFeed } from '@/components/feed/FriendFeed'
 import { YearlyGoal } from '@/components/home/YearlyGoal'
 import Link from 'next/link'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 const STREAK_MILESTONES = [7, 30, 100]
 
 export const revalidate = 60
 
 export default async function HomePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  let currentStreak = 0
+  let goalTarget: number | null = null
+  let watchedCount = 0
 
-  const year = new Date().getFullYear()
+  try {
+    // Fetch data from public API endpoints
+    const [streakRes, goalRes, statsRes] = await Promise.all([
+      fetch(`${API_BASE}/v1/streaks`, { cache: 'no-store' }).catch(() => ({ ok: false })),
+      fetch(`${API_BASE}/v1/goal`, { cache: 'no-store' }).catch(() => ({ ok: false })),
+      fetch(`${API_BASE}/v1/records/stats`, { cache: 'no-store' }).catch(() => ({ ok: false })),
+    ])
 
-  const [streakResult, goalResult, watchedResult] = user
-    ? await Promise.all([
-        supabase.from('user_streaks').select('current_streak').eq('user_id', user.id).maybeSingle(),
-        supabase.from('user_goals').select('target_count').eq('user_id', user.id).eq('year', year).maybeSingle(),
-        supabase.from('user_records').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'watched'),
-      ])
-    : [{ data: null }, { data: null }, { count: 0 }]
+    if (streakRes.ok && 'json' in streakRes) {
+      const streakData = await (streakRes as Response).json()
+      currentStreak = streakData.current_streak ?? 0
+    }
+    if (goalRes.ok && 'json' in goalRes) {
+      const goalData = await (goalRes as Response).json()
+      goalTarget = goalData.target_count ?? null
+    }
+    if (statsRes.ok && 'json' in statsRes) {
+      const statsData = await (statsRes as Response).json()
+      watchedCount = statsData.watched_count ?? 0
+    }
+  } catch (error) {
+    console.error('Failed to fetch home page data:', error)
+  }
 
-  const currentStreak = (streakResult as { data: { current_streak: number } | null }).data?.current_streak ?? 0
   const isMilestone = STREAK_MILESTONES.includes(currentStreak)
-  const goalTarget = (goalResult as { data: { target_count: number } | null }).data?.target_count ?? null
-  const watchedCount = (watchedResult as { count: number | null }).count ?? 0
 
   return (
     <main className="flex flex-col min-h-screen bg-background pb-16">
@@ -52,9 +63,7 @@ export default async function HomePage() {
         </div>
 
         {/* Yearly goal widget */}
-        {user && (
-          <YearlyGoal currentCount={watchedCount} initialTarget={goalTarget} />
-        )}
+        <YearlyGoal currentCount={watchedCount} initialTarget={goalTarget} />
 
         {/* Search shortcut */}
         <Link
@@ -67,13 +76,8 @@ export default async function HomePage() {
           영화, 시리즈 검색...
         </Link>
 
-        {/* Friend feed */}
-        {user && (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-text font-semibold text-[15px]">친구 피드</h2>
-            <FriendFeed userId={user.id} />
-          </div>
-        )}
+        {/* Friend feed - TODO: Add user auth to Server Component */}
+        {/* <FriendFeed /> */}
       </div>
 
       <BottomNav active="home" />

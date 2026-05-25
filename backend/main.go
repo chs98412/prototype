@@ -28,9 +28,23 @@ func main() {
 
 	r.GET("/health", handler.Health)
 
+	// Public endpoints (읽기 전용, 토큰 불필요)
 	r.POST("/v1/music/search", handler.SearchAlbums)
 	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
 	r.GET("/v1/profile/:userId", handler.GetUserProfile)
+	r.GET("/v1/records", handler.GetRecords)
+	r.GET("/v1/records/stats", handler.GetRecordStats)
+	r.GET("/v1/feed", handler.GetFeed)
+	r.GET("/v1/follows", handler.GetFollows)
+	r.GET("/v1/followers", handler.GetFollowers)
+	r.GET("/v1/heatmap", handler.GetHeatmap)
+	r.GET("/v1/taste-match/:userId", handler.GetTasteMatch)
+	r.GET("/v1/genres/ratings", handler.GetGenreRatings)
+	r.GET("/v1/notifications", handler.GetNotifications)
+	r.GET("/v1/goal", handler.GetGoal)
+	r.GET("/v1/reviews", handler.GetReviews)
+	r.GET("/v1/reviews/:id", handler.GetReviewByID)
+	r.GET("/v1/tmdb/:tmdbId/reviews", handler.GetReviewsByTmdbID)
 
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
