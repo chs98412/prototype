@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { getClientToken } from '@/lib/auth/getToken'
 import { API_URL } from '@/lib/config'
 import { updateProfile } from '@/app/actions/profile'
+import { LoadingMessage } from '@/components/ui/Loading'
 
 export default function ProfileEditPage() {
   const router = useRouter()
@@ -76,7 +77,7 @@ export default function ProfileEditPage() {
   if (loading) {
     return (
       <main className="flex flex-col min-h-screen bg-white items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500" />
+        <LoadingMessage message="프로필 로딩 중..." />
       </main>
     )
   }

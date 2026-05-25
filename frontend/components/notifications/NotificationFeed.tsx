@@ -1,4 +1,5 @@
 import NotificationItem from './NotificationItem'
+import { LoadingMessage } from '@/components/ui/Loading'
 import type { Notification } from '@/lib/types/notification'
 
 interface NotificationFeedProps {
@@ -17,7 +18,7 @@ export default function NotificationFeed({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500" />
+        <LoadingMessage message="알림 로딩 중..." />
       </div>
     )
   }

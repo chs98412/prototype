@@ -1,5 +1,7 @@
 'use client'
 
+import { LoadingSpinner } from '@/components/ui/Loading'
+
 function SearchIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 flex-shrink-0">
@@ -47,7 +49,7 @@ export default function AlbumSearchBar({ query, onQueryChange, onSearch, isLoadi
             className="bg-transparent text-sm outline-none flex-1 placeholder:text-gray-500"
           />
           {isLoading ? (
-            <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin flex-shrink-0" />
+            <LoadingSpinner size="sm" className="flex-shrink-0" />
           ) : (
             <button onClick={onSearch} aria-label="검색">
               <SearchIcon />

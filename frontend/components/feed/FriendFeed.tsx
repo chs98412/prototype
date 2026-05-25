@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getFeed } from '@/lib/api/social'
+import { LoadingSpinner } from '@/components/ui/Loading'
 import type { FeedItem } from '@/lib/types/social'
 import { IMG_BASE } from '@/lib/config'
 
@@ -59,7 +60,7 @@ export function FriendFeed({ userId }: { userId: string }) {
   if (loading) {
     return (
       <div className="flex justify-center py-10">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <LoadingSpinner size="lg" />
       </div>
     )
   }

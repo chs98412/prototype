@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getReviewsByTmdbId } from '@/lib/api/reviews'
 import { upsertReview, deleteReview } from '@/app/actions/reviews'
+import { LoadingSpinner } from '@/components/ui/Loading'
 import type { Review } from '@/lib/types/reviews'
 
 function relativeTime(dateStr: string): string {
@@ -122,7 +123,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
 
       {loading ? (
         <div className="flex justify-center py-6">
-          <div className="w-5 h-5 border-2 border-text border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" />
         </div>
       ) : reviews.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-8 bg-surface text-center">

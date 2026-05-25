@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getClientToken } from '@/lib/auth/getToken'
 import { API_URL, IMG_BASE } from '@/lib/config'
+import { LoadingSpinner } from '@/components/ui/Loading'
 
 type Status = 'watched' | 'watching' | 'want'
 
@@ -68,7 +69,7 @@ export function RecordTabs({ userId, showAllTabs }: { userId: string; showAllTab
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <LoadingSpinner size="md" />
         </div>
       ) : records.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center">

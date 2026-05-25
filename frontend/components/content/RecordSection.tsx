@@ -6,6 +6,7 @@ import { getClientToken } from '@/lib/auth/getToken'
 import { API_URL } from '@/lib/config'
 import { upsertRecord, deleteRecord, type RecordStatus } from '@/app/actions/records'
 import { StarRating } from './StarRating'
+import { LoadingSpinner } from '@/components/ui/Loading'
 
 interface RecordSectionProps {
   tmdbId: number
@@ -78,7 +79,10 @@ export function RecordSection({ tmdbId, mediaType, isLoggedIn, title, posterPath
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-text font-semibold text-[15px]">내 기록</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-text font-semibold text-[15px]">내 기록</h2>
+          {loadingRecord && <LoadingSpinner size="sm" />}
+        </div>
         {record && (
           <button
             onClick={handleDelete}

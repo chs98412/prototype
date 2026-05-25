@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getClientToken } from '@/lib/auth/getToken'
 import { API_URL } from '@/lib/config'
+import { LoadingSpinner } from '@/components/ui/Loading'
 
 type HeatmapRow = { activity_date: string; cnt: number }
 
@@ -78,7 +79,7 @@ export function ActivityHeatmap({ userId }: { userId: string }) {
   if (loading) {
     return (
       <div className="flex justify-center py-4">
-        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <LoadingSpinner size="md" />
       </div>
     )
   }
