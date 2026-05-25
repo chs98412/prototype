@@ -91,6 +91,10 @@ func main() {
 	analyticsService := service.NewAnalyticsService(analyticsRepo)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
 
+	streakRepo := repository.NewStreakRepository(db)
+	streakService := service.NewStreakService(streakRepo)
+	streakHandler := handler.NewStreakHandler(streakService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -149,7 +153,7 @@ func main() {
 		v1.GET("/taste-match/:userId/common", analyticsHandler.GetCommonWorks)
 
 		// Gamification
-		v1.POST("/streaks/log", handler.LogStreak)
+		v1.POST("/streaks/log", streakHandler.LogStreak)
 		v1.POST("/challenges/progress", challengeHandler.UpdateChallengeProgress)
 
 		// 음악 API (인증 필요)
