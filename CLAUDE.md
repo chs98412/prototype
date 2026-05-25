@@ -36,12 +36,13 @@ Available agents (definitions in `.bmad-core/agents/`):
 
 ## Project Conventions
 
-- **Language/Framework**: To be decided in architecture phase
+- **Language/Framework**: Next.js 16 (Frontend) + Go/Gin (Backend)
 - **Story format**: `.bmad-core/templates/story-template.md`
 - **PRD format**: `.bmad-core/templates/prd-template.md`
 - **Architecture format**: `.bmad-core/templates/architecture-template.md`
 - **Stories location**: `docs/stories/`
 - **Completed stories**: `docs/stories/done/`
+- **Development Rules**: See `DEVELOPMENT.md` (automatically applied in all sessions)
 
 ## Key Rules
 
