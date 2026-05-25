@@ -67,6 +67,10 @@ func main() {
 	followService := service.NewFollowService(followRepo)
 	followHandler := handler.NewFollowHandler(followService)
 
+	challengeRepo := repository.NewChallengeRepository(db)
+	challengeService := service.NewChallengeService(challengeRepo)
+	challengeHandler := handler.NewChallengeHandler(challengeService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -113,10 +117,10 @@ func main() {
 		// Goals & Challenges
 		v1.GET("/goals", handler.GetGoal)
 		v1.PUT("/goals", handler.UpdateGoal)
-		v1.GET("/challenges", handler.GetChallenges)
-		v1.GET("/user-challenges", handler.GetUserChallenges)
-		v1.POST("/challenges/:challengeId/start", handler.StartChallenge)
-		v1.DELETE("/challenges/:progressId/abandon", handler.AbandonChallenge)
+		v1.GET("/challenges", challengeHandler.GetChallenges)
+		v1.GET("/user-challenges", challengeHandler.GetUserChallenges)
+		v1.POST("/challenges/:challengeId/start", challengeHandler.StartChallenge)
+		v1.DELETE("/challenges/:progressId/abandon", challengeHandler.AbandonChallenge)
 
 		// Analytics
 		v1.GET("/heatmap", handler.GetHeatmap)
@@ -126,7 +130,7 @@ func main() {
 
 		// Gamification
 		v1.POST("/streaks/log", handler.LogStreak)
-		v1.POST("/challenges/progress", handler.UpdateChallengeProgress)
+		v1.POST("/challenges/progress", challengeHandler.UpdateChallengeProgress)
 
 		// 음악 API (인증 필요)
 		v1.POST("/music/ratings", handler.RateTrack)
