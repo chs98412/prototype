@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { getClientToken } from '@/lib/auth/getToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StarRating } from '@/components/content/StarRating'
+import { TrackDetailSkeleton } from '@/components/ui/Loading'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
@@ -136,18 +137,7 @@ export default function TrackDetailPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10 flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-900"><BackIcon /></button>
-          <span className="text-gray-400 text-sm">로드 중...</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
-        </div>
-        <BottomNav active="search" />
-      </div>
-    )
+    return <TrackDetailSkeleton />
   }
 
   if (error || !track || !album) {

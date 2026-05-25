@@ -9,6 +9,7 @@ import TrackRatingTable from '@/components/music/TrackRatingTable'
 import ReviewSection from '@/components/music/ReviewSection'
 import AlbumStatsCards from '@/components/music/AlbumStatsCards'
 import AlbumReviewDisplay from '@/components/music/AlbumReviewDisplay'
+import { AlbumDetailSkeleton } from '@/components/ui/Loading'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
@@ -158,18 +159,7 @@ export default function AlbumDetailPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10 flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-900"><BackArrowIcon /></button>
-          <span className="text-gray-400">로드 중...</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-gray-500">로드 중...</div>
-        </div>
-        <BottomNav active="search" />
-      </div>
-    )
+    return <AlbumDetailSkeleton />
   }
 
   if (error || !album) {
