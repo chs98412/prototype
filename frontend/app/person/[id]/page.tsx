@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 import { BackButton } from '@/components/content/BackButton'
 import type { Metadata } from 'next'
 
@@ -9,6 +9,7 @@ export const revalidate = 604800 // 7일
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const IMG_BASE = 'https://image.tmdb.org/t/p'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Params = { id: string }
 
@@ -86,20 +87,16 @@ export default async function PersonPage({ params }: { params: Promise<Params> }
 
   const { person, credits } = data
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = await getServerToken()
 
   // 유저의 시청 기록 조회
   const watchedSet = new Set<string>()
-  if (user && credits.length > 0) {
-    const tmdbIds = credits.map((c) => c.id)
-    const { data: records = [] } = await supabase
-      .from('user_records')
-      .select('tmdb_id, media_type')
-      .eq('user_id', user.id)
-      .eq('status', 'watched')
-      .in('tmdb_id', tmdbIds)
-    records?.forEach((r) => watchedSet.add(`${r.media_type}-${r.tmdb_id}`))
+  const recordsRes = await fetch(`${API_URL}/v1/records?status=watched`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (recordsRes.ok) {
+    const records = (await recordsRes.json()).data ?? []
+    records?.forEach((r: any) => watchedSet.add(`${r.media_type}-${r.tmdb_id}`))
   }
 
   const watchedCount = credits.filter((c) => watchedSet.has(`${c.media_type}-${c.id}`)).length

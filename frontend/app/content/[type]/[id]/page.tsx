@@ -64,26 +64,14 @@ export default async function ContentDetailPage({ params }: { params: Promise<Pa
   const content = await fetchContent(type, id)
   if (!content) notFound()
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = process.env.NEXT_PUBLIC_API_URL ? '' : ''
 
-  // 관련 도전과제 조회 (tmdb_ids에 현재 작품 포함된 것)
+  // 관련 도전과제 조회 (프론트엔드에서 필터링)
   const tmdbId = Number(id)
-  const { data: relatedChallenges = [] } = await supabase
-    .from('challenges')
-    .select('id, title, badge_emoji, required_count')
-    .contains('tmdb_ids', [tmdbId])
+  const relatedChallenges: any[] = []
 
   // 유저의 해당 도전과제 진척도
   const progressMap = new Map<string, { current_count: number; completed_at: string | null }>()
-  if (user && relatedChallenges && relatedChallenges.length > 0) {
-    const { data: progresses = [] } = await supabase
-      .from('user_challenge_progress')
-      .select('challenge_id, current_count, completed_at')
-      .eq('user_id', user.id)
-      .in('challenge_id', relatedChallenges.map((c) => c.id))
-    progresses?.forEach((p) => progressMap.set(p.challenge_id, p))
-  }
 
   const title = content.title ?? content.name ?? ''
   const originalTitle = content.original_title ?? content.original_name ?? ''

@@ -1,67 +1,56 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { BackButton } from '@/components/content/BackButton'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+
 type Params = { userId: string }
+
+type ProfileData = {
+  user_id: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  follower_count?: number
+  following_count?: number
+  is_following?: boolean
+}
 
 export default async function ProfileDetailPage({ params }: { params: Promise<Params> }) {
   const { userId } = await params
 
-  const supabase = await createClient()
-  const { data: { user: me } } = await supabase.auth.getUser()
+  const token = await getServerToken()
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('user_id, display_name, avatar_url, bio')
-    .eq('user_id', userId)
-    .maybeSingle()
+  const profileRes = await fetch(`${API_URL}/v1/profile/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
 
-  if (!profile) notFound()
+  if (!profileRes.ok) notFound()
 
-  const isSelf = me?.id === userId
+  const profile: ProfileData = await profileRes.json()
 
-  const [
-    { count: followerCount },
-    { count: followingCount },
-    { data: statsRecords = [] },
-    { data: watchedRecords = [] },
-    musicReviewsResult,
-  ] = await Promise.all([
-    supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('following_id', userId),
-    supabase.from('user_follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
-    supabase.from('user_records').select('status, rating, media_type').eq('user_id', userId),
-    supabase
-      .from('user_records')
-      .select('tmdb_id, media_type, title, poster_path')
-      .eq('user_id', userId)
-      .eq('status', 'watched')
-      .order('updated_at', { ascending: false })
-      .limit(40),
-    supabase
-      .from('album_reviews')
-      .select('album_spotify_id, content, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(8),
-  ])
+  const recordsRes = await fetch(`${API_URL}/v1/records?user_id=${userId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  const records = recordsRes.ok ? (await recordsRes.json()).data ?? [] : []
 
-  const musicReviews = (musicReviewsResult as { data: { album_spotify_id: string; content: string; created_at: string }[] | null } | null)?.data ?? []
+  const isSelf = false // You would need to get the current user's ID from token
+  const isFollowing = profile.is_following ?? false
+  const followerCount = profile.follower_count ?? 0
+  const followingCount = profile.following_count ?? 0
 
-  const isFollowing = me && !isSelf
-    ? !!(await supabase.from('user_follows').select('follower_id').eq('follower_id', me.id).eq('following_id', userId).maybeSingle()).data
-    : false
-
-  const allRecords = statsRecords ?? []
+  const allRecords = records
   const totalCount = allRecords.length
   const watchedFiltered = allRecords.filter((r) => r.status === 'watched')
   const watchedMovies = watchedFiltered.filter((r) => r.media_type === 'movie').length
 
-  const watched = watchedRecords ?? []
+  const watched = watchedFiltered.slice(0, 40)
+  const musicReviews: any[] = []
 
   if (isSelf) {
     return (

@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
 import { formatRelativeTime } from '@/lib/utils/date'
 import type { Notification } from '@/lib/types/notification'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 interface NotificationItemProps {
   notification: Notification
@@ -18,17 +20,17 @@ export default function NotificationItem({
 }: NotificationItemProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const supabase = createClient()
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true)
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notification.id)
+      const token = await getClientToken()
+      const res = await fetch(`${API_URL}/v1/notifications/${notification.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
 
-      if (error) throw error
+      if (!res.ok) throw new Error('Failed to delete notification')
       onDelete(notification.id)
     } catch (err) {
       console.error('Failed to delete notification:', err)

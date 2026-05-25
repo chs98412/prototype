@@ -1,6 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import Link from 'next/link'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Challenge = {
   id: string
@@ -8,6 +10,8 @@ type Challenge = {
   description: string
   required_count: number
   badge_emoji: string
+  current_count?: number
+  completed_at?: string | null
 }
 
 type Progress = {
@@ -26,22 +30,24 @@ export default async function ChallengesPage({
   const { tab = 'all' } = await searchParams
   const activeTab = (tab as Tab) ?? 'all'
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = await getServerToken()
 
-  const { data: challenges = [] } = await supabase
-    .from('challenges')
-    .select('id, title, description, required_count, badge_emoji')
-    .order('created_at')
+  const res = await fetch(`${API_URL}/v1/challenges`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+
+  const challenges: Challenge[] = res.ok ? ((await res.json()).data ?? []) : []
 
   const progressMap = new Map<string, Progress>()
-  if (user) {
-    const { data: progresses = [] } = await supabase
-      .from('user_challenge_progress')
-      .select('challenge_id, current_count, completed_at')
-      .eq('user_id', user.id)
-    progresses?.forEach((p) => progressMap.set(p.challenge_id, p))
-  }
+  challenges?.forEach((c) => {
+    if (c.current_count !== undefined) {
+      progressMap.set(c.id, {
+        challenge_id: c.id,
+        current_count: c.current_count,
+        completed_at: c.completed_at ?? null
+      })
+    }
+  })
 
   const filtered = (challenges ?? []).filter((c) => {
     const p = progressMap.get(c.id)

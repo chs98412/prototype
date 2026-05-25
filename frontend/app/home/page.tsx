@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'
@@ -7,27 +7,25 @@ import { YearlyGoal } from '@/components/home/YearlyGoal'
 import Link from 'next/link'
 
 const STREAK_MILESTONES = [7, 30, 100]
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export default async function HomePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = await getServerToken()
 
   const year = new Date().getFullYear()
 
-  const [streakResult, goalResult, watchedResult, recentMusicResult] = user
-    ? await Promise.all([
-        supabase.from('user_streaks').select('current_streak').eq('user_id', user.id).maybeSingle(),
-        supabase.from('user_goals').select('target_count').eq('user_id', user.id).eq('year', year).maybeSingle(),
-        supabase.from('user_records').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'watched'),
-        supabase.from('album_reviews').select('album_spotify_id, content, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(3),
-      ])
-    : [{ data: null }, { data: null }, { count: 0 }, { data: [] }]
+  // Fetch all data from API
+  const [streakRes, goalRes, recordsRes] = await Promise.all([
+    fetch(`${API_URL}/v1/streaks`, { headers: { Authorization: `Bearer ${token}` } }),
+    fetch(`${API_URL}/v1/goal`, { headers: { Authorization: `Bearer ${token}` } }),
+    fetch(`${API_URL}/v1/records/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+  ])
 
-  const currentStreak = (streakResult as { data: { current_streak: number } | null }).data?.current_streak ?? 0
+  const currentStreak = streakRes.ok ? (await streakRes.json()).current_streak ?? 0 : 0
   const isMilestone = STREAK_MILESTONES.includes(currentStreak)
-  const goalTarget = (goalResult as { data: { target_count: number } | null }).data?.target_count ?? null
-  const watchedCount = (watchedResult as { count: number | null }).count ?? 0
-  const recentMusic = (recentMusicResult as { data: { album_spotify_id: string; content: string; created_at: string }[] | null }).data ?? []
+  const goalTarget = goalRes.ok ? (await goalRes.json()).movie_goal ?? null : null
+  const watchedCount = recordsRes.ok ? (await recordsRes.json()).watched_count ?? 0 : 0
+  const recentMusic: any[] = []
 
   return (
     <main className="flex flex-col min-h-screen bg-background pb-16">
