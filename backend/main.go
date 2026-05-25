@@ -2,13 +2,14 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/chs98412/prototype/backend/handler"
+	"github.com/chs98412/prototype/backend/infrastructure/repository"
 	"github.com/chs98412/prototype/backend/middleware"
 	"github.com/chs98412/prototype/backend/pkg/supabase"
+	"github.com/chs98412/prototype/backend/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -47,6 +48,11 @@ func main() {
 	r.POST("/v1/music/search", handler.SearchAlbums)
 	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
 
+	// Dependency Injection
+	profileRepo := repository.NewProfileRepository(supabase.NewClient())
+	profileService := service.NewProfileService(profileRepo)
+	profileHandler := handler.NewProfileHandler(profileService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -54,9 +60,9 @@ func main() {
 		v1.GET("/me", handler.GetMe)
 
 		// Profile
-		v1.GET("/profile", handler.GetProfile)
-		v1.GET("/profile/:userId", handler.GetUserProfile)
-		v1.PUT("/profile", handler.UpdateProfile)
+		v1.GET("/profile", profileHandler.GetProfile)
+		v1.GET("/profile/:userId", profileHandler.GetUserProfile)
+		v1.PUT("/profile", profileHandler.UpdateProfile)
 
 		// Records (Watch History)
 		v1.GET("/records", handler.GetRecords)

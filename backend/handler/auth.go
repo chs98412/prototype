@@ -28,8 +28,6 @@ func HandleOAuthCallback(c *gin.Context) {
 	}
 
 	// Exchange code for session with Supabase
-	db := supabase.NewClient()
-
 	// Supabase auth endpoint
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_ANON_KEY")
