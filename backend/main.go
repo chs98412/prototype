@@ -79,6 +79,14 @@ func main() {
 	reviewLikeService := service.NewReviewLikeService(reviewLikeRepo)
 	reviewLikeHandler := handler.NewReviewLikeHandler(reviewLikeService)
 
+	trackRatingRepo := repository.NewTrackRatingRepository(db)
+	trackRatingService := service.NewTrackRatingService(trackRatingRepo)
+	trackRatingHandler := handler.NewTrackRatingHandler(trackRatingService)
+
+	albumReviewRepo := repository.NewAlbumReviewRepository(db)
+	albumReviewService := service.NewAlbumReviewService(albumReviewRepo)
+	albumReviewHandler := handler.NewAlbumReviewHandler(albumReviewService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -141,10 +149,10 @@ func main() {
 		v1.POST("/challenges/progress", challengeHandler.UpdateChallengeProgress)
 
 		// 음악 API (인증 필요)
-		v1.POST("/music/ratings", handler.RateTrack)
-		v1.POST("/music/reviews", handler.SaveAlbumReview)
-		v1.PUT("/music/reviews/:id", handler.UpdateAlbumReview)
-		v1.DELETE("/music/reviews/:id", handler.DeleteAlbumReview)
+		v1.POST("/music/ratings", trackRatingHandler.RateTrack)
+		v1.POST("/music/reviews", albumReviewHandler.SaveReview)
+		v1.PUT("/music/reviews/:id", albumReviewHandler.UpdateReview)
+		v1.DELETE("/music/reviews/:id", albumReviewHandler.DeleteReview)
 	}
 
 	port := os.Getenv("PORT")
