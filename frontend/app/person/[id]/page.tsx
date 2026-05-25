@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { BackButton } from '@/components/content/BackButton'
 import type { Metadata } from 'next'
 
@@ -86,24 +85,6 @@ export default async function PersonPage({ params }: { params: Promise<Params> }
 
   const { person, credits } = data
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // 유저의 시청 기록 조회
-  const watchedSet = new Set<string>()
-  if (user && credits.length > 0) {
-    const tmdbIds = credits.map((c) => c.id)
-    const { data: records = [] } = await supabase
-      .from('user_records')
-      .select('tmdb_id, media_type')
-      .eq('user_id', user.id)
-      .eq('status', 'watched')
-      .in('tmdb_id', tmdbIds)
-    records?.forEach((r) => watchedSet.add(`${r.media_type}-${r.tmdb_id}`))
-  }
-
-  const watchedCount = credits.filter((c) => watchedSet.has(`${c.media_type}-${c.id}`)).length
-
   return (
     <main className="flex flex-col min-h-screen bg-background pb-10">
       {/* Header */}
@@ -129,11 +110,9 @@ export default async function PersonPage({ params }: { params: Promise<Params> }
           <div className="min-w-0">
             <h1 className="text-text text-xl font-bold">{person.name}</h1>
             <p className="text-muted text-sm">{person.known_for_department === 'Directing' ? '감독' : '배우'}</p>
-            {user && (
-              <p className="text-primary text-sm font-semibold mt-1">
-                {credits.length}편 중 {watchedCount}편 시청
-              </p>
-            )}
+            <p className="text-primary text-sm font-semibold mt-1">
+              {credits.length}편
+            </p>
           </div>
         </div>
       </div>
@@ -143,7 +122,6 @@ export default async function PersonPage({ params }: { params: Promise<Params> }
         <h2 className="text-text font-semibold text-[15px] mb-3">필모그래피</h2>
         <div className="grid grid-cols-3 gap-2">
           {credits.map((credit) => {
-            const watched = watchedSet.has(`${credit.media_type}-${credit.id}`)
             const title = credit.title ?? credit.name ?? ''
             const year = (credit.release_date ?? credit.first_air_date ?? '').slice(0, 4)
             return (
@@ -160,11 +138,6 @@ export default async function PersonPage({ params }: { params: Promise<Params> }
                     className="object-cover"
                     sizes="30vw"
                   />
-                  {watched && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-2xl">✅</span>
-                    </div>
-                  )}
                 </div>
                 <p className="text-text text-[12px] font-medium leading-tight line-clamp-2">{title}</p>
                 {year && <p className="text-muted text-[11px]">{year}</p>}
