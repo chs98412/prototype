@@ -42,7 +42,9 @@ Available agents (definitions in `.bmad-core/agents/`):
 - **Architecture format**: `.bmad-core/templates/architecture-template.md`
 - **Stories location**: `docs/stories/`
 - **Completed stories**: `docs/stories/done/`
-- **Development Rules**: See `DEVELOPMENT.md` (automatically applied in all sessions)
+- **Development Rules**: 
+  - Frontend: `DEVELOPMENT.md` (automatically applied)
+  - Backend: `BACKEND_DEVELOPMENT.md` (automatically applied)
 
 ## Key Rules
 
