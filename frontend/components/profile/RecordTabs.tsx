@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Status = 'watched' | 'watching' | 'want'
 
@@ -30,18 +31,23 @@ export function RecordTabs({ userId, showAllTabs }: { userId: string; showAllTab
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(true)
-    const supabase = createClient()
-    supabase
-      .from('user_records')
-      .select('tmdb_id, media_type, status, rating, title, poster_path')
-      .eq('user_id', userId)
-      .eq('status', activeTab)
-      .order('updated_at', { ascending: false })
-      .then(({ data }) => {
-        setRecords((data ?? []) as RecordItem[])
+    async function fetchRecords() {
+      setLoading(true)
+      try {
+        const token = await getClientToken()
+        const res = await fetch(`${API_URL}/v1/records?status=${activeTab}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch records')
+        const json = await res.json()
+        setRecords((json.data ?? []) as RecordItem[])
+      } catch (err) {
+        console.error('Failed to fetch records:', err)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    fetchRecords()
   }, [userId, activeTab])
 
   return (

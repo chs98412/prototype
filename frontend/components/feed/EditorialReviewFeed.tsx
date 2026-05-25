@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
 import { formatRelativeTime } from '@/lib/utils/date'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 const PAGE_SIZE = 10
 
 type ReviewItem = {
@@ -44,46 +45,30 @@ export function EditorialReviewFeed({
   const [likedReviews, setLikedReviews] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    const supabase = createClient()
-
-    supabase
-      .from('reviews')
-      .select(`
-        id,
-        user_id,
-        tmdb_id,
-        media_type,
-        title,
-        review_text,
-        rating,
-        created_at,
-        user_profiles(display_name, avatar_url),
-        reviews_likes(count)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(PAGE_SIZE)
-      .then(({ data }) => {
-        const results = (data ?? []).map((item: any) => ({
-          id: item.id,
-          user_id: item.user_id,
-          display_name: item.user_profiles?.display_name,
-          avatar_url: item.user_profiles?.avatar_url,
-          tmdb_id: item.tmdb_id,
-          media_type: item.media_type,
-          title: item.title,
-          poster_path: null,
-          rating: item.rating,
-          review_text: item.review_text,
-          like_count: item.reviews_likes?.[0]?.count ?? 0,
-          comment_count: 0,
-          created_at: item.created_at
-        })) as ReviewItem[]
-
+    async function fetchReviews() {
+      try {
+        const token = await getClientToken()
+        const url = new URL(`${API_URL}/v1/reviews`)
+        url.searchParams.append('limit', String(PAGE_SIZE))
+        if (userId) {
+          url.searchParams.append('user_id', userId)
+        }
+        const res = await fetch(url.toString(), {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch reviews')
+        const json = await res.json()
+        const results = (json.data ?? []) as ReviewItem[]
         setItems(results)
         setHasMore(results.length === PAGE_SIZE)
         setOffset(results.length)
+      } catch (err) {
+        console.error('Failed to fetch reviews:', err)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    fetchReviews()
   }, [userId, onlyFollowing])
 
   const handleLike = (reviewId: string) => {

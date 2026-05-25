@@ -36,9 +36,22 @@ func GetRecords(c *gin.Context) {
 	}
 
 	// Query parameters
-	limit := c.DefaultQuery("limit", "20")
+	limit := c.DefaultQuery("limit", "100")
 	offset := c.DefaultQuery("offset", "0")
-	query := "user_id=eq." + userID + "&order=watched_at.desc&limit=" + limit + "&offset=" + offset
+	status := c.DefaultQuery("status", "")
+	tmdbID := c.DefaultQuery("tmdb_id", "")
+	mediaType := c.DefaultQuery("media_type", "")
+
+	query := "user_id=eq." + userID + "&order=updated_at.desc&limit=" + limit + "&offset=" + offset
+	if status != "" {
+		query += "&status=eq." + status
+	}
+	if tmdbID != "" {
+		query += "&tmdb_id=eq." + tmdbID
+	}
+	if mediaType != "" {
+		query += "&media_type=eq." + mediaType
+	}
 
 	db := supabase.NewClient()
 	result, err := db.Select("user_records", query)
@@ -47,7 +60,7 @@ func GetRecords(c *gin.Context) {
 		return
 	}
 
-	var records []RecordResponse
+	var records []map[string]interface{}
 	if err := json.Unmarshal(result, &records); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse response"})
 		return

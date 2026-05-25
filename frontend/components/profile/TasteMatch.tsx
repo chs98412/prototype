@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
-type MatchResult = { match_pct: number | null; common_count: number }
+type MatchResult = { compatibility_score: number | null; common_titles: number }
 type CommonWork = { tmdb_id: number; media_type: string; title: string | null; poster_path: string | null; rating: number | null }
 
 export function TasteMatch({ myId, friendId }: { myId: string; friendId: string }) {
@@ -18,35 +19,47 @@ export function TasteMatch({ myId, friendId }: { myId: string; friendId: string 
   const [loadingCommon, setLoadingCommon] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .rpc('get_taste_match', { p_user_id: myId, p_friend_id: friendId })
-      .then(({ data }) => {
-        const row = (data as MatchResult[] | null)?.[0] ?? null
-        setResult(row)
+    async function fetchMatch() {
+      try {
+        const token = await getClientToken()
+        const res = await fetch(`${API_URL}/v1/taste-match/${friendId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch taste match')
+        const data = await res.json()
+        setResult(data)
+      } catch (err) {
+        console.error('Failed to fetch taste match:', err)
+      } finally {
         setLoading(false)
-      })
-  }, [myId, friendId])
+      }
+    }
+    fetchMatch()
+  }, [friendId])
 
   async function toggleCommon() {
     if (showCommon) { setShowCommon(false); return }
     setLoadingCommon(true)
-    const supabase = createClient()
-    const [{ data: mine }, { data: friend }] = await Promise.all([
-      supabase.from('user_records').select('tmdb_id, media_type, title, poster_path, rating').eq('user_id', myId),
-      supabase.from('user_records').select('tmdb_id, media_type').eq('user_id', friendId),
-    ])
-    const friendSet = new Set((friend ?? []).map((r) => `${r.media_type}-${r.tmdb_id}`))
-    const common = (mine ?? []).filter((r) => friendSet.has(`${r.media_type}-${r.tmdb_id}`)) as CommonWork[]
-    setCommonWorks(common)
-    setLoadingCommon(false)
-    setShowCommon(true)
+    try {
+      const token = await getClientToken()
+      const res = await fetch(`${API_URL}/v1/taste-match/${friendId}/common`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to fetch common works')
+      const data = await res.json()
+      setCommonWorks(data.data || [])
+    } catch (err) {
+      console.error('Failed to fetch common works:', err)
+    } finally {
+      setLoadingCommon(false)
+      setShowCommon(true)
+    }
   }
 
   if (loading) return null
 
-  const pct = result?.match_pct
-  const common = result?.common_count ?? 0
+  const pct = result?.compatibility_score
+  const common = result?.common_titles ?? 0
 
   return (
     <div className="flex flex-col gap-3">

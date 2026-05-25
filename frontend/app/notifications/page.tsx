@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { getNotifications } from '@/lib/api/client'
 import NotificationFeed from '@/components/notifications/NotificationFeed'
 import type { Notification } from '@/lib/types/notification'
@@ -14,8 +13,6 @@ export default function NotificationsPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-
     const fetchNotifications = async () => {
       try {
         setIsLoading(true)
@@ -35,36 +32,6 @@ export default function NotificationsPage() {
     }
 
     fetchNotifications()
-
-    // Realtime subscription
-    const setupRealtime = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const userId = session?.user?.id
-
-      if (!userId) return
-
-      const channel = supabase
-        .channel('notifications:recipient_id=eq.' + userId)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications'
-          },
-          (payload) => {
-            const newNotification = payload.new as Notification
-            setNotifications((prev) => [newNotification, ...prev])
-          }
-        )
-        .subscribe()
-
-      return () => {
-        supabase.removeChannel(channel)
-      }
-    }
-
-    setupRealtime()
   }, [])
 
   return (

@@ -100,6 +100,7 @@ func main() {
 		v1.GET("/heatmap", handler.GetHeatmap)
 		v1.GET("/genres/ratings", handler.GetGenreRatings)
 		v1.GET("/taste-match/:userId", handler.GetTasteMatch)
+		v1.GET("/taste-match/:userId/common", handler.GetCommonWorks)
 
 		// Gamification
 		v1.POST("/streaks/log", handler.LogStreak)

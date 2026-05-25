@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
 import { upsertRecord, deleteRecord, type RecordStatus } from '@/app/actions/records'
 import { StarRating } from './StarRating'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 interface RecordSectionProps {
   tmdbId: number
@@ -32,17 +34,24 @@ export function RecordSection({ tmdbId, mediaType, isLoggedIn, title, posterPath
   useEffect(() => {
     if (!isLoggedIn) return
 
-    const supabase = createClient()
-    supabase
-      .from('user_records')
-      .select('status, rating')
-      .eq('tmdb_id', tmdbId)
-      .eq('media_type', mediaType)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setRecord(data as UserRecord)
+    async function fetchRecord() {
+      try {
+        const token = await getClientToken()
+        const res = await fetch(`${API_URL}/v1/records?tmdb_id=${tmdbId}&media_type=${mediaType}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch record')
+        const json = await res.json()
+        if (json.data && json.data.length > 0) {
+          setRecord(json.data[0] as UserRecord)
+        }
+      } catch (err) {
+        console.error('Failed to fetch record:', err)
+      } finally {
         setLoadingRecord(false)
-      })
+      }
+    }
+    fetchRecord()
   }, [tmdbId, mediaType, isLoggedIn])
 
   function handleStatus(status: RecordStatus) {

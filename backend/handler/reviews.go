@@ -28,17 +28,20 @@ type CreateReviewRequest struct {
 	Rating  int    `json:"rating"`
 }
 
-// GetReviews retrieves user's reviews
+// GetReviews retrieves reviews (all or user-specific)
 func GetReviews(c *gin.Context) {
 	userID := c.GetString("userID")
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
 
 	limit := c.DefaultQuery("limit", "20")
 	offset := c.DefaultQuery("offset", "0")
-	query := "user_id=eq." + userID + "&order=created_at.desc&limit=" + limit + "&offset=" + offset
+	filterUserID := c.DefaultQuery("user_id", "")
+
+	query := "order=created_at.desc&limit=" + limit + "&offset=" + offset
+	if filterUserID != "" {
+		query = "user_id=eq." + filterUserID + "&" + query
+	} else if userID != "" {
+		query = "user_id=eq." + userID + "&" + query
+	}
 
 	db := supabase.NewClient()
 	result, err := db.Select("reviews", query)
@@ -47,7 +50,7 @@ func GetReviews(c *gin.Context) {
 		return
 	}
 
-	var reviews []ReviewResponse
+	var reviews []map[string]interface{}
 	json.Unmarshal(result, &reviews)
 
 	c.JSON(http.StatusOK, gin.H{

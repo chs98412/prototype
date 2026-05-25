@@ -1,28 +1,36 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 import { LikeButton } from '@/components/review/LikeButton'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Params = { id: string }
+
+type Review = {
+  id: string
+  user_id: string
+  content: string
+  is_spoiler: boolean
+  created_at: string
+  tmdb_id: number
+  media_type: string
+  user_name?: string
+}
 
 export default async function ReviewPage({ params }: { params: Promise<Params> }) {
   const { id } = await params
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const token = await getServerToken()
 
-  const { data: review } = await supabase
-    .from('reviews')
-    .select('id, user_id, content, is_spoiler, created_at, tmdb_id, media_type, user_profiles(display_name)')
-    .eq('id', id)
-    .maybeSingle()
+  const reviewRes = await fetch(`${API_URL}/v1/reviews/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (!reviewRes.ok) notFound()
 
-  if (!review) notFound()
-
-  const profile = review.user_profiles as unknown as { display_name: string | null } | null
+  const review = (await reviewRes.json()) as Review
 
   const apiKey = process.env.TMDB_API_KEY
   let posterPath: string | null = null
@@ -43,15 +51,11 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
     }
   }
 
-  const [{ count: likeCount }, likeCheck] = await Promise.all([
-    supabase.from('review_likes').select('*', { count: 'exact', head: true }).eq('review_id', id),
-    user
-      ? supabase.from('review_likes').select('user_id').eq('review_id', id).eq('user_id', user.id).maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
-
-  const initialLiked = !!likeCheck.data
-  const initialCount = likeCount ?? 0
+  const likesRes = await fetch(`${API_URL}/v1/reviews/${id}/likes`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  const initialCount = likesRes.ok ? (await likesRes.json()).count || 0 : 0
+  const initialLiked = false
 
   const previewTitle = review.content.slice(0, 80)
 
@@ -75,7 +79,7 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
 
           <div className="flex-1 flex flex-col gap-1 min-w-0">
             <p className="font-bold text-[22px] leading-tight text-text">{previewTitle}</p>
-            <p className="text-muted text-[13px] text-right">{profile?.display_name ?? '유저'}</p>
+            <p className="text-muted text-[13px] text-right">{review.user_name ?? '유저'}</p>
           </div>
         </div>
 

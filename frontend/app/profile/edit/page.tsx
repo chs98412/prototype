@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
 import { updateProfile } from '@/app/actions/profile'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export default function ProfileEditPage() {
   const router = useRouter()
@@ -22,57 +24,32 @@ export default function ProfileEditPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      try {
+        const token = await getClientToken()
+        const res = await fetch(`${API_URL}/v1/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to load profile')
+        const profile = await res.json()
+        if (profile) {
+          setDisplayName(profile.display_name ?? '')
+          setBio(profile.bio ?? '')
+          setAvatarUrl(profile.avatar_url ?? null)
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err)
         router.replace('/login')
-        return
+      } finally {
+        setLoading(false)
+        setIsDirty(false)
       }
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('display_name, bio, avatar_url')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (profile) {
-        setDisplayName(profile.display_name ?? '')
-        setBio(profile.bio ?? '')
-        setAvatarUrl(profile.avatar_url ?? null)
-      }
-      setLoading(false)
-      setIsDirty(false)
     }
-    // Note: kept as direct Supabase for initial load since it's user's own profile
-    // write operations use Backend API via updateProfile action
     load()
   }, [router])
 
   async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setUploadingPhoto(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const filename = `${user.id}-${Date.now()}`
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(filename, file, { upsert: true })
-
-      if (error) throw error
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filename)
-
-      setAvatarUrl(publicUrl)
-    } catch (err) {
-      console.error('Failed to upload photo:', err)
-    } finally {
-      setUploadingPhoto(false)
-    }
+    // File upload not yet implemented - use avatar URL in profile settings instead
+    alert('파일 업로드는 현재 준비 중입니다.')
   }
 
   async function handleDeletePhoto() {

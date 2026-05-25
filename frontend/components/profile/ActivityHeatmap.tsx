@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getClientToken } from '@/lib/supabase/getToken'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type HeatmapRow = { activity_date: string; cnt: number }
 
@@ -52,17 +54,26 @@ export function ActivityHeatmap({ userId }: { userId: string }) {
   const [tooltip, setTooltip] = useState<{ date: string; cnt: number } | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .rpc('get_activity_heatmap', { p_user_id: userId, p_year: year })
-      .then(({ data }) => {
+    async function fetchHeatmap() {
+      try {
+        const token = await getClientToken()
+        const res = await fetch(`${API_URL}/v1/heatmap`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) throw new Error('Failed to fetch heatmap')
+        const json = await res.json()
         const map = new Map<string, number>()
-        ;(data ?? []).forEach((row: HeatmapRow) => {
+        ;(json.data ?? []).forEach((row: HeatmapRow) => {
           map.set(row.activity_date.slice(0, 10), Number(row.cnt))
         })
         setDataMap(map)
+      } catch (err) {
+        console.error('Failed to fetch heatmap:', err)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    fetchHeatmap()
   }, [userId, year])
 
   if (loading) {

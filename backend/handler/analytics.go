@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetHeatmap retrieves user's activity heatmap (52 weeks x 7 days)
+// GetHeatmap retrieves user's activity heatmap (by date)
 func GetHeatmap(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -20,13 +20,12 @@ func GetHeatmap(c *gin.Context) {
 	db := supabase.NewClient()
 	query := fmt.Sprintf(`
 		SELECT
-			EXTRACT(WEEK FROM watched_at) as week,
-			EXTRACT(DOW FROM watched_at) as day,
-			COUNT(*) as count
+			DATE(watched_at) as activity_date,
+			COUNT(*) as cnt
 		FROM user_records
 		WHERE user_id = '%s'
-		GROUP BY week, day
-		ORDER BY week, day
+		GROUP BY DATE(watched_at)
+		ORDER BY DATE(watched_at) DESC
 	`, userID)
 
 	result, err := db.Query(query)
@@ -35,13 +34,15 @@ func GetHeatmap(c *gin.Context) {
 		return
 	}
 
-	var heatmap interface{}
+	var heatmap []map[string]interface{}
 	if err := json.Unmarshal(result, &heatmap); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse response"})
 		return
 	}
 
-	c.JSON(http.StatusOK, heatmap)
+	c.JSON(http.StatusOK, gin.H{
+		"data": heatmap,
+	})
 }
 
 // GetGenreRatings retrieves user's genre preferences and ratings
@@ -129,4 +130,55 @@ func GetTasteMatch(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, match)
+}
+
+// GetCommonWorks retrieves common works watched by both users
+func GetCommonWorks(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	otherUserID := c.Param("userId")
+	if otherUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+		return
+	}
+
+	db := supabase.NewClient()
+	query := fmt.Sprintf(`
+		SELECT
+			ur1.tmdb_id,
+			ur1.media_type,
+			ur1.title,
+			ur1.poster_path,
+			ur1.rating
+		FROM user_records ur1
+		WHERE ur1.user_id = '%s'
+		AND EXISTS (
+			SELECT 1 FROM user_records ur2
+			WHERE ur2.user_id = '%s'
+			AND ur2.tmdb_id = ur1.tmdb_id
+			AND ur2.media_type = ur1.media_type
+		)
+		ORDER BY ur1.watched_at DESC
+	`, userID, otherUserID)
+
+	result, err := db.Query(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var works []map[string]interface{}
+	if err := json.Unmarshal(result, &works); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse response"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  works,
+		"count": len(works),
+	})
 }
