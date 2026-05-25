@@ -106,8 +106,6 @@ func main() {
 	r.GET("/health", authHandler.Health)
 	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
 	r.POST("/v1/auth/logout", authHandler.Logout)
-	r.POST("/v1/music/search", handler.SearchAlbums)
-	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
 
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
