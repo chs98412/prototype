@@ -38,22 +38,15 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	r.GET("/health", handler.Health)
-
-	// 인증 API (public)
-	r.POST("/v1/auth/callback", handler.HandleOAuthCallback)
-	r.POST("/v1/auth/logout", handler.Logout)
-
-	// 음악 API (인증 미필요 - 공개 API)
-	r.POST("/v1/music/search", handler.SearchAlbums)
-	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
-
 	// Dependency Injection
 	db := supabase.NewClient()
 
 	profileRepo := repository.NewProfileRepository(db)
 	profileService := service.NewProfileService(profileRepo)
 	profileHandler := handler.NewProfileHandler(profileService)
+
+	authService := service.NewAuthService()
+	authHandler := handler.NewAuthHandler(authService, profileService)
 
 	recordRepo := repository.NewRecordRepository(db)
 	recordService := service.NewRecordService(recordRepo)
@@ -95,11 +88,18 @@ func main() {
 	streakService := service.NewStreakService(streakRepo)
 	streakHandler := handler.NewStreakHandler(streakService)
 
+	// Public endpoints
+	r.GET("/health", authHandler.Health)
+	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
+	r.POST("/v1/auth/logout", authHandler.Logout)
+	r.POST("/v1/music/search", handler.SearchAlbums)
+	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
 		// User
-		v1.GET("/me", handler.GetMe)
+		v1.GET("/me", authHandler.GetMe)
 
 		// Profile
 		v1.GET("/profile", profileHandler.GetProfile)
