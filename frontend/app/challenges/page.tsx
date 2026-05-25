@@ -1,4 +1,5 @@
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { API_URL } from '@/lib/config'
 import { BottomNav } from '@/components/layout/BottomNav'
 import Link from 'next/link'
@@ -30,6 +31,7 @@ export default async function ChallengesPage({
   const activeTab = (tab as Tab) ?? 'all'
 
   const token = await getServerToken()
+  const user = await getCurrentUser()
 
   const res = await fetch(`${API_URL}/v1/challenges`, {
     headers: { Authorization: `Bearer ${token}` }

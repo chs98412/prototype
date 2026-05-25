@@ -1,5 +1,5 @@
 'use server'
-import { likeReview, unlikeReview, checkReviewLike } from '@/lib/api/client'
+import { likeReview, unlikeReview, checkReviewLike } from '@/lib/api/reviews'
 import { getServerToken } from '@/lib/auth/getServerToken'
 
 export async function toggleReviewLike(reviewId: string) {

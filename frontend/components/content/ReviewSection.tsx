@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getReviewsByTmdbId } from '@/lib/api/client'
+import { getReviewsByTmdbId } from '@/lib/api/reviews'
 import { upsertReview, deleteReview } from '@/app/actions/reviews'
 
 type Review = {

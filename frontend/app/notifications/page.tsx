@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getNotifications } from '@/lib/api/client'
+import { getNotifications } from '@/lib/api/social'
 import NotificationFeed from '@/components/notifications/NotificationFeed'
 import type { Notification } from '@/lib/types/notification'
 

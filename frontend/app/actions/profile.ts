@@ -1,5 +1,5 @@
 'use server'
-import { updateProfile as updateProfileApi } from '@/lib/api/client'
+import { updateProfile as updateProfileApi } from '@/lib/api/profile'
 
 export async function updateProfile(data: { displayName: string; bio?: string }) {
   const response = await updateProfileApi({

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { TMDB_BASE, API_URL } from '@/lib/config'
 import { LikeButton } from '@/components/review/LikeButton'
 
@@ -22,6 +23,7 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
   const { id } = await params
 
   const token = await getServerToken()
+  const user = await getCurrentUser()
 
   const reviewRes = await fetch(`${API_URL}/v1/reviews/${id}`, {
     headers: { Authorization: `Bearer ${token}` }

@@ -1,6 +1,6 @@
 'use server'
 
-import { follow, unfollow } from '@/lib/api/client'
+import { follow, unfollow } from '@/lib/api/social'
 
 export async function followUser(followingId: string) {
   const response = await follow(followingId)

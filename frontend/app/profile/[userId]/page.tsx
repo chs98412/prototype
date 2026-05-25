@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
 import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { API_URL } from '@/lib/config'
+import type { Record } from '@/lib/types/records'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { BackButton } from '@/components/content/BackButton'
@@ -38,14 +39,14 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
   const recordsRes = await fetch(`${API_URL}/v1/records?user_id=${userId}`, {
     headers: { Authorization: `Bearer ${token}` }
   })
-  const records = recordsRes.ok ? (await recordsRes.json()).data ?? [] : []
+  const records: Record[] = recordsRes.ok ? (await recordsRes.json()).data ?? [] : []
 
   const isSelf = currentUser?.id === userId
   const isFollowing = profile.is_following ?? false
   const followerCount = profile.follower_count ?? 0
   const followingCount = profile.following_count ?? 0
 
-  const allRecords = records
+  const allRecords: Record[] = records
   const totalCount = allRecords.length
   const watchedFiltered = allRecords.filter((r) => r.status === 'watched')
   const watchedMovies = watchedFiltered.filter((r) => r.media_type === 'movie').length

@@ -1,4 +1,5 @@
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { API_URL } from '@/lib/config'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
@@ -11,6 +12,7 @@ const STREAK_MILESTONES = [7, 30, 100]
 
 export default async function HomePage() {
   const token = await getServerToken()
+  const user = await getCurrentUser()
 
   const year = new Date().getFullYear()
 

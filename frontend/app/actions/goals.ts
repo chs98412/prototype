@@ -1,6 +1,6 @@
 'use server'
 
-import { updateGoal } from '@/lib/api/client'
+import { updateGoal } from '@/lib/api/challenges'
 
 export async function setGoal(target: number) {
   const response = await updateGoal({

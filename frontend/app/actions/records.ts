@@ -1,6 +1,6 @@
 'use server'
 
-import { createRecord, deleteRecordByTmdbId } from '@/lib/api/client'
+import { createRecord, deleteRecordByTmdbId } from '@/lib/api/records'
 
 export type RecordStatus = 'watched' | 'watching' | 'want'
 

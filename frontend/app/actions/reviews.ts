@@ -1,6 +1,6 @@
 'use server'
 
-import { createReview as createReviewApi, deleteReview as deleteReviewApi } from '@/lib/api/client'
+import { createReview as createReviewApi, deleteReview as deleteReviewApi } from '@/lib/api/reviews'
 
 export async function upsertReview(data: {
   tmdbId: number

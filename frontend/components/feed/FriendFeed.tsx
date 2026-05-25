@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getFeed } from '@/lib/api/client'
+import { getFeed } from '@/lib/api/social'
 import { IMG_BASE } from '@/lib/config'
 const PAGE_SIZE = 20
 
