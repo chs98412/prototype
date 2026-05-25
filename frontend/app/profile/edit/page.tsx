@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { getClientToken } from '@/lib/auth/getToken'
+import { API_URL } from '@/lib/config'
 import { updateProfile } from '@/app/actions/profile'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export default function ProfileEditPage() {
   const router = useRouter()

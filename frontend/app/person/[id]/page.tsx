@@ -3,14 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
 import { getCurrentUser } from '@/lib/auth/getCurrentUser'
+import { TMDB_BASE, IMG_BASE, API_URL } from '@/lib/config'
 import { BackButton } from '@/components/content/BackButton'
 import type { Metadata } from 'next'
 
 export const revalidate = 604800 // 7일
-
-const TMDB_BASE = 'https://api.themoviedb.org/3'
-const IMG_BASE = 'https://image.tmdb.org/t/p'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Params = { id: string }
 

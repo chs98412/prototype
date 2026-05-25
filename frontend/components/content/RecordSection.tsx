@@ -3,10 +3,9 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { getClientToken } from '@/lib/auth/getToken'
+import { API_URL } from '@/lib/config'
 import { upsertRecord, deleteRecord, type RecordStatus } from '@/app/actions/records'
 import { StarRating } from './StarRating'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 interface RecordSectionProps {
   tmdbId: number

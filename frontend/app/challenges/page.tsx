@@ -1,8 +1,7 @@
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { API_URL } from '@/lib/config'
 import { BottomNav } from '@/components/layout/BottomNav'
 import Link from 'next/link'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Challenge = {
   id: string

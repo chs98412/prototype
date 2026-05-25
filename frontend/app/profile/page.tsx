@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getServerToken } from '@/lib/auth/getServerToken'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { API_URL } from '@/lib/config'
 
 export default async function ProfilePage() {
   const token = await getServerToken()

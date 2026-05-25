@@ -3,12 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
 import { getCurrentUser } from '@/lib/auth/getCurrentUser'
+import { API_URL } from '@/lib/config'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { BackButton } from '@/components/content/BackButton'
 import { LogoutButton } from '@/components/auth/LogoutButton'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Params = { userId: string }
 

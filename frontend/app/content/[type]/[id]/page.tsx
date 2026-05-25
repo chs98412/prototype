@@ -1,18 +1,16 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
+import { TMDB_BASE, IMG_BASE } from '@/lib/config'
 import { BackButton } from '@/components/content/BackButton'
 import { RecordSection } from '@/components/content/RecordSection'
 import { ReviewSection } from '@/components/content/ReviewSection'
 import { MovieDetailHeader } from '@/components/content/MovieDetailHeader'
 import { MovieDetailInfo } from '@/components/content/MovieDetailInfo'
-import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import type { Metadata } from 'next'
 
 export const revalidate = 86400
-
-const TMDB_BASE = 'https://api.themoviedb.org/3'
-const IMG_BASE = 'https://image.tmdb.org/t/p'
 
 type Params = { type: string; id: string }
 

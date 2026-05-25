@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getFeed } from '@/lib/api/client'
-
-const IMG_BASE = 'https://image.tmdb.org/t/p'
+import { IMG_BASE } from '@/lib/config'
 const PAGE_SIZE = 20
 
 const STATUS_LABELS: Record<string, string> = {

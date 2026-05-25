@@ -1,4 +1,5 @@
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { API_URL } from '@/lib/config'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'
@@ -7,7 +8,6 @@ import { YearlyGoal } from '@/components/home/YearlyGoal'
 import Link from 'next/link'
 
 const STREAK_MILESTONES = [7, 30, 100]
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export default async function HomePage() {
   const token = await getServerToken()

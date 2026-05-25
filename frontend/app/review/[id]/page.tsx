@@ -2,10 +2,8 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getServerToken } from '@/lib/auth/getServerToken'
+import { TMDB_BASE, API_URL } from '@/lib/config'
 import { LikeButton } from '@/components/review/LikeButton'
-
-const TMDB_BASE = 'https://api.themoviedb.org/3'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 type Params = { id: string }
 

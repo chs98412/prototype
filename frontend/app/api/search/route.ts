@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
-const TMDB_BASE = 'https://api.themoviedb.org/3'
+import { TMDB_BASE } from '@/lib/config'
 
 const GENRE_MAP: Record<number, string> = {
   28: '액션', 12: '모험', 16: '애니메이션', 35: '코미디', 80: '범죄',

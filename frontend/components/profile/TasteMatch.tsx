@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getClientToken } from '@/lib/auth/getToken'
-
-const IMG_BASE = 'https://image.tmdb.org/t/p'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { API_URL, IMG_BASE } from '@/lib/config'
 
 type MatchResult = { compatibility_score: number | null; common_titles: number }
 type CommonWork = { tmdb_id: number; media_type: string; title: string | null; poster_path: string | null; rating: number | null }

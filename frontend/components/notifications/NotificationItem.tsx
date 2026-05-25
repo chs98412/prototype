@@ -5,9 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getClientToken } from '@/lib/auth/getToken'
 import { formatRelativeTime } from '@/lib/utils/date'
+import { API_URL } from '@/lib/config'
 import type { Notification } from '@/lib/types/notification'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 interface NotificationItemProps {
   notification: Notification

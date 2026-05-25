@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import { BackButton } from './BackButton'
-
-const IMG_BASE = 'https://image.tmdb.org/t/p'
+import { IMG_BASE } from '@/lib/config'
 
 interface MovieDetailHeaderProps {
   title: string

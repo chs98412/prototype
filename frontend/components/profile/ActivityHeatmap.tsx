@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getClientToken } from '@/lib/auth/getToken'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { API_URL } from '@/lib/config'
 
 type HeatmapRow = { activity_date: string; cnt: number }
 

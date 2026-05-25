@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-
-const IMG_BASE = 'https://image.tmdb.org/t/p'
+import { IMG_BASE } from '@/lib/config'
 
 interface Director {
   id: number
