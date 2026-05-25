@@ -64,12 +64,20 @@ export interface Profile {
   created_at: string
 }
 
+export interface ProfileDetail extends Profile {
+  follower_count: number
+  following_count: number
+  total_records: number
+  movie_count: number
+  is_following: boolean
+}
+
 export async function getProfile() {
   return apiFetch<Profile>('/v1/profile')
 }
 
 export async function getUserProfile(userId: string) {
-  return apiFetch<Profile>(`/v1/profile/${userId}`)
+  return apiFetch<ProfileDetail>(`/v1/profile/${userId}`)
 }
 
 export async function updateProfile(data: {

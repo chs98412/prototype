@@ -30,6 +30,15 @@ type Profile struct {
 	CreatedAt   string `json:"created_at"`
 }
 
+type ProfileDetail struct {
+	Profile
+	FollowerCount  int `json:"follower_count"`
+	FollowingCount int `json:"following_count"`
+	TotalRecords   int `json:"total_records"`
+	MovieCount     int `json:"movie_count"`
+	IsFollowing    bool `json:"is_following"`
+}
+
 func GetFeed(c *gin.Context) {
 	userID := c.GetString("userID")
 	limit := 20
@@ -252,7 +261,9 @@ func GetProfile(c *gin.Context) {
 
 func GetUserProfile(c *gin.Context) {
 	userID := c.Param("userId")
+	currentUserID := c.GetString("userID")
 
+	// Get profile
 	query := `
 	SELECT user_id, display_name, bio, avatar_url, created_at
 	FROM user_profiles
@@ -266,7 +277,34 @@ func GetUserProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, p)
+	// Get follower count
+	var followerCount int
+	db.DB.QueryRow("SELECT COUNT(*) FROM user_follows WHERE following_id = $1", userID).Scan(&followerCount)
+
+	// Get following count
+	var followingCount int
+	db.DB.QueryRow("SELECT COUNT(*) FROM user_follows WHERE follower_id = $1", userID).Scan(&followingCount)
+
+	// Get record stats
+	var totalRecords, movieCount int
+	db.DB.QueryRow("SELECT COUNT(*), COUNT(*) FILTER (WHERE media_type = 'movie') FROM user_records WHERE user_id = $1", userID).Scan(&totalRecords, &movieCount)
+
+	// Check if current user is following this user
+	var isFollowing bool
+	if currentUserID != "" && currentUserID != userID {
+		db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM user_follows WHERE follower_id = $1 AND following_id = $2)", currentUserID, userID).Scan(&isFollowing)
+	}
+
+	detail := ProfileDetail{
+		Profile:        p,
+		FollowerCount:  followerCount,
+		FollowingCount: followingCount,
+		TotalRecords:   totalRecords,
+		MovieCount:     movieCount,
+		IsFollowing:    isFollowing,
+	}
+
+	c.JSON(http.StatusOK, detail)
 }
 
 func UpdateProfile(c *gin.Context) {
