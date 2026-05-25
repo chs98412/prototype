@@ -21,12 +21,6 @@ type RecordResponse struct {
 	UpdatedAt    string `json:"updated_at"`
 }
 
-type CreateRecordRequest struct {
-	TMDBID     int    `json:"tmdb_id"`
-	RecordType string `json:"record_type"` // "movie" or "tv"
-	Rating     int    `json:"rating"`      // 0-10
-}
-
 // GetRecords retrieves user's watch history
 func GetRecords(c *gin.Context) {
 	userID := c.GetString("userID")
@@ -73,6 +67,7 @@ func GetRecords(c *gin.Context) {
 }
 
 // CreateRecord creates a new watch record (upsert)
+// DEPRECATED: Use RecordHandler.CreateRecord instead
 func CreateRecord(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -80,22 +75,25 @@ func CreateRecord(c *gin.Context) {
 		return
 	}
 
-	var req CreateRecordRequest
+	var req map[string]interface{}
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
 	// Validate
-	if req.TMDBID == 0 {
+	tmdbID, ok := req["tmdb_id"].(float64)
+	if !ok || tmdbID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "tmdb_id is required"})
 		return
 	}
-	if req.RecordType != "movie" && req.RecordType != "tv" {
+	recordType, ok := req["record_type"].(string)
+	if !ok || (recordType != "movie" && recordType != "tv") {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "record_type must be 'movie' or 'tv'"})
 		return
 	}
-	if req.Rating < 0 || req.Rating > 10 {
+	rating, ok := req["rating"].(float64)
+	if !ok || rating < 0 || rating > 10 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "rating must be between 0 and 10"})
 		return
 	}
@@ -103,9 +101,9 @@ func CreateRecord(c *gin.Context) {
 	// Upsert record
 	data := map[string]interface{}{
 		"user_id":     userID,
-		"tmdb_id":     req.TMDBID,
-		"record_type": req.RecordType,
-		"rating":      req.Rating,
+		"tmdb_id":     int(tmdbID),
+		"record_type": recordType,
+		"rating":      int(rating),
 	}
 
 	db := supabase.NewClient()

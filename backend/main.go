@@ -49,9 +49,15 @@ func main() {
 	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
 
 	// Dependency Injection
-	profileRepo := repository.NewProfileRepository(supabase.NewClient())
+	db := supabase.NewClient()
+
+	profileRepo := repository.NewProfileRepository(db)
 	profileService := service.NewProfileService(profileRepo)
 	profileHandler := handler.NewProfileHandler(profileService)
+
+	recordRepo := repository.NewRecordRepository(db)
+	recordService := service.NewRecordService(recordRepo)
+	recordHandler := handler.NewRecordHandler(recordService)
 
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
@@ -65,11 +71,11 @@ func main() {
 		v1.PUT("/profile", profileHandler.UpdateProfile)
 
 		// Records (Watch History)
-		v1.GET("/records", handler.GetRecords)
-		v1.POST("/records", handler.CreateRecord)
-		v1.DELETE("/records/:recordId", handler.DeleteRecord)
-		v1.DELETE("/records/tmdb/:tmdbId", handler.DeleteRecordByTMDB)
-		v1.GET("/records/stats", handler.GetRecordStats)
+		v1.GET("/records", recordHandler.GetRecords)
+		v1.POST("/records", recordHandler.CreateRecord)
+		v1.DELETE("/records/:recordId", recordHandler.DeleteRecord)
+		v1.DELETE("/records/tmdb/:tmdbId", recordHandler.DeleteRecordByTMDB)
+		v1.GET("/records/stats", recordHandler.GetRecordStats)
 
 		// Reviews
 		v1.GET("/reviews", handler.GetReviews)
