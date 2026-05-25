@@ -4,10 +4,15 @@ import "time"
 
 // ReviewLike is the domain entity for review likes
 type ReviewLike struct {
-	ID        string
-	ReviewID  string
-	UserID    string
-	CreatedAt time.Time
+	ID        string    `gorm:"primaryKey;column:id"`
+	ReviewID  string    `gorm:"index;column:review_id"`
+	UserID    string    `gorm:"index;column:user_id"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
+}
+
+// TableName specifies the table name for GORM
+func (rl *ReviewLike) TableName() string {
+	return "review_likes"
 }
 
 // NewReviewLike creates a new review like entity

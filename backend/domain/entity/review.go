@@ -7,14 +7,19 @@ import (
 
 // Review is the domain entity for user reviews
 type Review struct {
-	ID        string
-	UserID    string
-	TMDBID    int
-	Content   string
-	Spoiler   bool
-	LikeCount int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        string    `gorm:"primaryKey;column:id"`
+	UserID    string    `gorm:"index;column:user_id"`
+	TMDBID    int       `gorm:"index;column:tmdb_id"`
+	Content   string    `gorm:"column:content"`
+	Spoiler   bool      `gorm:"column:spoiler"`
+	LikeCount int       `gorm:"column:like_count"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
+}
+
+// TableName specifies the table name for GORM
+func (r *Review) TableName() string {
+	return "reviews"
 }
 
 // NewReview creates a new review entity

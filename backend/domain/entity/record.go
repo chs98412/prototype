@@ -20,15 +20,20 @@ const (
 
 // Record is the domain entity for watch history records
 type Record struct {
-	ID         string
-	UserID     string
-	TMDBID     int
-	MediaType  string // "movie" or "tv"
-	Status     RecordStatus
-	Rating     int // 0-10, 0 means not rated
-	WatchedAt  time.Time
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID         string       `gorm:"primaryKey;column:id"`
+	UserID     string       `gorm:"index;column:user_id"`
+	TMDBID     int          `gorm:"index;column:tmdb_id"`
+	MediaType  string       `gorm:"column:media_type"`
+	Status     RecordStatus `gorm:"column:status"`
+	Rating     int          `gorm:"column:rating"`
+	WatchedAt  time.Time    `gorm:"index;column:watched_at"`
+	CreatedAt  time.Time    `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt  time.Time    `gorm:"autoUpdateTime;column:updated_at"`
+}
+
+// TableName specifies the table name for GORM
+func (r *Record) TableName() string {
+	return "user_records"
 }
 
 // NewRecord creates a new record entity

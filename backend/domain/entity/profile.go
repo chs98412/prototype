@@ -5,13 +5,18 @@ import "time"
 // Profile is the domain entity for user profiles
 // Not exported outside domain layer
 type Profile struct {
-	ID          string
-	UserID      string
-	DisplayName string
-	Bio         string
-	AvatarURL   string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          string    `gorm:"primaryKey;column:id"`
+	UserID      string    `gorm:"uniqueIndex;column:user_id"`
+	DisplayName string    `gorm:"column:display_name"`
+	Bio         string    `gorm:"column:bio"`
+	AvatarURL   string    `gorm:"column:avatar_url"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime;column:updated_at"`
+}
+
+// TableName specifies the table name for GORM
+func (p *Profile) TableName() string {
+	return "user_profiles"
 }
 
 // NewProfile creates a new profile entity

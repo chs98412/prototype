@@ -13,11 +13,16 @@ const (
 
 // Challenge is the domain entity for challenge definitions
 type Challenge struct {
-	ID          string
-	Title       string
-	Description string
-	Target      int // target count to complete
-	CreatedAt   time.Time
+	ID          string    `gorm:"primaryKey;column:id"`
+	Title       string    `gorm:"column:title"`
+	Description string    `gorm:"column:description"`
+	Target      int       `gorm:"column:target"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:created_at"`
+}
+
+// TableName specifies the table name for GORM
+func (c *Challenge) TableName() string {
+	return "challenges"
 }
 
 // NewChallenge creates a new challenge entity
@@ -53,13 +58,18 @@ type ChallengeDTO struct {
 
 // ChallengeProgress is the domain entity for user's challenge progress
 type ChallengeProgress struct {
-	ID          string
-	UserID      string
-	ChallengeID string
-	Progress    int
-	Status      ChallengeStatus
-	StartedAt   time.Time
-	UpdatedAt   time.Time
+	ID          string            `gorm:"primaryKey;column:id"`
+	UserID      string            `gorm:"index;column:user_id"`
+	ChallengeID string            `gorm:"index;column:challenge_id"`
+	Progress    int               `gorm:"column:progress"`
+	Status      ChallengeStatus   `gorm:"column:status"`
+	StartedAt   time.Time         `gorm:"index;column:started_at"`
+	UpdatedAt   time.Time         `gorm:"autoUpdateTime;column:updated_at"`
+}
+
+// TableName specifies the table name for GORM
+func (cp *ChallengeProgress) TableName() string {
+	return "challenge_progress"
 }
 
 // NewChallengeProgress creates a new challenge progress entity

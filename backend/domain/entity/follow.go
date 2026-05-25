@@ -4,10 +4,15 @@ import "time"
 
 // Follow is the domain entity for follow relationships
 type Follow struct {
-	ID          string
-	FollowerID  string
-	FollowingID string
-	CreatedAt   time.Time
+	ID          string    `gorm:"primaryKey;column:id"`
+	FollowerID  string    `gorm:"index;column:follower_id"`
+	FollowingID string    `gorm:"index;column:following_id"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:created_at"`
+}
+
+// TableName specifies the table name for GORM
+func (f *Follow) TableName() string {
+	return "user_follows"
 }
 
 // NewFollow creates a new follow relationship

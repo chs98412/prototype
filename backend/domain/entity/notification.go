@@ -4,12 +4,17 @@ import "time"
 
 // Notification represents a user notification
 type Notification struct {
-	ID          string
-	RecipientID string
-	SenderID    string
-	Type        string // "follow", "like", "comment", etc.
-	Content     string
-	CreatedAt   time.Time
+	ID          string    `gorm:"primaryKey;column:id"`
+	RecipientID string    `gorm:"index;column:recipient_id"`
+	SenderID    string    `gorm:"index;column:sender_id"`
+	Type        string    `gorm:"column:type"`
+	Content     string    `gorm:"column:content"`
+	CreatedAt   time.Time `gorm:"autoCreateTime;column:created_at"`
+}
+
+// TableName specifies the table name for GORM
+func (n *Notification) TableName() string {
+	return "notifications"
 }
 
 // NotificationDTO is the data transfer object for notifications

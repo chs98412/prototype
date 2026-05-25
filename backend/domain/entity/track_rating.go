@@ -4,11 +4,16 @@ import "time"
 
 // TrackRating is the domain entity for user music track ratings
 type TrackRating struct {
-	ID            string
-	UserID        string
-	TrackSpotifyID string
-	Rating        int // 0-5
-	ListenedAt    time.Time
+	ID             string    `gorm:"primaryKey;column:id"`
+	UserID         string    `gorm:"index;column:user_id"`
+	TrackSpotifyID string    `gorm:"index;column:track_spotify_id"`
+	Rating         int       `gorm:"column:rating"`
+	ListenedAt     time.Time `gorm:"autoCreateTime;column:listened_at"`
+}
+
+// TableName specifies the table name for GORM
+func (tr *TrackRating) TableName() string {
+	return "track_records"
 }
 
 // NewTrackRating creates a new track rating entity

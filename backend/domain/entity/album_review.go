@@ -7,13 +7,18 @@ import (
 
 // AlbumReview is the domain entity for user music album reviews
 type AlbumReview struct {
-	ID             string
-	UserID         string
-	AlbumSpotifyID string
-	Content        string
-	HasSpoiler     bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID             string    `gorm:"primaryKey;column:id"`
+	UserID         string    `gorm:"index;column:user_id"`
+	AlbumSpotifyID string    `gorm:"index;column:album_spotify_id"`
+	Content        string    `gorm:"column:content"`
+	HasSpoiler     bool      `gorm:"column:has_spoiler"`
+	CreatedAt      time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime;column:updated_at"`
+}
+
+// TableName specifies the table name for GORM
+func (ar *AlbumReview) TableName() string {
+	return "album_reviews"
 }
 
 // NewAlbumReview creates a new album review entity

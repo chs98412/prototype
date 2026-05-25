@@ -7,13 +7,18 @@ import (
 
 // Goal is the domain entity for user yearly goals
 type Goal struct {
-	ID        string
-	UserID    string
-	Year      int
-	MovieGoal int
-	DramaGoal int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        string    `gorm:"primaryKey;column:id"`
+	UserID    string    `gorm:"index;column:user_id"`
+	Year      int       `gorm:"column:year"`
+	MovieGoal int       `gorm:"column:movie_goal"`
+	DramaGoal int       `gorm:"column:drama_goal"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
+}
+
+// TableName specifies the table name for GORM
+func (g *Goal) TableName() string {
+	return "user_goals"
 }
 
 // NewGoal creates a new goal entity

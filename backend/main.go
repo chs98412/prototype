@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/chs98412/prototype/backend/handler"
 	"github.com/chs98412/prototype/backend/infrastructure/repository"
 	"github.com/chs98412/prototype/backend/middleware"
-	"github.com/chs98412/prototype/backend/pkg/supabase"
+	"github.com/chs98412/prototype/backend/pkg/database"
 	"github.com/chs98412/prototype/backend/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -16,10 +17,17 @@ import (
 
 func main() {
 	// Initialize database connection
-	if err := supabase.Init(); err != nil {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
+	)
+	if err := database.Init(dsn); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	defer supabase.Close()
+	defer database.Close()
 
 	r := gin.Default()
 
@@ -39,7 +47,7 @@ func main() {
 	}))
 
 	// Dependency Injection
-	db := supabase.NewClient()
+	db := database.NewClient()
 
 	profileRepo := repository.NewProfileRepository(db)
 	profileService := service.NewProfileService(profileRepo)
