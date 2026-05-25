@@ -133,7 +133,7 @@ export function ReviewSection({ tmdbId, mediaType, userId }: ReviewSectionProps)
         <div className="flex flex-col gap-4">
           {reviews.map((r) => {
             const isMe = r.user_id === userId
-            const profile = r.user_profiles
+            const profile = r.user
             const spoilerVisible = revealed.has(r.id)
             const preview = r.content.slice(0, 100)
 

@@ -7,10 +7,12 @@ interface LogEntry {
   data?: Record<string, unknown>
   duration?: number
   stack?: string
+  source: 'client' | 'server'
 }
 
 class Logger {
   private isDev = process.env.NODE_ENV === 'development'
+  private isServer = typeof window === 'undefined'
 
   private formatTimestamp(): string {
     return new Date().toISOString()
@@ -24,6 +26,7 @@ class Logger {
       data,
       duration,
       stack,
+      source: this.isServer ? 'server' : 'client',
     }
 
     // 항상 콘솔에 출력 (프로덕션에서도)
@@ -35,14 +38,34 @@ class Logger {
     }[level]
 
     if (data || duration) {
-      logFn(`[${entry.timestamp}] [${level.toUpperCase()}] ${message}`, { data, duration: duration ? `${duration.toFixed(2)}ms` : undefined })
+      logFn(`[${entry.timestamp}] [${level.toUpperCase()}] [${entry.source}] ${message}`, { data, duration: duration ? `${duration.toFixed(2)}ms` : undefined })
     } else {
-      logFn(`[${entry.timestamp}] [${level.toUpperCase()}] ${message}`)
+      logFn(`[${entry.timestamp}] [${level.toUpperCase()}] [${entry.source}] ${message}`)
     }
 
-    // 프로덕션에서는 에러만 외부 서비스로 전송 (추후 구현)
-    if (level === 'error' && !this.isDev) {
-      this.reportError(entry)
+    // 로그를 서버로 전송 (프로덕션에서 에러만, 개발에서는 모두)
+    if (this.isDev || level === 'error' || level === 'warn') {
+      this.sendToServer(entry)
+    }
+  }
+
+  /**
+   * 로그를 서버로 전송
+   * 서버에서 외부 서비스(Sentry 등)로 다시 전송
+   */
+  private async sendToServer(entry: LogEntry) {
+    // 서버에서는 로그 전송 불필요 (이미 외부 서비스로 보내짐)
+    if (this.isServer) return
+
+    try {
+      await fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      })
+    } catch (error) {
+      // 로그 전송 실패해도 조용히 무시 (무한 루프 방지)
+      // console.error('Failed to send log to server:', error)
     }
   }
 
@@ -126,13 +149,6 @@ class Logger {
     })
   }
 
-  /**
-   * 프로덕션에서 에러 보고 (추후 Sentry 등과 연동)
-   */
-  private reportError(entry: LogEntry) {
-    // TODO: Sentry, LogRocket 등과 연동
-    // await fetch('/api/logs', { method: 'POST', body: JSON.stringify(entry) })
-  }
 }
 
 export const logger = new Logger()

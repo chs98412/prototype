@@ -18,10 +18,10 @@ export function PerformanceMonitor() {
         const domContentLoadedTime = perfData.domContentLoadedEventEnd - perfData.navigationStart
 
         logger.info('페이지 로드 완료', {
-          'Total Page Load Time': `${pageLoadTime}ms`,
-          'DOM Content Loaded': `${domContentLoadedTime}ms`,
-          'Connect Time': `${connectTime}ms`,
-          'Render Time': `${renderTime}ms`,
+          pageLoadTime,
+          domContentLoadedTime,
+          connectTime,
+          renderTime,
         })
       }
 
@@ -42,8 +42,9 @@ export function PerformanceMonitor() {
           current.duration > prev.duration ? current : prev
         )
         logger.info(`${apiCalls.length}개 API 호출 기록됨`, {
-          'Slowest API': slowestApi.name,
-          'Duration': `${slowestApi.duration.toFixed(2)}ms`,
+          slowestApi: slowestApi.name,
+          slowestDuration: slowestApi.duration.toFixed(2),
+          totalApiCalls: apiCalls.length,
         })
       }
 
@@ -54,8 +55,8 @@ export function PerformanceMonitor() {
         const totalMemory = Math.round(memory.totalJSHeapSize / 1048576) // MB
 
         logger.debug('메모리 사용량', {
-          'Used': `${usedMemory}MB`,
-          'Total': `${totalMemory}MB`,
+          usedMB: usedMemory,
+          totalMB: totalMemory,
         })
       }
     }
@@ -72,9 +73,9 @@ export function PerformanceMonitor() {
     // 페이지 언로드 시 기록
     const handleBeforeUnload = () => {
       const navigationStart = window.performance.timing.navigationStart
-      const unloadTime = Date.now() - navigationStart
+      const sessionDuration = Date.now() - navigationStart
       logger.debug('페이지 언로드', {
-        'Session Duration': `${unloadTime}ms`,
+        sessionDurationMs: sessionDuration,
       })
     }
 
