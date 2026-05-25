@@ -63,6 +63,10 @@ func main() {
 	reviewService := service.NewReviewService(reviewRepo)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
+	followRepo := repository.NewFollowRepository(db)
+	followService := service.NewFollowService(followRepo)
+	followHandler := handler.NewFollowHandler(followService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -95,12 +99,12 @@ func main() {
 		v1.POST("/reviews/:reviewId/like", handler.LikeReview)
 		v1.DELETE("/reviews/:reviewId/like", handler.UnlikeReview)
 
-		// Social
-		v1.GET("/follows", handler.GetFollows)
-		v1.GET("/followers", handler.GetFollowers)
-		v1.POST("/follow/:userId", handler.Follow)
-		v1.DELETE("/follow/:userId", handler.Unfollow)
-		v1.GET("/follow/:userId/status", handler.IsFollowing)
+		// Social - Follow
+		v1.GET("/follows", followHandler.GetFollows)
+		v1.GET("/followers", followHandler.GetFollowers)
+		v1.POST("/follow/:userId", followHandler.Follow)
+		v1.DELETE("/follow/:userId", followHandler.Unfollow)
+		v1.GET("/follow/:userId/status", followHandler.IsFollowing)
 
 		// Feed & Notifications
 		v1.GET("/feed", handler.GetFeed)
