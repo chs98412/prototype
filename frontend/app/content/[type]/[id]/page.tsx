@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { BackButton } from '@/components/content/BackButton'
 import { RecordSection } from '@/components/content/RecordSection'
 import { ReviewSection } from '@/components/content/ReviewSection'

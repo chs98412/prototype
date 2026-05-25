@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
@@ -24,14 +24,10 @@ export async function apiCall<T>(
   } = {}
 ): Promise<ApiResponse<T>> {
   try {
-    // 토큰이 제공되지 않으면 Supabase 세션에서 가져오기
+    // 토큰이 제공되지 않으면 쿠키에서 가져오기
     let token = options.token
     if (!token) {
-      const supabase = await createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      token = session?.access_token
+      token = await getServerToken()
     }
 
     if (!token) {
