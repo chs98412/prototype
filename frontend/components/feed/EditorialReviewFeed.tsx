@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getClientToken } from '@/lib/supabase/getToken'
+import { getClientToken } from '@/lib/auth/getToken'
 import { formatRelativeTime } from '@/lib/utils/date'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'

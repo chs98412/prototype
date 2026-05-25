@@ -1,4 +1,4 @@
-import { getServerToken } from '@/lib/supabase/getServerToken'
+import { getServerToken } from '@/lib/auth/getServerToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import Link from 'next/link'
 

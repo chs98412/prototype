@@ -1,6 +1,6 @@
 'use server'
 
-import { getServerToken } from '@/lib/supabase/getServerToken'
+import { getServerToken } from '@/lib/auth/getServerToken'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 

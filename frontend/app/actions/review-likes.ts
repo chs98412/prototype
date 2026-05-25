@@ -1,6 +1,6 @@
 'use server'
 import { likeReview, unlikeReview, checkReviewLike } from '@/lib/api/client'
-import { getServerToken } from '@/lib/supabase/getServerToken'
+import { getServerToken } from '@/lib/auth/getServerToken'
 
 export async function toggleReviewLike(reviewId: string) {
   const token = await getServerToken()

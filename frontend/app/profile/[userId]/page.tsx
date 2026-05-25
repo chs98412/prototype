@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getServerToken } from '@/lib/supabase/getServerToken'
+import { getServerToken } from '@/lib/auth/getServerToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { FollowButton } from '@/components/profile/FollowButton'
 import { BackButton } from '@/components/content/BackButton'

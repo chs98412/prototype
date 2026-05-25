@@ -1,4 +1,4 @@
-import { getServerToken } from '@/lib/supabase/getServerToken'
+import { getServerToken } from '@/lib/auth/getServerToken'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'

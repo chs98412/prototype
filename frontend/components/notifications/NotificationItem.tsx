@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getClientToken } from '@/lib/supabase/getToken'
+import { getClientToken } from '@/lib/auth/getToken'
 import { formatRelativeTime } from '@/lib/utils/date'
 import type { Notification } from '@/lib/types/notification'
 

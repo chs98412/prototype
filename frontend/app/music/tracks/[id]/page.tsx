@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { getClientToken } from '@/lib/supabase/getToken'
+import { getClientToken } from '@/lib/auth/getToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { StarRating } from '@/components/content/StarRating'
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getClientToken } from '@/lib/supabase/getToken'
+import { getClientToken } from '@/lib/auth/getToken'
 
 const IMG_BASE = 'https://image.tmdb.org/t/p'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'

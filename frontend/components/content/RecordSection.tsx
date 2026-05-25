@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { getClientToken } from '@/lib/supabase/getToken'
+import { getClientToken } from '@/lib/auth/getToken'
 import { upsertRecord, deleteRecord, type RecordStatus } from '@/app/actions/records'
 import { StarRating } from './StarRating'
 

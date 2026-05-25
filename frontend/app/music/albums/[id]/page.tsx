@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getClientToken } from '@/lib/supabase/getToken'
+import { getClientToken } from '@/lib/auth/getToken'
 import { BottomNav } from '@/components/layout/BottomNav'
 import AlbumDetailHeader from '@/components/music/AlbumDetailHeader'
 import TrackRatingTable from '@/components/music/TrackRatingTable'
