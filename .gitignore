@@ -1,0 +1,36 @@
+# Binaries
+backend/app
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build output
+/dist
+/build
+
+# Node modules
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Testing
+coverage/
+.coverage
