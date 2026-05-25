@@ -302,6 +302,12 @@ export async function getNotifications(limit = 20, offset = 0) {
   return apiFetch<Notification[]>(`/v1/notifications?limit=${limit}&offset=${offset}`)
 }
 
+export async function deleteNotification(notificationId: string) {
+  return apiFetch<void>(`/v1/notifications/${notificationId}`, {
+    method: 'DELETE',
+  })
+}
+
 // ============================================
 // Goals API
 // ============================================

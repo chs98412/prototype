@@ -88,6 +88,7 @@ func main() {
 
 		// Notifications
 		v1.GET("/notifications", handler.GetNotifications)
+		v1.DELETE("/notifications/:id", handler.DeleteNotification)
 
 		// Goals
 		v1.GET("/goal", handler.GetGoal)

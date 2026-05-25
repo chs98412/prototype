@@ -60,3 +60,23 @@ func GetNotifications(c *gin.Context) {
 
 	c.JSON(http.StatusOK, notifications)
 }
+
+func DeleteNotification(c *gin.Context) {
+	userID := c.GetString("userID")
+	notificationID := c.Param("id")
+
+	query := `DELETE FROM notifications WHERE id = $1 AND user_id = $2`
+	result, err := db.DB.Exec(query, notificationID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete notification"})
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Notification not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
