@@ -75,6 +75,10 @@ func main() {
 	goalService := service.NewGoalService(goalRepo)
 	goalHandler := handler.NewGoalHandler(goalService)
 
+	reviewLikeRepo := repository.NewReviewLikeRepository(db)
+	reviewLikeService := service.NewReviewLikeService(reviewLikeRepo)
+	reviewLikeHandler := handler.NewReviewLikeHandler(reviewLikeService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -102,10 +106,10 @@ func main() {
 		v1.GET("/tmdb/:tmdbId/reviews", reviewHandler.GetReviewsByTMDB)
 
 		// Review Likes
-		v1.GET("/reviews/:reviewId/likes", handler.GetReviewLikes)
-		v1.GET("/reviews/:reviewId/like/status", handler.CheckReviewLike)
-		v1.POST("/reviews/:reviewId/like", handler.LikeReview)
-		v1.DELETE("/reviews/:reviewId/like", handler.UnlikeReview)
+		v1.GET("/reviews/:reviewId/likes", reviewLikeHandler.GetLikes)
+		v1.GET("/reviews/:reviewId/like/status", reviewLikeHandler.CheckLike)
+		v1.POST("/reviews/:reviewId/like", reviewLikeHandler.Like)
+		v1.DELETE("/reviews/:reviewId/like", reviewLikeHandler.Unlike)
 
 		// Social - Follow
 		v1.GET("/follows", followHandler.GetFollows)
