@@ -87,6 +87,10 @@ func main() {
 	albumReviewService := service.NewAlbumReviewService(albumReviewRepo)
 	albumReviewHandler := handler.NewAlbumReviewHandler(albumReviewService)
 
+	analyticsRepo := repository.NewAnalyticsRepository(db)
+	analyticsService := service.NewAnalyticsService(analyticsRepo)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
+
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
 	{
@@ -139,10 +143,10 @@ func main() {
 		v1.DELETE("/challenges/:progressId/abandon", challengeHandler.AbandonChallenge)
 
 		// Analytics
-		v1.GET("/heatmap", handler.GetHeatmap)
-		v1.GET("/genres/ratings", handler.GetGenreRatings)
-		v1.GET("/taste-match/:userId", handler.GetTasteMatch)
-		v1.GET("/taste-match/:userId/common", handler.GetCommonWorks)
+		v1.GET("/heatmap", analyticsHandler.GetHeatmap)
+		v1.GET("/genres/ratings", analyticsHandler.GetGenreRatings)
+		v1.GET("/taste-match/:userId", analyticsHandler.GetTasteMatch)
+		v1.GET("/taste-match/:userId/common", analyticsHandler.GetCommonWorks)
 
 		// Gamification
 		v1.POST("/streaks/log", handler.LogStreak)
