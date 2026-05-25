@@ -1,7 +1,11 @@
-import { createClient } from './client'
-
 export async function getClientToken(): Promise<string> {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  return session?.access_token ?? ''
+  // Get token from cookie
+  const cookies = document.cookie.split('; ')
+  for (const cookie of cookies) {
+    const [name, value] = cookie.split('=')
+    if (name === 'auth_token') {
+      return decodeURIComponent(value)
+    }
+  }
+  return ''
 }

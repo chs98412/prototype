@@ -39,6 +39,10 @@ func main() {
 
 	r.GET("/health", handler.Health)
 
+	// 인증 API (public)
+	r.POST("/v1/auth/callback", handler.HandleOAuthCallback)
+	r.POST("/v1/auth/logout", handler.Logout)
+
 	// 음악 API (인증 미필요 - 공개 API)
 	r.POST("/v1/music/search", handler.SearchAlbums)
 	r.GET("/v1/music/albums/:id", handler.GetAlbumDetail)
@@ -47,9 +51,7 @@ func main() {
 	v1.Use(middleware.Auth())
 	{
 		// User
-		v1.GET("/me", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"user_id": c.GetString("userID")})
-		})
+		v1.GET("/me", handler.GetMe)
 
 		// Profile
 		v1.GET("/profile", handler.GetProfile)

@@ -1,5 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -7,10 +8,20 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/home'
 
   if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+    try {
+      const res = await fetch(`${API_URL}/v1/auth/callback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // Token is set in HttpOnly cookie by backend
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+    } catch (err) {
+      console.error('Auth callback failed:', err)
     }
   }
 

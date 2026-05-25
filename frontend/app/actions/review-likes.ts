@@ -1,17 +1,14 @@
 'use server'
 import { likeReview, unlikeReview, checkReviewLike } from '@/lib/api/client'
-import { createClient } from '@/lib/supabase/server'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { getServerToken } from '@/lib/supabase/getServerToken'
 
 export async function toggleReviewLike(reviewId: string) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const token = await getServerToken()
 
-  if (!session) throw new Error('Unauthorized')
+  if (!token) throw new Error('Unauthorized')
 
   // Check current state via API
-  const checkResponse = await checkReviewLike(reviewId, session.access_token)
+  const checkResponse = await checkReviewLike(reviewId, token)
   const isLiked = checkResponse.data?.liked ?? false
 
   if (isLiked) {

@@ -1,7 +1,9 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 function GoogleIcon() {
   return (
@@ -28,14 +30,12 @@ interface OAuthButtonsProps {
 
 export function OAuthButtons({ redirectTo }: OAuthButtonsProps) {
   const [loading, setLoading] = useState<'google' | 'kakao' | null>(null)
-  const supabase = createClient()
 
   async function signIn(provider: 'google' | 'kakao') {
     setLoading(provider)
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo },
-    })
+    const redirectUri = `${window.location.origin}/auth/callback`
+    const authUrl = `${SUPABASE_URL}/auth/v1/authorize?client_id=${SUPABASE_KEY}&redirect_to=${encodeURIComponent(redirectUri)}&response_type=code&provider=${provider}&scopes=profile%20email`
+    window.location.href = authUrl
   }
 
   return (

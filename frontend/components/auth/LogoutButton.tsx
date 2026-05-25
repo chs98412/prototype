@@ -1,14 +1,18 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export function LogoutButton() {
   const router = useRouter()
-  const supabase = createClient()
 
   async function logout() {
-    await supabase.auth.signOut()
+    try {
+      await fetch(`${API_URL}/v1/auth/logout`, { method: 'POST' })
+    } catch (err) {
+      console.error('Logout failed:', err)
+    }
     router.push('/')
   }
 
