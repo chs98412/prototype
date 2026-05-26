@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useFonts, NotoSerifKR_400Regular, NotoSerifKR_500Medium, NotoSerifKR_700Bold } from '@expo-google-fonts/noto-serif-kr'
 import { getToken } from '../lib/auth'
 import { apiCall } from '../lib/api-client'
 
@@ -10,19 +11,25 @@ export default function RootLayout() {
   const [isReady, setIsReady] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
+  const [fontsLoaded] = useFonts({
+    NotoSerifKR_400Regular,
+    NotoSerifKR_500Medium,
+    NotoSerifKR_700Bold,
+  })
+
   useEffect(() => {
     checkAuth()
   }, [])
 
   useEffect(() => {
-    if (!isReady) return
+    if (!isReady || !fontsLoaded) return
     const inAuthGroup = segments[0] === 'login' || segments[0] === '(auth)'
     if (!isLoggedIn && !inAuthGroup) {
       router.replace('/login')
     } else if (isLoggedIn && inAuthGroup) {
       router.replace('/(tabs)')
     }
-  }, [isReady, isLoggedIn, segments])
+  }, [isReady, isLoggedIn, segments, fontsLoaded])
 
   const checkAuth = async () => {
     try {
@@ -40,7 +47,7 @@ export default function RootLayout() {
     }
   }
 
-  if (!isReady) return null
+  if (!isReady || !fontsLoaded) return null
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

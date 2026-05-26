@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native'
 import { API_URL } from '../lib/config'
+import { Colors } from '../lib/design'
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
@@ -36,15 +37,31 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Logged</Text>
-      <Text style={styles.subtitle}>영화를 평가해보세요</Text>
+      {/* 브랜드 */}
+      <View style={styles.brand}>
+        <Text style={styles.brandName}>logged</Text>
+        <Text style={styles.brandDot}>.</Text>
+      </View>
+
+      <Text style={styles.tagline}>영화를 읽는 방식</Text>
+      <Text style={styles.desc}>
+        별점보다 문장을{'\n'}에세이, 한줄평, 로그로 기록합니다.
+      </Text>
+
+      {/* 구분선 */}
+      <View style={styles.divider} />
+
+      {/* 로그인 버튼 */}
       {loading ? (
-        <ActivityIndicator size="large" color="#0a0a0a" />
+        <ActivityIndicator size="large" color={Colors.olive} />
       ) : (
         <Pressable style={styles.button} onPress={handleGoogleLogin}>
-          <Text style={styles.buttonText}>Google로 로그인</Text>
+          <Text style={styles.buttonText}>Google로 시작하기</Text>
         </Pressable>
       )}
+
+      {/* 푸터 */}
+      <Text style={styles.footer}>logged · 평론 매거진 플랫폼</Text>
     </View>
   )
 }
@@ -54,29 +71,60 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#f7f6f3',
+    padding: 36,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#0a0a0a',
+  brand: { flexDirection: 'row', alignItems: 'baseline' },
+  brandName: {
+    fontFamily: 'NotoSerifKR_500Medium',
+    fontSize: 42,
+    color: Colors.inkSoft,
+    letterSpacing: -1,
   },
-  subtitle: {
+  brandDot: {
+    fontFamily: 'NotoSerifKR_500Medium',
+    fontSize: 42,
+    color: Colors.olive,
+    letterSpacing: -1,
+  },
+  tagline: {
+    marginTop: 16,
+    fontFamily: 'NotoSerifKR_400Regular',
     fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
+    color: Colors.inkSoft,
+    letterSpacing: 0.5,
+  },
+  desc: {
+    marginTop: 10,
+    fontSize: 13,
+    color: Colors.mute,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  divider: {
+    width: 40,
+    height: 1,
+    backgroundColor: Colors.olive,
+    marginVertical: 40,
+    opacity: 0.4,
   },
   button: {
-    backgroundColor: '#0a0a0a',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    backgroundColor: Colors.inkSoft,
+    paddingVertical: 14,
+    paddingHorizontal: 36,
+    borderRadius: 4,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 40,
+    fontSize: 10,
+    color: Colors.mute,
+    letterSpacing: 1,
   },
 })
