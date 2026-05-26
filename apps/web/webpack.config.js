@@ -17,14 +17,9 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(ts|tsx)$/,
+        test: /\.(ts|tsx|js|jsx)$/,
         use: 'babel-loader',
-        exclude: /node_modules/,
-      },
-      {
-        test: /\.(js|jsx)$/,
-        use: 'babel-loader',
-        exclude: /node_modules/,
+        exclude: /node_modules\/(?!(react-native|react-native-web|react-native-safe-area-context|@react-navigation)\/).*/,
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
