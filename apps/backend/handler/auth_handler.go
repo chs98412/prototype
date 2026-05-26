@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/chs98412/prototype/backend/domain/entity"
@@ -81,10 +82,9 @@ func (h *AuthHandler) InitiateGoogleOAuth(c *gin.Context) {
 	}
 
 	authURL := fmt.Sprintf(
-		"%s/auth/v1/authorize?provider=google&client_id=%s&redirect_to=%s&response_type=code",
+		"%s/auth/v1/authorize?provider=google&redirect_to=%s",
 		supabaseURL,
-		supabaseKey,
-		req.RedirectUri,
+		url.QueryEscape(req.RedirectUri),
 	)
 
 	c.JSON(http.StatusOK, gin.H{"auth_url": authURL})

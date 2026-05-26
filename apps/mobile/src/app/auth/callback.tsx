@@ -12,10 +12,21 @@ export default function AuthCallback() {
 
   const handleCallback = async () => {
     try {
-      const params = new URLSearchParams(
-        typeof window !== 'undefined' ? window.location.search : ''
-      )
-      const token = params.get('token')
+      if (typeof window === 'undefined') {
+        router.replace('/login')
+        return
+      }
+
+      // Supabase implicit flow: token comes in URL hash
+      const hash = window.location.hash
+      const params = new URLSearchParams(hash.replace('#', ''))
+      const accessToken = params.get('access_token')
+
+      // Also check query params as fallback
+      const queryParams = new URLSearchParams(window.location.search)
+      const queryToken = queryParams.get('token')
+
+      const token = accessToken || queryToken
 
       if (token) {
         await saveToken(token)
