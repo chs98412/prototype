@@ -21,7 +21,12 @@ func Auth() gin.HandlerFunc {
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Try both NEXT_PUBLIC_SUPABASE_URL and SUPABASE_URL
 		projectUrl := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
+		if projectUrl == "" {
+			projectUrl = os.Getenv("SUPABASE_URL")
+		}
 
 		// Parse JWT without signature verification (Supabase uses ES256)
 		// Verification is handled by Supabase, we just check expiration and issuer
