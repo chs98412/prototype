@@ -2,7 +2,10 @@
 
 import { getServerToken } from '@/lib/supabase/getServerToken'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? 'https://logged-backend.fly.dev'
+    : 'http://localhost:8080')
 
 export type RecordStatus = 'watched' | 'watching' | 'want'
 
