@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, Image, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
 import { getMovieDetail, getImageUrl } from '../lib/tmdb'
-import { apiCall } from '../lib/api/client'
+import { apiCall } from '../lib/api-client'
 
 interface MovieDetailScreenProps {
   movieId: number

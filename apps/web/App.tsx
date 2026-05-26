@@ -6,10 +6,11 @@ import { HomeScreen } from './screens/HomeScreen'
 import { SearchScreen } from './screens/SearchScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { MovieDetailScreen } from './screens/MovieDetailScreen'
-import { getCurrentUser } from './lib/supabase'
+import { getToken, clearToken } from './lib/auth'
+import { apiCall } from './lib/api-client'
 
 export default function App() {
-  const [user, setUser] = useState<any>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'profile'>('home')
   const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null)
@@ -20,10 +21,17 @@ export default function App() {
 
   const checkAuth = async () => {
     try {
-      const user = await getCurrentUser()
-      setUser(user)
+      const token = getToken()
+      if (token) {
+        // 토큰이 유효한지 백엔드에서 확인
+        const { data } = await apiCall('/v1/profile')
+        setIsLoggedIn(!!data)
+      } else {
+        setIsLoggedIn(false)
+      }
     } catch (error) {
       console.error('인증 확인 실패:', error)
+      setIsLoggedIn(false)
     } finally {
       setLoading(false)
     }
@@ -33,7 +41,7 @@ export default function App() {
     return <View style={{ flex: 1, backgroundColor: '#fff' }} />
   }
 
-  if (!user) {
+  if (!isLoggedIn) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <LoginScreen onLoginSuccess={() => checkAuth()} />
@@ -61,7 +69,8 @@ export default function App() {
         )}
         {activeTab === 'profile' && (
           <ProfileScreen onLogout={() => {
-            setUser(null)
+            clearToken()
+            setIsLoggedIn(false)
             setActiveTab('home')
           }} />
         )}

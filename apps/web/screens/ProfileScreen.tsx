@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
-import { apiCall } from '../lib/api/client'
-import { supabase } from '../lib/supabase'
+import { apiCall } from '../lib/api-client'
+import { clearToken } from '../lib/auth'
 
 export function ProfileScreen({ onLogout }: { onLogout: () => void }) {
   const [profile, setProfile] = useState<any>(null)
@@ -26,7 +26,7 @@ export function ProfileScreen({ onLogout }: { onLogout: () => void }) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    clearToken()
     onLogout()
   }
 

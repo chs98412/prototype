@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
-import { apiCall } from '../lib/api/client'
+import { apiCall } from '../lib/api-client'
 
 export function HomeScreen() {
   const [profile, setProfile] = useState<any>(null)

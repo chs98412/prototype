@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
-import { supabase } from '../lib/supabase'
+import { apiCall } from '../lib/api-client'
+import { saveToken, saveUser } from '../lib/auth'
 
 export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const [loading, setLoading] = useState(false)
@@ -8,13 +9,23 @@ export function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) 
   const handleGoogleLogin = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-        },
+      // 백엔드에서 OAuth 시작
+      const redirectUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/auth/callback`
+        : 'http://localhost:3000/auth/callback'
+
+      // 백엔드의 OAuth 초기화 엔드포인트 호출
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/v1/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redirect_uri: redirectUrl }),
       })
-      if (!error) onLoginSuccess()
+
+      const data = await response.json()
+      if (data.auth_url) {
+        // Supabase 인증 페이지로 리다이렉트
+        window.location.href = data.auth_url
+      }
     } catch (error) {
       console.error('로그인 실패:', error)
     } finally {
