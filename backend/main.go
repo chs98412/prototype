@@ -32,9 +32,6 @@ func main() {
 
 	r := gin.Default()
 
-	// Load templates for documentation
-	r.LoadHTMLGlob("templates/*")
-
 	allowOrigins := []string{
 		"http://localhost:3000",
 		"https://prototype-eta-ruby.vercel.app",
