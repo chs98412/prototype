@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from
 import { useRouter } from 'expo-router'
 import { apiCall } from '../../lib/api-client'
 import { clearToken } from '../../lib/auth'
+import { RecordTabs } from '../../components/RecordTabs'
 
 export default function ProfileScreen() {
   const router = useRouter()
@@ -54,6 +55,11 @@ export default function ProfileScreen() {
         <Pressable style={styles.button} onPress={handleLogout}>
           <Text style={styles.buttonText}>로그아웃</Text>
         </Pressable>
+
+        <View style={styles.records}>
+          <Text style={styles.sectionTitle}>내 기록</Text>
+          <RecordTabs />
+        </View>
       </ScrollView>
     </View>
   )
@@ -78,4 +84,6 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 12, color: '#666', marginTop: 4 },
   button: { backgroundColor: '#0a0a0a', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  records: { marginTop: 32 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#0a0a0a', marginBottom: 12 },
 })
