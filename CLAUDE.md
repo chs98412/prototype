@@ -54,6 +54,43 @@ Available agents (definitions in `.bmad-core/agents/`):
 4. Update story status immediately when it changes
 5. Architecture decisions go in `docs/architecture.md` as ADRs
 
+## Frontend Architecture Rules (MANDATORY)
+
+**All rules in DEVELOPMENT.md MUST be followed. No exceptions.**
+
+### 1. API-First Architecture (CRITICAL)
+- ❌ **Frontend NEVER directly calls Supabase** (see DEVELOPMENT.md line 10)
+- ✅ **All data access goes through backend API** (`/v1/*` endpoints)
+- ✅ Backend handles all database/auth operations
+- ✅ Frontend only calls REST API and stores JWT tokens
+
+### 2. Authentication Flow
+```
+Frontend                    Backend                 Supabase
+   |                          |                        |
+   +---POST /v1/auth/login---→|                        |
+   |                          +--OAuth Request-----→    |
+   |                          |←--JWT Token back--+     |
+   |←--JWT Token--------------+                        |
+   |    (store in localStorage)                       |
+   |                                                    |
+   +--GET /v1/profile---------→|                        |
+   | (with Authorization header)|--Query------→        |
+   |←--Profile Data------------+                       |
+```
+
+### 3. Token Management
+- Store JWT in `localStorage` (client-side only)
+- Add `Authorization: Bearer <token>` header to all API calls
+- Use `lib/auth.ts` for token save/retrieve/clear
+- Use `lib/api-client.ts` for API calls (auto-injects token)
+
+### 4. Never:
+- ❌ Import `@supabase/supabase-js` in frontend
+- ❌ Call `supabase.auth.*` directly
+- ❌ Query Supabase tables from frontend
+- ❌ Store `SUPABASE_KEY` in environment variables exposed to frontend
+
 ## Story Status Flow
 
 ```
