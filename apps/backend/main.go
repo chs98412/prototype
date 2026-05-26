@@ -143,6 +143,10 @@ func main() {
 		v1.DELETE("/reviews/:reviewId", reviewHandler.DeleteReview)
 		v1.GET("/tmdb/:tmdbId/reviews", reviewHandler.GetReviewsByTMDB)
 
+		// Movies (TMDB proxy)
+		v1.GET("/movies/search", handler.SearchMovies)
+		v1.GET("/movies/:tmdbId", handler.GetMovieDetail)
+
 		// Review Likes
 		v1.GET("/reviews/:reviewId/likes", reviewLikeHandler.GetLikes)
 		v1.GET("/reviews/:reviewId/like/status", reviewLikeHandler.CheckLike)

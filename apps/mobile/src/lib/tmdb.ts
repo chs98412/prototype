@@ -1,15 +1,13 @@
-const TMDB_BASE = 'https://api.themoviedb.org/3'
-const TMDB_KEY = process.env.EXPO_PUBLIC_TMDB_KEY || ''
+import { apiCall } from './api-client'
 
 export async function searchMovies(query: string) {
-  const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${query}&language=ko-KR`)
-  const data = await res.json()
-  return data.results || []
+  const { data } = await apiCall<{ results: any[] }>(`/v1/movies/search?q=${encodeURIComponent(query)}`)
+  return data?.results || []
 }
 
 export async function getMovieDetail(id: number) {
-  const res = await fetch(`${TMDB_BASE}/movie/${id}?api_key=${TMDB_KEY}&language=ko-KR`)
-  return res.json()
+  const { data } = await apiCall<any>(`/v1/movies/${id}`)
+  return data
 }
 
 export function getImageUrl(path: string | null): string | null {
