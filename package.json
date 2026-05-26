@@ -1,0 +1,16 @@
+{
+  "name": "logged",
+  "version": "1.0.0",
+  "description": "영화 평점 앱 - 웹 + 백엔드",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm run start",
+    "lint": "cd frontend && npm run lint",
+    "backend": "cd backend && go run main.go"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
