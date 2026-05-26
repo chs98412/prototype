@@ -1,7 +1,6 @@
 {
   "buildCommand": "cd apps/mobile && npm install --legacy-peer-deps && npx expo export --platform web",
-  "outputDirectory": "apps/mobile/dist",
-  "installCommand": "echo 'skip root install'",
-  "framework": null
+  "outputDirectory": "./apps/mobile/dist"
 }
+
 
