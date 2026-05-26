@@ -8,9 +8,10 @@
     "apps/*"
   ],
   "scripts": {
-    "web": "cd apps/web && npm run dev",
+    "web": "cd apps/mobile && npm run web",
     "mobile": "cd apps/mobile && npm start",
     "backend": "cd apps/backend && go run main.go",
+    "build:web": "cd apps/mobile && npx expo export --platform web",
     "api-client": "cd packages/api-client && npm run build",
     "types": "cd packages/types && npm run build"
   },
