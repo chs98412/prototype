@@ -1,7 +1,6 @@
 import { getServerToken } from '@/lib/auth/getServerToken'
 import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import { API_URL } from '@/lib/config'
-import { logger } from '@/lib/logger'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { Logo } from '@/design-system/components/Logo'
 import { BottomNav } from '@/components/layout/BottomNav'
@@ -12,9 +11,6 @@ import Link from 'next/link'
 const STREAK_MILESTONES = [7, 30, 100]
 
 export default async function HomePage() {
-  const pageStartTime = performance.now()
-  logger.info('홈 페이지 렌더링 시작')
-
   const token = await getServerToken()
   const user = await getCurrentUser()
 

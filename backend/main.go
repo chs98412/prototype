@@ -32,6 +32,9 @@ func main() {
 
 	r := gin.Default()
 
+	// Load templates for documentation
+	r.LoadHTMLGlob("templates/*")
+
 	allowOrigins := []string{
 		"http://localhost:3000",
 		"https://prototype-eta-ruby.vercel.app",
@@ -46,6 +49,9 @@ func main() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
+
+	// Add request logging middleware
+	r.Use(middleware.RequestLogger())
 
 	// Dependency Injection
 	db := database.NewClient()
@@ -105,6 +111,8 @@ func main() {
 
 	// Public endpoints
 	r.GET("/health", authHandler.Health)
+	r.GET("/docs", handler.DocsHandler)
+	r.GET("/api/openapi.json", handler.OpenAPIHandler)
 	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
 	r.POST("/v1/auth/logout", authHandler.Logout)
 
