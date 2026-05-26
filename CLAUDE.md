@@ -50,6 +50,13 @@ Available agents (definitions in `.bmad-core/agents/`):
 3. All code must have corresponding tests before a story is `Done`
 4. Update story status immediately when it changes
 5. Architecture decisions go in `docs/architecture.md` as ADRs
+6. **ALWAYS respond in Korean (한글)** — All communication must be in Korean
+
+## Language Convention
+
+- Respond to all requests in **Korean (한글)**
+- Documentation updates should maintain Korean for consistency with the existing codebase
+- Code comments can be in English or Korean
 
 ## Story Status Flow
 
