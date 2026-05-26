@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/service"
@@ -58,6 +60,34 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, profile)
+}
+
+// InitiateGoogleOAuth returns Google OAuth URL
+func (h *AuthHandler) InitiateGoogleOAuth(c *gin.Context) {
+	var req struct {
+		RedirectUri string `json:"redirect_uri"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "redirect_uri is required"})
+		return
+	}
+
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_ANON_KEY")
+
+	if supabaseURL == "" || supabaseKey == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "missing supabase config"})
+		return
+	}
+
+	authURL := fmt.Sprintf(
+		"%s/auth/v1/authorize?provider=google&client_id=%s&redirect_to=%s&response_type=code",
+		supabaseURL,
+		supabaseKey,
+		req.RedirectUri,
+	)
+
+	c.JSON(http.StatusOK, gin.H{"auth_url": authURL})
 }
 
 // Logout clears auth token

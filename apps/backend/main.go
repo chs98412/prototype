@@ -116,6 +116,7 @@ func main() {
 	r.GET("/health", authHandler.Health)
 	r.GET("/docs", handler.DocsHandler)
 	r.GET("/api/openapi.json", handler.OpenAPIHandler)
+	r.POST("/v1/auth/google", authHandler.InitiateGoogleOAuth)
 	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
 	r.POST("/v1/auth/logout", authHandler.Logout)
 
