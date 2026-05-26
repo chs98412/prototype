@@ -1,29 +1,32 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "@logged/web",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "react-native-web-run start",
+    "build": "react-native-web-run build",
+    "start": "react-native-web-run start",
+    "web": "react-native-web-run start --web",
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.4",
+    "@supabase/supabase-js": "^2.38.0",
+    "@react-navigation/native": "^6.1.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-native": "0.85.3",
+    "react-native-web": "~0.21.0",
+    "zustand": "^4.4.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-react": "^7.23.0",
     "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react-native": "^0.85.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  },
-  "optionalDependencies": {
-    "lightningcss-darwin-arm64": "^1.32.0"
+    "typescript": "^5",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^4.15.0"
   }
 }
