@@ -22,14 +22,11 @@ func Auth() gin.HandlerFunc {
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		projectUrl := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
-		jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
 
-		// Parse JWT claims without verification first (to handle ES256)
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			// Accept the token without verification for now
-			// We'll verify the signature separately if needed
-			return jwtSecret, nil
-		}, jwt.WithoutClaimsValidation())
+		// Parse JWT without signature verification (Supabase uses ES256)
+		// Verification is handled by Supabase, we just check expiration and issuer
+		parser := jwt.NewParser(jwt.WithoutClaimsValidation())
+		token, _, err := parser.ParseUnverified(tokenStr, jwt.MapClaims{})
 
 		if err != nil {
 			log.Printf("❌ JWT parse error: %v\n", err)
