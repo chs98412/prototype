@@ -1,0 +1,13 @@
+{
+  "name": "@logged/api-client",
+  "version": "1.0.0",
+  "description": "Supabase와 백엔드 API 통합 클라이언트",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  }
+}

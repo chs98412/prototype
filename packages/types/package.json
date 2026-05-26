@@ -1,0 +1,10 @@
+{
+  "name": "@logged/types",
+  "version": "1.0.0",
+  "description": "공유 TypeScript 타입",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  }
+}
