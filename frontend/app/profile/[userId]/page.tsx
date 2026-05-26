@@ -28,17 +28,19 @@ export default async function ProfileDetailPage({ params }: { params: Promise<Pa
   const currentUser = await getCurrentUser()
   const token = await getServerToken()
 
-  const profileRes = await fetch(`${API_URL}/v1/profile/${userId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
+  // Parallel fetch for better performance
+  const [profileRes, recordsRes] = await Promise.all([
+    fetch(`${API_URL}/v1/profile/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+    fetch(`${API_URL}/v1/records?user_id=${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+  ])
 
   if (!profileRes.ok) notFound()
 
   const profile: ProfileData = await profileRes.json()
-
-  const recordsRes = await fetch(`${API_URL}/v1/records?user_id=${userId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
   const records: Record[] = recordsRes.ok ? (await recordsRes.json()).data ?? [] : []
 
   const isSelf = currentUser?.id === userId

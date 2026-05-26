@@ -32,11 +32,13 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
 
   const review = (await reviewRes.json()) as Review
 
+  // Fetch TMDB data and likes in parallel
   const apiKey = process.env.TMDB_API_KEY
   let posterPath: string | null = null
   let contentTitle: string | null = null
 
-  if (apiKey) {
+  const fetchTmdbData = async () => {
+    if (!apiKey) return
     const endpoint = review.media_type === 'movie'
       ? `${TMDB_BASE}/movie/${review.tmdb_id}?api_key=${apiKey}&language=ko-KR`
       : `${TMDB_BASE}/tv/${review.tmdb_id}?api_key=${apiKey}&language=ko-KR`
@@ -51,10 +53,17 @@ export default async function ReviewPage({ params }: { params: Promise<Params> }
     }
   }
 
-  const likesRes = await fetch(`${API_URL}/v1/reviews/${id}/likes`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-  const initialCount = likesRes.ok ? (await likesRes.json()).count || 0 : 0
+  const fetchLikes = async () => {
+    const res = await fetch(`${API_URL}/v1/reviews/${id}/likes`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    return res.ok ? (await res.json()).count || 0 : 0
+  }
+
+  const [, initialCount] = await Promise.all([
+    fetchTmdbData(),
+    fetchLikes()
+  ])
   const initialLiked = false
 
   const previewTitle = review.content.slice(0, 80)
