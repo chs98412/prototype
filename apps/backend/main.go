@@ -38,7 +38,9 @@ func main() {
 
 	allowOrigins := []string{
 		"http://localhost:3000",
+		"http://localhost:3000/",
 		"https://prototype-eta-ruby.vercel.app",
+		"*",
 	}
 	if o := os.Getenv("ALLOWED_ORIGINS"); o != "" {
 		allowOrigins = append(allowOrigins, strings.Split(o, ",")...)
