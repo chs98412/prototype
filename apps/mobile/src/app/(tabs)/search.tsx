@@ -1,33 +1,75 @@
-import { View, Text, StyleSheet } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import React, { useState } from 'react'
+import { View, Text, TextInput, ScrollView, ActivityIndicator, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
+import { searchMovies } from '../../lib/tmdb'
+import { MovieCard } from '../../components/MovieCard'
 
 export default function SearchScreen() {
+  const router = useRouter()
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const handleSearch = async (text: string) => {
+    setQuery(text)
+    if (text.length < 2) {
+      setResults([])
+      return
+    }
+    setLoading(true)
+    try {
+      const movies = await searchMovies(text)
+      setResults(movies)
+    } catch (error) {
+      console.error('검색 실패:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>검색</Text>
-        <Text style={styles.description}>영화를 검색해보세요</Text>
+    <View style={styles.container}>
+      <View style={styles.searchBox}>
+        <TextInput
+          style={styles.input}
+          placeholder="영화 검색..."
+          placeholderTextColor="#999"
+          value={query}
+          onChangeText={handleSearch}
+        />
       </View>
-    </SafeAreaView>
+      <ScrollView style={styles.results}>
+        {loading && <ActivityIndicator size="large" color="#0a0a0a" />}
+        {results.map((movie) => (
+          <MovieCard
+            key={movie.id}
+            id={movie.id}
+            title={movie.title}
+            posterPath={movie.poster_path}
+            rating={movie.vote_average}
+            onPress={(id) => router.push(`/movie/${id}`)}
+          />
+        ))}
+        {!loading && results.length === 0 && query.length >= 2 && (
+          <Text style={styles.noResults}>검색 결과가 없습니다</Text>
+        )}
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  container: { flex: 1, backgroundColor: '#fff' },
+  searchBox: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
     color: '#0a0a0a',
   },
-  description: {
-    fontSize: 14,
-    color: '#666',
-  },
+  results: { padding: 16 },
+  noResults: { textAlign: 'center', color: '#666', marginTop: 24 },
 })
