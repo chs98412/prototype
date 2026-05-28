@@ -34,9 +34,49 @@ Available agents (definitions in `.bmad-core/agents/`):
 9. Repeat 4–8 per sprint
 ```
 
+## Work Log Rules (MANDATORY)
+
+작업을 수행할 때마다 반드시 작업 기록 파일을 생성한다.
+
+### 폴더 구조
+```
+work-logs/
+└── YYYY-MM-DD/
+    ├── fe/
+    │   └── [screen-name].md      # 화면 단위
+    └── be/
+        └── [api-name].md         # API 단위
+```
+
+- 날짜 폴더는 작업 당일 날짜로 생성
+- fe 작업은 화면 단위로 파일 생성 (한 작업에 여러 화면이 포함되면 화면마다 각각 파일 생성)
+- be 작업은 API 단위로 파일 생성
+- 같은 화면/API를 여러 번 수정하면 파일이 여러 개 생성될 수 있음 (덮어쓰지 않음)
+- 파일명이 중복되면 `-2`, `-3` 순서로 suffix 추가
+
+### 파일 형식
+```markdown
+# [자연어로 어떤 작업인지 한 줄 설명 — 클래스명/파일명 없이]
+
+[자세한 설명 — 어떤 파일을 어떻게 수정/생성했는지, 클래스명·파일명 포함]
+```
+
+예시:
+```markdown
+# 피드 화면을 에디토리얼 매거진 스타일로 전면 재설계
+
+Noto Serif KR 폰트와 올리브 액센트(#6a7040)를 적용하여 app/(tabs)/index.tsx를
+새로 작성했습니다. DayDivider, ReviewCard 하위 컴포넌트를 분리하고, 필터 칩과
+날짜 구분선을 추가했습니다.
+
+- `app/(tabs)/index.tsx` 재작성
+- `components/cards/ReviewCard.tsx` 신규 생성
+- `lib/design.ts` Colors, Font 토큰 정의
+```
+
 ## Project Conventions
 
-- **Language/Framework**: Next.js 16 (Frontend) + Go/Gin (Backend)
+- **Language/Framework**: Expo (React Native Web) (Frontend) + Go/Gin (Backend)
 - **Story format**: `.bmad-core/templates/story-template.md`
 - **PRD format**: `.bmad-core/templates/prd-template.md`
 - **Architecture format**: `.bmad-core/templates/architecture-template.md`

@@ -4,6 +4,63 @@ This document outlines architectural decisions, coding conventions, and developm
 
 ---
 
+## Frontend Code Structure
+
+### 폴더 구조
+```
+apps/mobile/src/
+├── app/                          # 화면 (Expo Router 파일 기반 라우팅)
+│   ├── (tabs)/
+│   │   ├── _layout.tsx           # 탭바 설정
+│   │   ├── index.tsx             # 피드
+│   │   ├── search.tsx            # 검색
+│   │   └── profile.tsx           # 프로필
+│   ├── _layout.tsx               # 루트 레이아웃 (폰트 로딩, 인증 체크)
+│   ├── login.tsx
+│   ├── auth/callback.tsx
+│   └── content/[type]/[id].tsx   # 콘텐츠 상세 (movie·book·music·performance 공통)
+│
+├── components/
+│   ├── ui/                       # 디자인 시스템 기본 요소 (Pill, Poster, Avatar, StarRow 등)
+│   └── cards/                    # 피드 카드 (EssayCard, RatingCard, LogCard 등)
+│
+├── lib/
+│   ├── api/                      # API 호출 (도메인별)
+│   │   ├── client.ts             # 베이스 fetch + 인증 헤더
+│   │   ├── reviews.ts
+│   │   ├── records.ts
+│   │   └── profile.ts
+│   ├── types/                    # 타입 정의 (도메인별)
+│   │   ├── content.ts            # ContentType = 'movie' | 'book' | 'music' | 'performance'
+│   │   ├── review.ts
+│   │   ├── record.ts
+│   │   └── profile.ts
+│   ├── auth.ts                   # 토큰 저장/불러오기/삭제
+│   ├── config.ts                 # API_URL 등 환경 설정
+│   └── design.ts                 # 색상·폰트 토큰 (Colors, Font)
+│
+└── hooks/                        # 커스텀 훅
+    ├── useProfile.ts
+    └── useReviews.ts
+```
+
+### 파일 내부 순서 (모든 파일 통일)
+```
+1. import
+2. type (이 파일 내부에서만 쓰는 타입)
+3. default export (메인 컴포넌트 또는 함수)
+4. 하위 컴포넌트 (이 파일에서만 쓰이는 것)
+5. const styles = StyleSheet.create(...)
+```
+
+### 확장 가능성
+콘텐츠 타입(영화·책·공연·음악)이 추가될 경우를 위해:
+- 라우팅은 `content/[type]/[id]` 구조로 공통화
+- `ContentType` 타입만 추가하면 기존 카드 컴포넌트는 변경 불필요
+- 콘텐츠 소스 API는 `lib/api/` 하위에 도메인별로 추가
+
+---
+
 ## Architecture Rules
 
 ### 1. API-First Architecture
