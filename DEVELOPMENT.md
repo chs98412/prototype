@@ -103,20 +103,6 @@ lib/types/
 
 No `any` types. Request/response types must be explicit interfaces.
 
-### 4. Server Components vs Client Components
-
-**Server Components (default):**
-- Direct database/external API calls allowed
-- Can use server-only code (credentials, private keys)
-- Must use `async` and await data before rendering
-- Use `getCurrentUser()` from `lib/auth/getCurrentUser.ts` for auth context
-
-**Client Components (`'use client'`):**
-- API calls only via `clientApiCall()` with existing JWT token
-- State management (useState, useEffect)
-- Event handlers (onClick, onChange)
-- Must explicitly import types from `lib/types/*`
-
 ---
 
 ## Centralized Configuration
@@ -209,33 +195,6 @@ logger.warn('Slow API response', { duration: '2000ms' })
 
 ---
 
-## Logging & Performance Monitoring
-
-### Logger Integration
-- **Client-side errors** → collected via Performance Monitor → sent to `/api/logs` → stored/forwarded to external service
-- **Server-side errors** → logged directly → external service
-- Development: all logs sent; Production: errors/warnings only
-
-### Performance Metrics
-- API call duration tracked automatically
-- Page render time logged via `logPageRender()`
-- Custom metrics via `logPerformanceMetric()`
-
-### External Services
-External API calls (Sentry, LogRocket, etc.) must route through **server endpoint `/api/logs`**, NOT from client:
-
-```typescript
-// ✅ CORRECT: Server-side
-async function sendToExternalService(log: LogEntry) {
-  await fetch('https://sentry.io/api/...', {
-    headers: { 'X-Sentry-Auth': `Sentry sentry_key=${process.env.SENTRY_KEY}` },
-  })
-}
-
-// ❌ WRONG: Never from client
-fetch('https://sentry.io/...', { /* API key exposed */ })
-```
-
 ---
 
 ## Commit & Branch Rules
@@ -289,25 +248,27 @@ changes
 
 ### Frontend Structure
 ```
-frontend/
-├─ app/                      # Next.js app router
-│  ├─ api/                   # Route handlers (/api/*)
-│  │  └─ logs/route.ts       # Log collection endpoint
-│  ├─ actions/               # Server Actions (mutations)
-│  └─ [routes]/              # Page routes
-├─ components/
-│  ├─ feed/                  # Feature: Friend feed
-│  ├─ content/               # Feature: Content display
-│  ├─ providers/             # App-level providers (PerformanceMonitor, etc.)
-│  └─ [feature]/             # Organized by feature
-├─ lib/
-│  ├─ api/                   # API functions by domain
-│  ├─ types/                 # TypeScript types by domain
-│  ├─ auth/                  # Authentication utilities
-│  ├─ config.ts              # Centralized configuration
-│  ├─ logger.ts              # Logging system
-│  └─ performance.ts         # Performance utilities
-└─ proxy.ts                  # Middleware for request interception
+apps/mobile/src/
+├── app/                          # 화면 (Expo Router 파일 기반 라우팅)
+│   ├── (tabs)/
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx             # 피드
+│   │   ├── search.tsx            # 검색
+│   │   └── profile.tsx           # 프로필
+│   ├── _layout.tsx               # 루트 레이아웃
+│   ├── login.tsx
+│   ├── auth/callback.tsx
+│   └── content/[type]/[id].tsx   # 콘텐츠 상세
+├── components/
+│   ├── ui/                       # 디자인 시스템 기본 요소
+│   └── cards/                    # 피드 카드
+├── lib/
+│   ├── api/                      # API 호출 (도메인별)
+│   ├── types/                    # 타입 정의 (도메인별)
+│   ├── auth.ts
+│   ├── config.ts
+│   └── design.ts
+└── hooks/
 ```
 
 ### Backend Structure (Go)
@@ -407,11 +368,10 @@ All responses follow standard envelope:
 
 ## Performance Best Practices
 
-### Next.js Optimization
-- Use `next/image` for all images (automatic optimization)
-- Implement ISR with `revalidate` for static pages
-- Server Components by default (more efficient)
-- Lazy load Client Components with `dynamic()`
+### Expo / React Native
+- Use `expo-image` for optimized image loading
+- Lazy load heavy components with `React.lazy()` or dynamic imports
+- Minimize re-renders with `useMemo`, `useCallback`
 
 ### Database Optimization
 - Use indexes on frequently queried columns
@@ -419,8 +379,7 @@ All responses follow standard envelope:
 - Cache repeated queries with appropriate TTL
 
 ### Monitoring
-- Track API response times in logs
-- Monitor page load times per route
+- Track API response times
 - Alert on errors (production: errors/warnings only)
 
 ---
