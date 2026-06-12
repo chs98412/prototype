@@ -1,8 +1,8 @@
-import { Routes, Route } from 'react-router-dom'
-import ProtectedRoute from './components/ProtectedRoute'
-import LoginPage from './pages/LoginPage'
-import AuthCallbackPage from './pages/AuthCallbackPage'
-import FeedPage from './pages/FeedPage'
+import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
+import FeedPage from './pages/FeedPage';
 
 export default function App() {
   return (
@@ -13,5 +13,5 @@ export default function App() {
         <Route path="/" element={<FeedPage />} />
       </Route>
     </Routes>
-  )
+  );
 }
