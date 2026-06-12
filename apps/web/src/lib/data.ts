@@ -68,6 +68,23 @@ export type ListItem = {
   likes: number;
 };
 
+export type Notification = {
+  id: string;
+  kind: 'like' | 'comment' | 'follow';
+  who: string;
+  body: string;
+  when: string;
+  essayId?: string;
+};
+
+export type FollowUser = {
+  id: string;
+  name: string;
+  handle: string;
+  bio: string;
+  following: boolean;
+};
+
 export type Me = {
   name: string;
   handle: string;
@@ -177,6 +194,22 @@ export const FEED_ITEMS: FeedItem[] = [
     blurb: '3시간 동안 도덕적 피로감이 쌓이는 영화. 그러나 마지막 강연 장면에서 카메라가 관객을 비추는 순간, 이 모든 게 우리의 거울임이 드러난다.',
     when: '4일 전', likes: 89, comments: 12 },
   { kind: 'essay', essayId: 'e5' },
+];
+
+export const NOTIFICATIONS: Notification[] = [
+  { id: 'n1', kind: 'like',    who: '최혁순',   body: '님이 게시글에 좋아요를 눌렀습니다.',              when: '1일 전', essayId: 'e1' },
+  { id: 'n2', kind: 'comment', who: '최혁순',   body: '님이 "글 더럽게 어렵게 쓰네" 라고 코멘트를 남겼습니다.', when: '1일 전', essayId: 'e1' },
+  { id: 'n3', kind: 'follow',  who: '레이첼',   body: '님이 회원님을 팔로우하기 시작했습니다.',           when: '3일 전' },
+  { id: 'n4', kind: 'like',    who: '김윤희',   body: '님이 회원님의 평론을 보관함에 저장했습니다.',       when: '1주 전', essayId: 'e4' },
+  { id: 'n5', kind: 'comment', who: '미리보기', body: '님이 "이 문장 너무 좋아요" 라고 코멘트를 남겼습니다.', when: '1주 전', essayId: 'e1' },
+];
+
+export const FOLLOWS: FollowUser[] = [
+  { id: 'u1', name: '김윤희',   handle: '@yunhee',  bio: '필름 보러 가는 사람',       following: true  },
+  { id: 'u2', name: '최혁순',   handle: '@hyukk',   bio: '비평은 사랑의 다른 이름',   following: false },
+  { id: 'u3', name: '레이첼',   handle: '@rachel',  bio: '스코세이지 키드',           following: true  },
+  { id: 'u4', name: '미리보기', handle: '@preview', bio: '감독판만 봅니다',           following: true  },
+  { id: 'u5', name: '지윤',     handle: '@jiyoon',  bio: '에세이 쓰는 영사기사',      following: false },
 ];
 
 export const ME: Me = {

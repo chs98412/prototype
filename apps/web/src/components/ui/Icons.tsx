@@ -98,3 +98,30 @@ export function BackIcon({ size = 24, stroke = '#1f1f1f', strokeWidth = 1.8 }: P
     </svg>
   );
 }
+
+export function PlusIcon({ size = 18, stroke = '#9a9a9a', strokeWidth = 1.8 }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 5v14M5 12h14" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function CameraIcon({ size = 14, stroke = '#1f1f1f', strokeWidth = 1.6 }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="7" width="20" height="14" rx="2" stroke={stroke} strokeWidth={strokeWidth} />
+      <circle cx="12" cy="14" r="3.5" stroke={stroke} strokeWidth={strokeWidth} />
+      <path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke={stroke} strokeWidth={strokeWidth} />
+    </svg>
+  );
+}
+
+export function SparkleIcon({ size = 14, stroke = '#1f1f1f', strokeWidth = 1.6 }: P) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+        stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
+    </svg>
+  );
+}
