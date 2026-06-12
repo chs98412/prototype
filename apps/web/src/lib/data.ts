@@ -68,6 +68,15 @@ export type ListItem = {
   likes: number;
 };
 
+export type Me = {
+  name: string;
+  handle: string;
+  bio: string;
+  avatar: string;
+  stats: { films: number; logs: number; following: number; followers: number };
+  watched: string[];
+};
+
 export type FeedItem =
   | { kind: 'day'; when: string }
   | { kind: 'essay'; essayId: string }
@@ -169,3 +178,12 @@ export const FEED_ITEMS: FeedItem[] = [
     when: '4일 전', likes: 89, comments: 12 },
   { kind: 'essay', essayId: 'e5' },
 ];
+
+export const ME: Me = {
+  name: '순이',
+  handle: '@suni',
+  avatar: img('profile.jpg'),
+  bio: '영화를 존나게 좋아합니다\n진짜루요',
+  stats: { films: 512, logs: 241, following: 112, followers: 312 },
+  watched: [img('poster-rachel.png'), img('poster-extra1.png'), img('poster-extra2.png'), img('poster-extra3.png'), img('poster-yuhi.png'), img('poster-extra4.png'), img('poster-feed.png')],
+};
