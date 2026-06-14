@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --ink: #000000;
+  --ink-soft: #1f1f1f;
+  --olive: #6a7040;
+  --mute: #9a9a9a;
+  --line: #d5d5d5;
+  --line-soft: #ededed;
+  --bg: #ffffff;
+  --bg-warm: #f7f6f3;
+
+  --serif: 'Noto Serif KR', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink-soft);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
