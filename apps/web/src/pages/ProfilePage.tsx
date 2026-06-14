@@ -32,14 +32,16 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('ProfilePage useEffect triggered');
     Promise.all([
-      api.get<ProfileDTO>('/v1/me').catch(() => null),
-      api.get<RecordStatsDTO>('/v1/records/stats').catch(() => null),
-      api.get<ApiList<ReviewDTO>>('/v1/reviews?limit=20').catch(() => ({ data: [], count: 0 })),
-      api.get<ApiList<RecordDTO>>('/v1/records?limit=50&status=watched').catch(() => ({ data: [], count: 0 })),
-      api.get<ApiList<unknown>>('/v1/follows?limit=1').catch(() => ({ data: [], count: 0 })),
-      api.get<ApiList<unknown>>('/v1/followers?limit=1').catch(() => ({ data: [], count: 0 })),
+      api.get<ProfileDTO>('/v1/me').catch(e => { console.error('me error:', e); return null; }),
+      api.get<RecordStatsDTO>('/v1/records/stats').catch(e => { console.error('stats error:', e); return null; }),
+      api.get<ApiList<ReviewDTO>>('/v1/reviews?limit=20').catch(e => { console.error('reviews error:', e); return { data: [], count: 0 }; }),
+      api.get<ApiList<RecordDTO>>('/v1/records?limit=50&status=watched').catch(e => { console.error('records error:', e); return { data: [], count: 0 }; }),
+      api.get<ApiList<unknown>>('/v1/follows?limit=1').catch(e => { console.error('follows error:', e); return { data: [], count: 0 }; }),
+      api.get<ApiList<unknown>>('/v1/followers?limit=1').catch(e => { console.error('followers error:', e); return { data: [], count: 0 }; }),
     ]).then(([profile, stats, reviews, records, follows, followers]) => {
+      console.log('API responses:', { profile, stats, reviews, records });
       setState({
         profile: profile as ProfileDTO | null,
         stats: stats as RecordStatsDTO | null,
