@@ -122,11 +122,12 @@ func (r *ReviewRepositoryImpl) GetUserReviewByTMDB(ctx context.Context, userID s
 		LEFT JOIN movies m ON m.id = rev.tmdb_id
 		WHERE rev.user_id = ? AND rev.tmdb_id = ?
 	`
-	if err := r.db.WithContext(ctx).Raw(sql, userID, tmdbID).Scan(review).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("failed to query review: %w", err)
+	result := r.db.WithContext(ctx).Raw(sql, userID, tmdbID).Scan(review)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to query review: %w", result.Error)
+	}
+	if result.RowsAffected == 0 || review.ID == "" {
+		return nil, domain.ErrNotFound
 	}
 	return review, nil
 }
