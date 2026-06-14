@@ -189,8 +189,28 @@ export default function EditorPage() {
   const [listPicks, setListPicks] = useState<string[]>([]);
   const [movieId, setMovieId] = useState(MOVIES[0].id);
 
-  // Use MOVIE_BY_ID for now (LogForm expects Movie type, not TmdbMovieDetail)
-  const movie = MOVIE_BY_ID[movieId];
+  // If coming from MoviePage, convert TmdbMovieDetail to mock Movie for display
+  let movie = MOVIE_BY_ID[movieId];
+  if (locationState.movie) {
+    const tmdb = locationState.movie;
+    // Create a mock Movie object from TMDB data for UI display
+    movie = {
+      id: String(tmdb.id),
+      title: tmdb.title,
+      poster: tmdb.poster_path
+        ? `https://image.tmdb.org/t/p/w185${tmdb.poster_path}`
+        : '/images/poster-feed.png',
+      backdrop: tmdb.backdrop_path
+        ? `https://image.tmdb.org/t/p/w500${tmdb.backdrop_path}`
+        : undefined,
+      year: parseInt(tmdb.release_date?.split('-')[0] || '0'),
+      genre: tmdb.genres.map(g => g.name).join(', '),
+      country: '-',
+      runtime: `${tmdb.runtime}분`,
+      rating: tmdb.vote_average.toFixed(1),
+      director: tmdb.credits?.crew.find(c => c.job === 'Director')?.name || '-',
+    };
+  }
 
   const currentType = TYPES.find(t => t.id === kind);
 
@@ -223,7 +243,7 @@ export default function EditorPage() {
         ))}
       </div>
 
-      {/* Movie picker (for non-list) */}
+      {/* Movie display (no dropdown if from MoviePage) */}
       {kind !== 'list' && (
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 22px', borderBottom: '1px solid var(--line-soft)' }}>
           <div style={{ width: 50, height: 68, borderRadius: 2, flexShrink: 0, background: `url(${movie.poster}) center / cover no-repeat #eee` }} />
@@ -232,13 +252,15 @@ export default function EditorPage() {
             <div style={{ fontFamily: 'var(--serif)', fontSize: 15, fontWeight: 500 }}>{movie.title}</div>
             <div style={{ fontSize: 10, color: ACCENT }}>{movie.year} · {movie.director}</div>
           </div>
-          <select value={movieId} onChange={e => setMovieId(e.target.value)} style={{
-            background: 'transparent', border: '0.5px solid var(--line-soft)',
-            padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-            fontSize: 10, fontWeight: 500, color: ACCENT, fontFamily: 'var(--sans)',
-          }}>
-            {MOVIES.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
-          </select>
+          {!locationState.movie && (
+            <select value={movieId} onChange={e => setMovieId(e.target.value)} style={{
+              background: 'transparent', border: '0.5px solid var(--line-soft)',
+              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+              fontSize: 10, fontWeight: 500, color: ACCENT, fontFamily: 'var(--sans)',
+            }}>
+              {MOVIES.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
+            </select>
+          )}
         </div>
       )}
 
