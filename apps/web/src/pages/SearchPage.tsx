@@ -1,17 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
-import { MOVIES } from '../lib/data';
 import { SearchIcon, PlusIcon } from '../components/ui/Icons';
+import { api } from '../lib/api';
+import type { TmdbSearchResult, TmdbSearchResponse } from '../lib/apiTypes';
 
 const ACCENT = '#6a7040';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w185';
 const RECENT = ['스즈메의 문단속', '30일', '에에올', '괴물'];
 
 export default function SearchPage() {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
+  const [results, setResults] = useState<TmdbSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const results = MOVIES.filter(m => !q || m.title.toLowerCase().includes(q.toLowerCase()));
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!q.trim()) { setResults([]); return; }
+
+    debounceRef.current = setTimeout(() => {
+      setLoading(true);
+      api.get<TmdbSearchResponse>(`/v1/movies/search?q=${encodeURIComponent(q)}`)
+        .then(res => setResults(res.results ?? []))
+        .catch(() => setResults([]))
+        .finally(() => setLoading(false));
+    }, 350);
+  }, [q]);
 
   return (
     <Layout>
@@ -65,14 +81,20 @@ export default function SearchPage() {
               이번 주 추천
             </div>
             <div style={{ marginTop: 4, fontSize: 11, color: ACCENT, letterSpacing: '0.06em' }}>
-              에디터의 픽 · {results.length}편
+              에디터의 픽 · 검색어를 입력하세요
             </div>
           </div>
         )}
       </div>
 
       <div style={{ marginTop: 22 }}>
-        {results.map((m, idx) => (
+        {loading && (
+          <div style={{ padding: '40px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
+            검색 중…
+          </div>
+        )}
+
+        {!loading && results.map((m, idx) => (
           <button key={m.id} onClick={() => navigate(`/movie/${m.id}`)} style={{
             display: 'flex', gap: 18, alignItems: 'center',
             padding: '16px 22px', width: '100%',
@@ -81,21 +103,24 @@ export default function SearchPage() {
           }}>
             <div style={{
               width: 70, height: 94, borderRadius: 3, flexShrink: 0,
-              background: `url(${m.poster}) center / cover no-repeat #eee`,
+              background: m.poster_path
+                ? `url(${TMDB_IMG}${m.poster_path}) center / cover no-repeat #eee`
+                : '#eee',
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500, letterSpacing: '-0.01em' }}>
                 {m.title}
               </div>
               <div style={{ marginTop: 8, fontSize: 11, color: ACCENT, lineHeight: 1.55, fontWeight: 500 }}>
-                {m.year} · {m.genre} · {m.country}<br />
-                {m.runtime} · {m.rating}
+                {m.release_date?.slice(0, 4)}
+                {m.vote_average > 0 && ` · ★ ${m.vote_average.toFixed(1)}`}
               </div>
             </div>
             <PlusIcon size={18} stroke="#9a9a9a" strokeWidth={1.8} />
           </button>
         ))}
-        {results.length === 0 && (
+
+        {!loading && q && results.length === 0 && (
           <div style={{ padding: '60px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
             결과가 없습니다.
           </div>

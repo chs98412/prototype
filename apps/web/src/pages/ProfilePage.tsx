@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
-import { ME, ESSAY_BY_ID, MOVIES } from '../lib/data';
+import { api } from '../lib/api';
+import type { ProfileDTO, RecordStatsDTO, ReviewDTO, RecordDTO, ApiList } from '../lib/apiTypes';
 
 type Tab = 'watched' | 'essays' | 'lists';
 
@@ -12,9 +13,49 @@ const LISTS = [
   { title: '어디에도 없는 풍경', count: 9, cover: '/images/poster-feed.png' },
 ];
 
+type ProfileState = {
+  profile: ProfileDTO | null
+  stats: RecordStatsDTO | null
+  reviews: ReviewDTO[]
+  records: RecordDTO[]
+  followingCount: number
+  followersCount: number
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('watched');
+  const [state, setState] = useState<ProfileState>({
+    profile: null, stats: null, reviews: [], records: [],
+    followingCount: 0, followersCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.get<ProfileDTO>('/v1/me').catch(() => null),
+      api.get<RecordStatsDTO>('/v1/records/stats').catch(() => null),
+      api.get<ApiList<ReviewDTO>>('/v1/reviews?limit=20').catch(() => ({ data: [], count: 0 })),
+      api.get<ApiList<RecordDTO>>('/v1/records?limit=50&status=watched').catch(() => ({ data: [], count: 0 })),
+      api.get<ApiList<unknown>>('/v1/follows?limit=1').catch(() => ({ data: [], count: 0 })),
+      api.get<ApiList<unknown>>('/v1/followers?limit=1').catch(() => ({ data: [], count: 0 })),
+    ]).then(([profile, stats, reviews, records, follows, followers]) => {
+      setState({
+        profile: profile as ProfileDTO | null,
+        stats: stats as RecordStatsDTO | null,
+        reviews: (reviews as ApiList<ReviewDTO>).data ?? [],
+        records: (records as ApiList<RecordDTO>).data ?? [],
+        followingCount: (follows as ApiList<unknown>).count ?? 0,
+        followersCount: (followers as ApiList<unknown>).count ?? 0,
+      });
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const { profile, stats, reviews, records, followingCount, followersCount } = state;
+  const displayName = profile?.display_name || '사용자';
+  const handle = profile ? `@${profile.user_id.slice(0, 8)}` : '';
+  const bio = profile?.bio || '';
+  const avatarUrl = profile?.avatar_url || '';
 
   return (
     <Layout>
@@ -23,22 +64,30 @@ export default function ProfilePage() {
         <div style={{ padding: '32px 22px 0', textAlign: 'center' }}>
           <div style={{
             width: 86, height: 86, borderRadius: '50%',
-            background: `url(${ME.avatar}) center / cover no-repeat #ddd`,
+            background: avatarUrl
+              ? `url(${avatarUrl}) center / cover no-repeat #ddd`
+              : '#ddd',
             margin: '0 auto',
             boxShadow: '0 0 0 2px #fff, 0 0 0 3.5px #6a7040',
             flexShrink: 0,
-          }} />
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 32, color: '#aaa',
+          }}>
+            {!avatarUrl && '👤'}
+          </div>
           <div style={{
             marginTop: 16, fontFamily: 'var(--serif)', fontSize: 22,
             fontWeight: 500, letterSpacing: '-0.01em',
-          }}>{ME.name}</div>
+          }}>{loading ? '…' : displayName}</div>
           <div style={{ marginTop: 2, fontSize: 11, color: '#6a7040', letterSpacing: '0.06em' }}>
-            {ME.handle}
+            {handle}
           </div>
-          <p style={{
-            margin: '14px auto 0', maxWidth: 240, fontFamily: 'var(--serif)',
-            fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap', color: '#1f1f1f',
-          }}>{ME.bio}</p>
+          {bio && (
+            <p style={{
+              margin: '14px auto 0', maxWidth: 240, fontFamily: 'var(--serif)',
+              fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap', color: '#1f1f1f',
+            }}>{bio}</p>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 14 }}>
             <button
@@ -69,10 +118,10 @@ export default function ProfilePage() {
           border: '1px solid var(--line-soft)', borderRadius: 4,
         }}>
           {[
-            ['영화', ME.stats.films],
-            ['기록', ME.stats.logs],
-            ['팔로잉', ME.stats.following],
-            ['팔로워', ME.stats.followers],
+            ['영화', stats?.movies_watched ?? records.length],
+            ['기록', stats?.total_records ?? 0],
+            ['팔로잉', followingCount],
+            ['팔로워', followersCount],
           ].map(([k, v], i) => (
             <div
               key={k}
@@ -88,7 +137,7 @@ export default function ProfilePage() {
               <div style={{
                 fontFamily: 'var(--serif)', fontSize: 18, fontWeight: 500,
                 letterSpacing: '-0.01em',
-              }}>{v}</div>
+              }}>{loading ? '…' : v}</div>
               <div style={{ marginTop: 4, fontSize: 9.5, color: '#666', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 {k}
               </div>
@@ -125,55 +174,69 @@ export default function ProfilePage() {
         {/* Tab content */}
         <div style={{ padding: '16px 22px 40px' }}>
           {tab === 'watched' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
-              {ME.watched.map((poster, i) => (
-                <div
-                  key={i}
-                  style={{
-                    aspectRatio: '3 / 4', borderRadius: 2,
-                    background: `url(${poster}) center / cover no-repeat #eee`,
-                    cursor: 'pointer',
-                  }}
-                />
-              ))}
+            <div>
+              {records.length === 0 && !loading && (
+                <div style={{ textAlign: 'center', color: 'var(--mute)', fontSize: 13, padding: '40px 0' }}>
+                  시청 기록이 없습니다.
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
+                {records.map((rec) => (
+                  <div
+                    key={rec.id}
+                    onClick={() => navigate(`/movie/${rec.tmdb_id}`)}
+                    style={{
+                      aspectRatio: '3 / 4', borderRadius: 2,
+                      background: '#e8e4df',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, color: '#aaa',
+                    }}
+                  >
+                    {rec.tmdb_id}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {tab === 'essays' && (
             <div>
-              {Object.values(ESSAY_BY_ID).slice(0, 3).map(essay => {
-                const movie = MOVIES.find(m => m.id === essay.movieId);
-                return (
-                  <button
-                    key={essay.id}
-                    onClick={() => navigate(`/essay/${essay.id}`)}
-                    style={{
-                      display: 'flex', gap: 12, width: '100%', textAlign: 'left',
-                      padding: '12px 0', borderBottom: '1px solid var(--line-soft)',
-                      background: 'transparent', border: 0, cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{
-                      width: 50, height: 68, borderRadius: 2,
-                      background: `url(${movie?.poster}) center / cover no-repeat #eee`,
-                      flexShrink: 0,
-                    }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--serif)', fontSize: 13, fontWeight: 500 }}>
-                        {essay.title}
-                      </div>
-                      <div style={{
-                        marginTop: 4, fontSize: 11, color: '#444', fontFamily: 'var(--serif)',
-                        lineHeight: 1.5,
-                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                      } as React.CSSProperties}>{essay.excerpt}</div>
-                      <div style={{ marginTop: 6, fontSize: 10, color: '#6a7040' }}>
-                        {essay.date} · ♥ {essay.likes}
-                      </div>
+              {reviews.length === 0 && !loading && (
+                <div style={{ textAlign: 'center', color: 'var(--mute)', fontSize: 13, padding: '40px 0' }}>
+                  작성한 평론이 없습니다.
+                </div>
+              )}
+              {reviews.map(review => (
+                <button
+                  key={review.id}
+                  onClick={() => navigate(`/post/review/${review.id}`)}
+                  style={{
+                    display: 'flex', gap: 12, width: '100%', textAlign: 'left',
+                    padding: '12px 0', borderBottom: '1px solid var(--line-soft)',
+                    background: 'transparent', border: 0, cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: 50, height: 68, borderRadius: 2,
+                    background: '#e8e4df', flexShrink: 0,
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--serif)', fontSize: 13, fontWeight: 500 }}>
+                      TMDB #{review.tmdb_id}
                     </div>
-                  </button>
-                );
-              })}
+                    <div style={{
+                      marginTop: 4, fontSize: 11, color: '#444', fontFamily: 'var(--serif)',
+                      lineHeight: 1.5,
+                      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    } as React.CSSProperties}>{review.content}</div>
+                    <div style={{ marginTop: 6, fontSize: 10, color: '#6a7040' }}>
+                      {new Date(review.created_at).toLocaleDateString('ko-KR')} · ♥ {review.like_count}
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
 

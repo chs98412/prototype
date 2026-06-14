@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Layout from '../components/ui/Layout';
-import { NOTIFICATIONS, ME } from '../lib/data';
 import { EllipsisIcon } from '../components/ui/Icons';
+import { api } from '../lib/api';
+import type { NotificationDTO, ApiList } from '../lib/apiTypes';
 
 const ACCENT = '#6a7040';
+
 type FilterTab = '전체' | '좋아요' | '코멘트' | '팔로우';
 const TABS: FilterTab[] = ['전체', '좋아요', '코멘트', '팔로우'];
-const KIND_MAP: Record<FilterTab, string | null> = {
+
+const KIND_FILTER: Record<FilterTab, string | null> = {
   '전체': null, '좋아요': 'like', '코멘트': 'comment', '팔로우': 'follow',
 };
 
@@ -17,14 +19,36 @@ const DOT_COLOR: Record<string, string> = {
   follow: '#5887d6',
 };
 
-export default function AlertsPage() {
-  const navigate = useNavigate();
-  const [tab, setTab] = useState<FilterTab>('전체');
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}분 전`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}시간 전`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}일 전`;
+  if (days < 30) return `${Math.floor(days / 7)}주 전`;
+  return new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+}
 
-  const visible = NOTIFICATIONS.filter(n => {
-    const kind = KIND_MAP[tab];
-    return kind === null || n.kind === kind;
+export default function AlertsPage() {
+  const [tab, setTab] = useState<FilterTab>('전체');
+  const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get<ApiList<NotificationDTO>>('/v1/notifications?limit=50')
+      .then(res => setNotifications(res.data ?? []))
+      .catch(() => setNotifications([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const visible = notifications.filter(n => {
+    const kind = KIND_FILTER[tab];
+    return kind === null || n.type === kind;
   });
+
+  const newCount = notifications.length;
 
   return (
     <Layout>
@@ -33,7 +57,7 @@ export default function AlertsPage() {
           알림
         </div>
         <div style={{ marginTop: 6, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          {NOTIFICATIONS.length} new · 이번 주
+          {newCount > 0 ? `${newCount} new · 최근` : '새 알림 없음'}
         </div>
       </div>
 
@@ -50,35 +74,43 @@ export default function AlertsPage() {
         ))}
       </div>
 
+      {loading && (
+        <div style={{ padding: '40px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
+          불러오는 중…
+        </div>
+      )}
+
       <div style={{ marginTop: 12 }}>
-        {visible.map(n => (
+        {!loading && visible.map(n => (
           <div
             key={n.id}
-            onClick={() => n.essayId && navigate(`/essay/${n.essayId}`)}
             style={{
               display: 'flex', gap: 14, padding: '14px 22px',
               borderBottom: '1px solid var(--line-soft)',
-              background: n.id === 'n1' ? 'rgba(106,112,64,0.04)' : 'transparent',
-              cursor: n.essayId ? 'pointer' : 'default',
+              background: 'transparent',
             }}
           >
             <div style={{
               width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-              background: `url(${ME.avatar}) center / cover no-repeat #ddd`,
-            }} />
+              background: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, color: '#999',
+            }}>
+              {n.type === 'like' ? '♥' : n.type === 'comment' ? '💬' : '👤'}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12.5, lineHeight: 1.55, color: '#1f1f1f' }}>
-                <strong style={{ fontWeight: 600 }}>{n.who}</strong>{n.body}
+                {n.content}
               </div>
               <div style={{ marginTop: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
                 <span style={{
                   width: 6, height: 6, borderRadius: 999,
-                  background: DOT_COLOR[n.kind] || ACCENT,
+                  background: DOT_COLOR[n.type] || ACCENT,
+                  flexShrink: 0,
                 }} />
-                <span style={{ fontSize: 10, color: 'var(--mute)' }}>{n.when}</span>
+                <span style={{ fontSize: 10, color: 'var(--mute)' }}>{timeAgo(n.created_at)}</span>
               </div>
             </div>
-            {n.kind === 'follow' ? (
+            {n.type === 'follow' ? (
               <button style={{
                 alignSelf: 'center', border: '0.5px solid #1f1f1f',
                 background: '#1f1f1f', color: '#fff',
@@ -92,6 +124,12 @@ export default function AlertsPage() {
             )}
           </div>
         ))}
+
+        {!loading && visible.length === 0 && (
+          <div style={{ padding: '60px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
+            알림이 없습니다.
+          </div>
+        )}
       </div>
     </Layout>
   );
