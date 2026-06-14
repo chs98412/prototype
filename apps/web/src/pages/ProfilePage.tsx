@@ -187,13 +187,15 @@ export default function ProfilePage() {
                     onClick={() => navigate(`/movie/${rec.tmdb_id}`)}
                     style={{
                       aspectRatio: '3 / 4', borderRadius: 2,
-                      background: '#e8e4df',
+                      background: rec.poster_path
+                        ? `url(https://image.tmdb.org/t/p/w185${rec.poster_path}) center / cover no-repeat #e8e4df`
+                        : '#e8e4df',
                       cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 9, color: '#aaa',
                     }}
                   >
-                    {rec.tmdb_id}
+                    {!rec.poster_path && rec.tmdb_id}
                   </div>
                 ))}
               </div>
@@ -210,7 +212,7 @@ export default function ProfilePage() {
               {reviews.map(review => (
                 <button
                   key={review.id}
-                  onClick={() => navigate(`/post/review/${review.id}`)}
+                  onClick={() => navigate(`/post/${review.id}`)}
                   style={{
                     display: 'flex', gap: 12, width: '100%', textAlign: 'left',
                     padding: '12px 0', borderBottom: '1px solid var(--line-soft)',
@@ -219,11 +221,14 @@ export default function ProfilePage() {
                 >
                   <div style={{
                     width: 50, height: 68, borderRadius: 2,
-                    background: '#e8e4df', flexShrink: 0,
+                    background: review.poster_path
+                      ? `url(https://image.tmdb.org/t/p/w185${review.poster_path}) center / cover no-repeat #e8e4df`
+                      : '#e8e4df',
+                    flexShrink: 0,
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--serif)', fontSize: 13, fontWeight: 500 }}>
-                      TMDB #{review.tmdb_id}
+                      {review.title || `TMDB #${review.tmdb_id}`}
                     </div>
                     <div style={{
                       marginTop: 4, fontSize: 11, color: '#444', fontFamily: 'var(--serif)',

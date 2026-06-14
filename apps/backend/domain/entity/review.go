@@ -7,15 +7,17 @@ import (
 
 // Review is the domain entity for user reviews
 type Review struct {
-	ID        string    `gorm:"primaryKey;column:id"`
-	UserID    string    `gorm:"index;column:user_id"`
-	TMDBID    int       `gorm:"index;column:tmdb_id"`
-	MediaType string    `gorm:"column:media_type"`
-	Content   string    `gorm:"column:content"`
-	Spoiler   bool      `gorm:"column:is_spoiler"`
-	LikeCount int       `gorm:"column:like_count"`
-	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
+	ID         string    `gorm:"primaryKey;column:id"`
+	UserID     string    `gorm:"index;column:user_id"`
+	TMDBID     int       `gorm:"index;column:tmdb_id"`
+	MediaType  string    `gorm:"column:media_type"`
+	Content    string    `gorm:"column:content"`
+	Spoiler    bool      `gorm:"column:is_spoiler"`
+	LikeCount  int       `gorm:"column:like_count"`
+	Title      string    `gorm:"-"`
+	PosterPath string    `gorm:"-"`
+	CreatedAt  time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt  time.Time `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
@@ -67,27 +69,31 @@ func (r *Review) DecrementLike() {
 // ToDTO converts entity to response DTO
 func (r *Review) ToDTO() *ReviewDTO {
 	return &ReviewDTO{
-		ID:        r.ID,
-		UserID:    r.UserID,
-		TMDBID:    r.TMDBID,
-		MediaType: r.MediaType,
-		Content:   r.Content,
-		Spoiler:   r.Spoiler,
-		LikeCount: r.LikeCount,
-		CreatedAt: r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
+		ID:         r.ID,
+		UserID:     r.UserID,
+		TMDBID:     r.TMDBID,
+		MediaType:  r.MediaType,
+		Title:      r.Title,
+		PosterPath: r.PosterPath,
+		Content:    r.Content,
+		Spoiler:    r.Spoiler,
+		LikeCount:  r.LikeCount,
+		CreatedAt:  r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  r.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
 // ReviewDTO is the data transfer object for responses
 type ReviewDTO struct {
-	ID        string `json:"id"`
-	UserID    string `json:"user_id"`
-	TMDBID    int    `json:"tmdb_id"`
-	MediaType string `json:"media_type"`
-	Content   string `json:"content"`
-	Spoiler   bool   `json:"spoiler"`
-	LikeCount int    `json:"like_count"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID         string `json:"id"`
+	UserID     string `json:"user_id"`
+	TMDBID     int    `json:"tmdb_id"`
+	MediaType  string `json:"media_type"`
+	Title      string `json:"title"`
+	PosterPath string `json:"poster_path"`
+	Content    string `json:"content"`
+	Spoiler    bool   `json:"spoiler"`
+	LikeCount  int    `json:"like_count"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
 }

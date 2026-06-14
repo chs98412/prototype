@@ -48,31 +48,43 @@ func (r *RecordRepositoryImpl) GetByTMDBID(ctx context.Context, userID string, t
 func (r *RecordRepositoryImpl) List(ctx context.Context, userID string, filters domainrepo.RecordFilters) ([]entity.Record, error) {
 	var records []entity.Record
 
-	whereClause := "user_id = ?"
+	whereClause := "ur.user_id = ?"
 	args := []interface{}{userID}
 
 	if filters.Status != "" {
-		whereClause += " AND status = ?"
+		whereClause += " AND ur.status = ?"
 		args = append(args, filters.Status)
 	}
 	if filters.MediaType != "" {
-		whereClause += " AND media_type = ?"
+		whereClause += " AND ur.media_type = ?"
 		args = append(args, filters.MediaType)
 	}
 
-	query := r.db.WithContext(ctx).
-		Select("id, user_id, tmdb_id, media_type, status, CAST(rating AS INTEGER) as rating, created_at, updated_at").
-		Where(whereClause, args...).
-		Order("updated_at DESC")
+	orderClause := "ur.updated_at DESC"
+	limitClause := ""
+	offsetClause := ""
 
 	if filters.Limit > 0 {
-		query = query.Limit(filters.Limit)
+		limitClause = fmt.Sprintf(" LIMIT %d", filters.Limit)
 	}
 	if filters.Offset > 0 {
-		query = query.Offset(filters.Offset)
+		offsetClause = fmt.Sprintf(" OFFSET %d", filters.Offset)
 	}
 
-	if err := query.Find(&records).Error; err != nil {
+	sql := fmt.Sprintf(`
+		SELECT
+			ur.id, ur.user_id, ur.tmdb_id, ur.media_type, ur.status,
+			CAST(ur.rating AS INTEGER) as rating,
+			COALESCE(m.title, '') as title,
+			COALESCE(m.poster_path, '') as poster_path,
+			ur.created_at, ur.updated_at
+		FROM user_records ur
+		LEFT JOIN movies m ON m.id = ur.tmdb_id
+		WHERE %s
+		ORDER BY %s%s%s
+	`, whereClause, orderClause, limitClause, offsetClause)
+
+	if err := r.db.WithContext(ctx).Raw(sql, args...).Scan(&records).Error; err != nil {
 		return nil, fmt.Errorf("failed to query records: %w", err)
 	}
 

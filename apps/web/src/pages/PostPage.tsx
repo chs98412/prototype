@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
+import { api } from '../lib/api';
+import type { ReviewDTO } from '../lib/apiTypes';
 import { FEED_ITEMS, MOVIE_BY_ID, MOVIES, ME } from '../lib/data';
 import type { RatingItem, LogItem, QuoteItem, ListItem } from '../lib/data';
 import { BackIcon, EllipsisIcon, HeartIcon, CommentIcon, BookmarkIcon, StarIcon } from '../components/ui/Icons';
@@ -253,12 +255,78 @@ function ListDetail({ item }: { item: ListItem }) {
 }
 
 export default function PostPage() {
-  const { kind, id } = useParams<{ kind: string; id: string }>();
+  const { kind, id } = useParams<{ kind?: string; id: string }>();
   const navigate = useNavigate();
+  const [review, setReview] = useState<ReviewDTO | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const item = FEED_ITEMS.find(x => 'id' in x && x.id === id);
+  useEffect(() => {
+    if (id) {
+      api.get<ReviewDTO>(`/v1/reviews/${id}`)
+        .then(r => setReview(r))
+        .catch(() => setReview(null))
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
+
+  // If kind is specified, use mock data (for backward compat)
+  const item = kind ? FEED_ITEMS.find(x => 'id' in x && x.id === id) : null;
 
   const titleMap: Record<string, string> = { rating: '한줄평', log: '로그', quote: '인용', list: '컬렉션' };
+
+  if (!item && !review && !loading) {
+    return (
+      <Layout>
+        <SubHeader onBack={() => navigate(-1)} title="평론" trailing={<button style={BTN}><EllipsisIcon /></button>} />
+        <div style={{ padding: '60px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
+          게시물을 찾을 수 없습니다.
+        </div>
+      </Layout>
+    );
+  }
+
+  if (review) {
+    return (
+      <Layout>
+        <SubHeader onBack={() => navigate(-1)} title="평론" trailing={<button style={BTN}><EllipsisIcon /></button>} />
+        <div style={{ padding: '12px 22px 0', textAlign: 'center' }}>
+          {review.poster_path && (
+            <div style={{
+              width: 170, height: 236, borderRadius: 3, margin: '0 auto', cursor: 'pointer',
+              background: `url(https://image.tmdb.org/t/p/w500${review.poster_path}) center / cover no-repeat #eee`,
+              boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
+            }} />
+          )}
+          <div style={{
+            marginTop: 18, fontFamily: 'var(--serif)', fontSize: 22,
+            fontWeight: 500, letterSpacing: '-0.02em',
+          }}>{review.title}</div>
+          <p style={{
+            margin: '32px auto 0', maxWidth: 300,
+            fontFamily: 'var(--serif)', fontSize: 16, lineHeight: 1.7,
+            color: '#1f1f1f', letterSpacing: '-0.005em', wordBreak: 'keep-all',
+          }}>{review.content}</p>
+        </div>
+        <div style={{
+          margin: '30px 22px 0', padding: '16px 0',
+          display: 'flex', gap: 12, alignItems: 'center',
+          borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)',
+        }}>
+          <div style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0, background: `url(${ME.avatar}) center / cover no-repeat #ddd` }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 500 }}>{review.user_id}</div>
+            <div style={{ fontSize: 10, color: 'var(--mute)', marginTop: 2 }}>
+              {new Date(review.created_at).toLocaleDateString('ko-KR')}
+            </div>
+          </div>
+          <button style={BTN}><HeartIcon /></button>
+        </div>
+        <div style={{ padding: '18px 22px', fontSize: 10, color: 'var(--mute)', letterSpacing: '0.08em' }}>
+          {review.like_count} likes
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -269,11 +337,6 @@ export default function PostPage() {
       {kind === 'log' && item?.kind === 'log' && <LogDetail item={item as LogItem} />}
       {kind === 'quote' && item?.kind === 'quote' && <QuoteDetail item={item as QuoteItem} />}
       {kind === 'list' && item?.kind === 'list' && <ListDetail item={item as ListItem} />}
-      {!item && (
-        <div style={{ padding: '60px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
-          게시물을 찾을 수 없습니다.
-        </div>
-      )}
     </Layout>
   );
 }

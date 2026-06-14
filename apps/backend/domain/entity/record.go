@@ -20,14 +20,16 @@ const (
 
 // Record is the domain entity for watch history records
 type Record struct {
-	ID        string       `gorm:"primaryKey;column:id"`
-	UserID    string       `gorm:"index;column:user_id"`
-	TMDBID    int          `gorm:"index;column:tmdb_id"`
-	MediaType string       `gorm:"column:media_type"`
-	Status    RecordStatus `gorm:"column:status"`
-	Rating    int          `gorm:"column:rating"`
-	CreatedAt time.Time    `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt time.Time    `gorm:"autoUpdateTime;column:updated_at"`
+	ID         string       `gorm:"primaryKey;column:id"`
+	UserID     string       `gorm:"index;column:user_id"`
+	TMDBID     int          `gorm:"index;column:tmdb_id"`
+	MediaType  string       `gorm:"column:media_type"`
+	Status     RecordStatus `gorm:"column:status"`
+	Rating     int          `gorm:"column:rating"`
+	Title      string       `gorm:"-"`
+	PosterPath string       `gorm:"-"`
+	CreatedAt  time.Time    `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt  time.Time    `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
@@ -85,27 +87,31 @@ func (r *Record) UpdateRating(rating int) error {
 // ToDTO converts entity to response DTO
 func (r *Record) ToDTO() *RecordDTO {
 	return &RecordDTO{
-		ID:        r.ID,
-		UserID:    r.UserID,
-		TMDBID:    r.TMDBID,
-		MediaType: r.MediaType,
-		Status:    string(r.Status),
-		Rating:    r.Rating,
-		CreatedAt: r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
+		ID:         r.ID,
+		UserID:     r.UserID,
+		TMDBID:     r.TMDBID,
+		MediaType:  r.MediaType,
+		Status:     string(r.Status),
+		Rating:     r.Rating,
+		Title:      r.Title,
+		PosterPath: r.PosterPath,
+		CreatedAt:  r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  r.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
 // RecordDTO is the data transfer object for responses
 type RecordDTO struct {
-	ID        string `json:"id"`
-	UserID    string `json:"user_id"`
-	TMDBID    int    `json:"tmdb_id"`
-	MediaType string `json:"media_type"`
-	Status    string `json:"status"`
-	Rating    int    `json:"rating"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID         string `json:"id"`
+	UserID     string `json:"user_id"`
+	TMDBID     int    `json:"tmdb_id"`
+	MediaType  string `json:"media_type"`
+	Status     string `json:"status"`
+	Rating     int    `json:"rating"`
+	Title      string `json:"title"`
+	PosterPath string `json:"poster_path"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
 }
 
 // RecordStatsDTO for statistics
