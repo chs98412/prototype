@@ -22,26 +22,33 @@ type ReviewService interface {
 
 // ReviewServiceImpl implements ReviewService
 type ReviewServiceImpl struct {
-	repo           repository.ReviewRepository
-	movieSvc       MovieService
-	movieRepo      repository.MovieRepository
+	repo        repository.ReviewRepository
+	movieSvc    MovieService
+	movieRepo   repository.MovieRepository
+	profileRepo repository.ProfileRepository
 }
 
 // NewReviewService creates a new review service
-func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService, movieRepo repository.MovieRepository) ReviewService {
+func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService, movieRepo repository.MovieRepository, profileRepo repository.ProfileRepository) ReviewService {
 	return &ReviewServiceImpl{
-		repo:      repo,
-		movieSvc:  movieSvc,
-		movieRepo: movieRepo,
+		repo:        repo,
+		movieSvc:    movieSvc,
+		movieRepo:   movieRepo,
+		profileRepo: profileRepo,
 	}
 }
 
-// enrichReviewDTO populates title and poster_path from movies table
+// enrichReviewDTO populates title, poster_path, display_name, avatar_url
 func (s *ReviewServiceImpl) enrichReviewDTO(ctx context.Context, dto *entity.ReviewDTO) {
 	movie, err := s.movieRepo.GetByID(ctx, dto.TMDBID)
 	if err == nil && movie != nil {
 		dto.Title = movie.Title
 		dto.PosterPath = movie.PosterPath
+	}
+	profile, err := s.profileRepo.GetByUserID(ctx, dto.UserID)
+	if err == nil && profile != nil {
+		dto.DisplayName = profile.DisplayName
+		dto.AvatarURL = profile.AvatarURL
 	}
 }
 

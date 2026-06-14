@@ -59,6 +59,8 @@ export type RecordStatsDTO = {
 export type ReviewDTO = {
   id: string
   user_id: string
+  display_name: string
+  avatar_url: string
   tmdb_id: number
   media_type: string
   kind: string

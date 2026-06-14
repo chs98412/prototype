@@ -89,6 +89,8 @@ func (r *Review) ToDTO() *ReviewDTO {
 type ReviewDTO struct {
 	ID          string `json:"id"`
 	UserID      string `json:"user_id"`
+	DisplayName string `json:"display_name"`
+	AvatarURL   string `json:"avatar_url"`
 	TMDBID      int    `json:"tmdb_id"`
 	MediaType   string `json:"media_type"`
 	Kind        string `json:"kind"`

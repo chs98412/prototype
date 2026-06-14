@@ -348,9 +348,9 @@ export default function PostPage() {
           display: 'flex', gap: 12, alignItems: 'center',
           borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)',
         }}>
-          <div style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0, background: `url(${ME.avatar}) center / cover no-repeat #ddd` }} />
+          <div style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0, background: `url(${review.avatar_url || ME.avatar}) center / cover no-repeat #ddd` }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 500 }}>{review.user_id}</div>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 500 }}>{review.display_name || review.user_id}</div>
             <div style={{ fontSize: 10, color: 'var(--mute)', marginTop: 2 }}>
               {new Date(review.created_at).toLocaleDateString('ko-KR')}
             </div>

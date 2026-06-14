@@ -74,7 +74,7 @@ func main() {
 	recordHandler := handler.NewRecordHandler(recordService)
 
 	reviewRepo := repository.NewReviewRepository(db)
-	reviewService := service.NewReviewService(reviewRepo, movieService, movieRepo)
+	reviewService := service.NewReviewService(reviewRepo, movieService, movieRepo, profileRepo)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
 	followRepo := repository.NewFollowRepository(db)
