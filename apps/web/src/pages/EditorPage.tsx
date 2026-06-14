@@ -199,15 +199,15 @@ export default function EditorPage() {
       const tmdbId = locationState.movie?.id || parseInt(movieId);
 
       if (kind === 'essay') {
-        if (!title.trim() || !body.trim()) {
-          alert('제목과 내용을 입력해주세요');
+        if (!body.trim()) {
+          alert('내용을 입력해주세요');
           setIsPosting(false);
           return;
         }
         await api.post('/v1/reviews', {
           tmdb_id: tmdbId,
           media_type: 'movie',
-          content: `${title}\n\n${body}`,
+          content: body,
           spoiler: false,
         });
       } else if (kind === 'rating') {
