@@ -5,6 +5,7 @@ import (
 	"github.com/chs98412/prototype/backend/domain"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
+	"github.com/google/uuid"
 )
 
 // RecordService interface
@@ -94,7 +95,7 @@ func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmd
 	}
 
 	// Create new record
-	record := entity.NewRecord("", userID, tmdbID, mediaType)
+	record := entity.NewRecord(uuid.New().String(), userID, tmdbID, mediaType)
 	record.SetWatched(rating)
 
 	if err := s.repo.Save(ctx, record); err != nil {

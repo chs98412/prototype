@@ -5,6 +5,7 @@ import (
 	"github.com/chs98412/prototype/backend/domain"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
+	"github.com/google/uuid"
 )
 
 // ReviewService interface
@@ -118,7 +119,7 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 	}
 
 	// Create new review
-	review := entity.NewReview("", userID, tmdbID, content, spoiler)
+	review := entity.NewReview(uuid.New().String(), userID, tmdbID, content, spoiler)
 
 	if err := s.repo.Save(ctx, review); err != nil {
 		return nil, err
