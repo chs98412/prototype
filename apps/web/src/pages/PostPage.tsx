@@ -255,19 +255,24 @@ function ListDetail({ item }: { item: ListItem }) {
 }
 
 export default function PostPage() {
-  const { kind, id } = useParams<{ kind?: string; id: string }>();
+  const { kind, id } = useParams<{ kind: string; id: string }>();
   const navigate = useNavigate();
   const [review, setReview] = useState<ReviewDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
+    if (id && kind === 'review') {
       api.get<ReviewDTO>(`/v1/reviews/${id}`)
         .then(r => setReview(r))
-        .catch(() => setReview(null))
+        .catch(err => {
+          console.error('Failed to fetch review:', err);
+          setReview(null);
+        })
         .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-  }, [id]);
+  }, [id, kind]);
 
   // If kind is specified, use mock data (for backward compat)
   const item = kind ? FEED_ITEMS.find(x => 'id' in x && x.id === id) : null;

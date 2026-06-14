@@ -214,7 +214,7 @@ export default function ProfilePage() {
               {reviews.map(review => (
                 <button
                   key={review.id}
-                  onClick={() => navigate(`/post/${review.id}`)}
+                  onClick={() => navigate(`/post/review/${review.id}`)}
                   style={{
                     display: 'flex', gap: 12, width: '100%', textAlign: 'left',
                     padding: '12px 0', borderBottom: '1px solid var(--line-soft)',
