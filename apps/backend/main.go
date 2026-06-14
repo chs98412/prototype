@@ -122,6 +122,10 @@ func main() {
 	r.POST("/v1/auth/google", authHandler.InitiateGoogleOAuth)
 	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
 	r.POST("/v1/auth/logout", authHandler.Logout)
+	// Movies — public (no auth required)
+	r.GET("/v1/movies/search", handler.SearchMovies)
+	r.GET("/v1/movies/:tmdbId", handler.GetMovieDetail)
+	r.GET("/v1/tmdb/:tmdbId/reviews", reviewHandler.GetReviewsByTMDB)
 
 	v1 := r.Group("/v1")
 	v1.Use(middleware.Auth())
@@ -147,11 +151,6 @@ func main() {
 		v1.POST("/reviews", reviewHandler.CreateReview)
 		v1.PUT("/reviews/:reviewId", reviewHandler.UpdateReview)
 		v1.DELETE("/reviews/:reviewId", reviewHandler.DeleteReview)
-		v1.GET("/tmdb/:tmdbId/reviews", reviewHandler.GetReviewsByTMDB)
-
-		// Movies (TMDB proxy)
-		v1.GET("/movies/search", handler.SearchMovies)
-		v1.GET("/movies/:tmdbId", handler.GetMovieDetail)
 
 		// Review Likes
 		v1.GET("/reviews/:reviewId/likes", reviewLikeHandler.GetLikes)
