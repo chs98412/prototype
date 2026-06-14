@@ -41,7 +41,8 @@ export type RecordDTO = {
   media_type: string
   status: string
   rating: number
-  watched_at: string
+  title: string
+  poster_path: string
   created_at: string
   updated_at: string
 }
@@ -59,6 +60,9 @@ export type ReviewDTO = {
   id: string
   user_id: string
   tmdb_id: number
+  media_type: string
+  title: string
+  poster_path: string
   content: string
   spoiler: boolean
   like_count: number
