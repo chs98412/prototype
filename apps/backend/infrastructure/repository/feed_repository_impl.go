@@ -50,7 +50,7 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 			r.content,
 			r.like_count,
 			NULL::int AS rating,
-			r.spoiler,
+			r.is_spoiler AS spoiler,
 			r.created_at AS event_time
 		FROM reviews r
 		JOIN user_follows f ON f.following_id = r.user_id AND f.follower_id = ?
@@ -72,7 +72,7 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 			0 AS like_count,
 			rec.rating,
 			NULL::bool AS spoiler,
-			COALESCE(rec.watched_at, rec.created_at) AS event_time
+			rec.created_at AS event_time
 		FROM user_records rec
 		JOIN user_follows f ON f.following_id = rec.user_id AND f.follower_id = ?
 		LEFT JOIN user_profiles p ON p.user_id = rec.user_id
