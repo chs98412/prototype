@@ -26,8 +26,6 @@ type Record struct {
 	MediaType string       `gorm:"column:media_type"`
 	Status    RecordStatus `gorm:"column:status"`
 	Rating    int          `gorm:"column:rating"`
-	Title     string       `gorm:"column:title"`
-	PosterPath string      `gorm:"column:poster_path"`
 	CreatedAt time.Time    `gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt time.Time    `gorm:"autoUpdateTime;column:updated_at"`
 }
@@ -93,8 +91,6 @@ func (r *Record) ToDTO() *RecordDTO {
 		MediaType: r.MediaType,
 		Status:    string(r.Status),
 		Rating:    r.Rating,
-		Title:     r.Title,
-		PosterPath: r.PosterPath,
 		CreatedAt: r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
 	}
@@ -108,8 +104,6 @@ type RecordDTO struct {
 	MediaType string `json:"media_type"`
 	Status    string `json:"status"`
 	Rating    int    `json:"rating"`
-	Title     string `json:"title"`
-	PosterPath string `json:"poster_path"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
