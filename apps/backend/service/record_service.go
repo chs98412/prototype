@@ -21,15 +21,26 @@ type RecordService interface {
 
 // RecordServiceImpl implements RecordService
 type RecordServiceImpl struct {
-	repo     repository.RecordRepository
-	movieSvc MovieService
+	repo           repository.RecordRepository
+	movieSvc       MovieService
+	movieRepo      repository.MovieRepository
 }
 
 // NewRecordService creates a new record service
-func NewRecordService(repo repository.RecordRepository, movieSvc MovieService) RecordService {
+func NewRecordService(repo repository.RecordRepository, movieSvc MovieService, movieRepo repository.MovieRepository) RecordService {
 	return &RecordServiceImpl{
-		repo:     repo,
-		movieSvc: movieSvc,
+		repo:      repo,
+		movieSvc:  movieSvc,
+		movieRepo: movieRepo,
+	}
+}
+
+// enrichRecordDTO populates title and poster_path from movies table
+func (s *RecordServiceImpl) enrichRecordDTO(ctx context.Context, dto *entity.RecordDTO) {
+	movie, err := s.movieRepo.GetByID(ctx, dto.TMDBID)
+	if err == nil && movie != nil {
+		dto.Title = movie.Title
+		dto.PosterPath = movie.PosterPath
 	}
 }
 
@@ -39,7 +50,9 @@ func (s *RecordServiceImpl) GetRecord(ctx context.Context, userID, recordID stri
 	if err != nil {
 		return nil, err
 	}
-	return record.ToDTO(), nil
+	dto := record.ToDTO()
+	s.enrichRecordDTO(ctx, dto)
+	return dto, nil
 }
 
 // ListRecords retrieves records with filters
@@ -65,7 +78,9 @@ func (s *RecordServiceImpl) ListRecords(ctx context.Context, userID string, stat
 
 	dtos := make([]entity.RecordDTO, 0, len(records))
 	for _, r := range records {
-		dtos = append(dtos, *r.ToDTO())
+		dto := r.ToDTO()
+		s.enrichRecordDTO(ctx, dto)
+		dtos = append(dtos, *dto)
 	}
 	return dtos, nil
 }
@@ -91,7 +106,9 @@ func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmd
 		if err := s.repo.Update(ctx, existingRecord); err != nil {
 			return nil, err
 		}
-		return existingRecord.ToDTO(), nil
+		dto := existingRecord.ToDTO()
+		s.enrichRecordDTO(ctx, dto)
+		return dto, nil
 	}
 
 	// Create new record
@@ -105,7 +122,9 @@ func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmd
 	// Best-effort: cache movie metadata from TMDB
 	go s.movieSvc.UpsertFromTMDB(context.Background(), tmdbID)
 
-	return record.ToDTO(), nil
+	dto := record.ToDTO()
+	s.enrichRecordDTO(ctx, dto)
+	return dto, nil
 }
 
 // UpdateRecordRating updates the rating of a record
@@ -123,7 +142,9 @@ func (s *RecordServiceImpl) UpdateRecordRating(ctx context.Context, userID, reco
 		return nil, err
 	}
 
-	return record.ToDTO(), nil
+	dto := record.ToDTO()
+	s.enrichRecordDTO(ctx, dto)
+	return dto, nil
 }
 
 // DeleteRecord deletes a watch record

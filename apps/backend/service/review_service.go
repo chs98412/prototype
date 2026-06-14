@@ -22,15 +22,26 @@ type ReviewService interface {
 
 // ReviewServiceImpl implements ReviewService
 type ReviewServiceImpl struct {
-	repo     repository.ReviewRepository
-	movieSvc MovieService
+	repo           repository.ReviewRepository
+	movieSvc       MovieService
+	movieRepo      repository.MovieRepository
 }
 
 // NewReviewService creates a new review service
-func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService) ReviewService {
+func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService, movieRepo repository.MovieRepository) ReviewService {
 	return &ReviewServiceImpl{
-		repo:     repo,
-		movieSvc: movieSvc,
+		repo:      repo,
+		movieSvc:  movieSvc,
+		movieRepo: movieRepo,
+	}
+}
+
+// enrichReviewDTO populates title and poster_path from movies table
+func (s *ReviewServiceImpl) enrichReviewDTO(ctx context.Context, dto *entity.ReviewDTO) {
+	movie, err := s.movieRepo.GetByID(ctx, dto.TMDBID)
+	if err == nil && movie != nil {
+		dto.Title = movie.Title
+		dto.PosterPath = movie.PosterPath
 	}
 }
 
@@ -40,7 +51,9 @@ func (s *ReviewServiceImpl) GetReview(ctx context.Context, reviewID string) (*en
 	if err != nil {
 		return nil, err
 	}
-	return review.ToDTO(), nil
+	dto := review.ToDTO()
+	s.enrichReviewDTO(ctx, dto)
+	return dto, nil
 }
 
 // ListReviews retrieves all reviews
@@ -56,7 +69,9 @@ func (s *ReviewServiceImpl) ListReviews(ctx context.Context, limit, offset int) 
 
 	dtos := make([]entity.ReviewDTO, 0, len(reviews))
 	for _, r := range reviews {
-		dtos = append(dtos, *r.ToDTO())
+		dto := r.ToDTO()
+		s.enrichReviewDTO(ctx, dto)
+		dtos = append(dtos, *dto)
 	}
 	return dtos, nil
 }
@@ -74,7 +89,9 @@ func (s *ReviewServiceImpl) GetReviewsByTMDB(ctx context.Context, tmdbID int, li
 
 	dtos := make([]entity.ReviewDTO, 0, len(reviews))
 	for _, r := range reviews {
-		dtos = append(dtos, *r.ToDTO())
+		dto := r.ToDTO()
+		s.enrichReviewDTO(ctx, dto)
+		dtos = append(dtos, *dto)
 	}
 	return dtos, nil
 }
@@ -92,7 +109,9 @@ func (s *ReviewServiceImpl) GetUserReviews(ctx context.Context, userID string, l
 
 	dtos := make([]entity.ReviewDTO, 0, len(reviews))
 	for _, r := range reviews {
-		dtos = append(dtos, *r.ToDTO())
+		dto := r.ToDTO()
+		s.enrichReviewDTO(ctx, dto)
+		dtos = append(dtos, *dto)
 	}
 	return dtos, nil
 }
@@ -115,7 +134,9 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 		if err := s.repo.Update(ctx, existingReview); err != nil {
 			return nil, err
 		}
-		return existingReview.ToDTO(), nil
+		dto := existingReview.ToDTO()
+		s.enrichReviewDTO(ctx, dto)
+		return dto, nil
 	}
 
 	// Create new review
@@ -128,7 +149,9 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 	// Best-effort: cache movie metadata from TMDB
 	go s.movieSvc.UpsertFromTMDB(context.Background(), tmdbID)
 
-	return review.ToDTO(), nil
+	dto := review.ToDTO()
+	s.enrichReviewDTO(ctx, dto)
+	return dto, nil
 }
 
 // UpdateReview updates an existing review
@@ -152,7 +175,9 @@ func (s *ReviewServiceImpl) UpdateReview(ctx context.Context, userID, reviewID s
 		return nil, err
 	}
 
-	return review.ToDTO(), nil
+	dto := review.ToDTO()
+	s.enrichReviewDTO(ctx, dto)
+	return dto, nil
 }
 
 // DeleteReview deletes a review
