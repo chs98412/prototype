@@ -23,9 +23,10 @@ func NewReviewHandler(svc service.ReviewService) *ReviewHandler {
 
 // CreateReviewRequest is the request DTO for creating a review
 type CreateReviewRequest struct {
-	TMDBID  int    `json:"tmdb_id" binding:"required"`
-	Content string `json:"content" binding:"required"`
-	Spoiler bool   `json:"spoiler"`
+	TMDBID    int    `json:"tmdb_id" binding:"required"`
+	MediaType string `json:"media_type"`
+	Content   string `json:"content" binding:"required"`
+	Spoiler   bool   `json:"spoiler"`
 }
 
 // UpdateReviewRequest is the request DTO for updating a review
@@ -82,7 +83,12 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		return
 	}
 
-	review, err := h.svc.CreateReview(c.Request.Context(), userID, req.TMDBID, req.Content, req.Spoiler)
+	mediaType := req.MediaType
+	if mediaType == "" {
+		mediaType = "movie"
+	}
+
+	review, err := h.svc.CreateReview(c.Request.Context(), userID, req.TMDBID, mediaType, req.Content, req.Spoiler)
 	if err == domain.ErrInvalidInput {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "content must be provided and less than 500 characters"})
 		return

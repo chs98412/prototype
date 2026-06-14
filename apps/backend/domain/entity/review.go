@@ -10,6 +10,7 @@ type Review struct {
 	ID        string    `gorm:"primaryKey;column:id"`
 	UserID    string    `gorm:"index;column:user_id"`
 	TMDBID    int       `gorm:"index;column:tmdb_id"`
+	MediaType string    `gorm:"column:media_type"`
 	Content   string    `gorm:"column:content"`
 	Spoiler   bool      `gorm:"column:is_spoiler"`
 	LikeCount int       `gorm:"column:like_count"`
@@ -23,11 +24,12 @@ func (r *Review) TableName() string {
 }
 
 // NewReview creates a new review entity
-func NewReview(id, userID string, tmdbID int, content string, spoiler bool) *Review {
+func NewReview(id, userID string, tmdbID int, mediaType, content string, spoiler bool) *Review {
 	return &Review{
 		ID:        id,
 		UserID:    userID,
 		TMDBID:    tmdbID,
+		MediaType: mediaType,
 		Content:   content,
 		Spoiler:   spoiler,
 		LikeCount: 0,
@@ -68,6 +70,7 @@ func (r *Review) ToDTO() *ReviewDTO {
 		ID:        r.ID,
 		UserID:    r.UserID,
 		TMDBID:    r.TMDBID,
+		MediaType: r.MediaType,
 		Content:   r.Content,
 		Spoiler:   r.Spoiler,
 		LikeCount: r.LikeCount,
@@ -81,6 +84,7 @@ type ReviewDTO struct {
 	ID        string `json:"id"`
 	UserID    string `json:"user_id"`
 	TMDBID    int    `json:"tmdb_id"`
+	MediaType string `json:"media_type"`
 	Content   string `json:"content"`
 	Spoiler   bool   `json:"spoiler"`
 	LikeCount int    `json:"like_count"`
