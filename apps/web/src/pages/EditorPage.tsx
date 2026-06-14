@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
+import { api } from '../lib/api';
 import type { Movie } from '../lib/data';
 import type { TmdbMovieDetail } from '../lib/apiTypes';
 import { MOVIES, MOVIE_BY_ID } from '../lib/data';
@@ -188,6 +189,72 @@ export default function EditorPage() {
   const [listDesc, setListDesc] = useState('');
   const [listPicks, setListPicks] = useState<string[]>([]);
   const [movieId, setMovieId] = useState(MOVIES[0].id);
+  const [isPosting, setIsPosting] = useState(false);
+
+  const handlePublish = async () => {
+    if (isPosting) return;
+    setIsPosting(true);
+
+    try {
+      const tmdbId = locationState.movie?.id || parseInt(movieId);
+
+      if (kind === 'essay') {
+        if (!title.trim() || !body.trim()) {
+          alert('제목과 내용을 입력해주세요');
+          setIsPosting(false);
+          return;
+        }
+        await api.post('/v1/reviews', {
+          tmdb_id: tmdbId,
+          content: `${title}\n\n${body}`,
+          spoiler: false,
+        });
+      } else if (kind === 'rating') {
+        if (!blurb.trim() || stars === 0) {
+          alert('별점과 한 줄평을 입력해주세요');
+          setIsPosting(false);
+          return;
+        }
+        await api.post('/v1/reviews', {
+          tmdb_id: tmdbId,
+          content: blurb,
+          spoiler: false,
+        });
+        await api.post('/v1/records', {
+          tmdb_id: tmdbId,
+          media_type: 'movie',
+          rating: stars,
+        });
+      } else if (kind === 'log') {
+        if (stars === 0) {
+          alert('별점을 선택해주세요');
+          setIsPosting(false);
+          return;
+        }
+        await api.post('/v1/records', {
+          tmdb_id: tmdbId,
+          media_type: 'movie',
+          rating: stars,
+        });
+      } else if (kind === 'quote') {
+        if (!quote.trim()) {
+          alert('대사를 입력해주세요');
+          setIsPosting(false);
+          return;
+        }
+        await api.post('/v1/reviews', {
+          tmdb_id: tmdbId,
+          content: `"${quote}"\n\n— ${cite}`,
+          spoiler: false,
+        });
+      }
+
+      navigate('/');
+    } catch (err) {
+      alert(`게시 중 오류가 발생했습니다: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setIsPosting(false);
+    }
+  };
 
   // If coming from MoviePage, convert TmdbMovieDetail to mock Movie for display
   let movie = MOVIE_BY_ID[movieId];
@@ -225,8 +292,8 @@ export default function EditorPage() {
       }}>
         <button onClick={() => navigate(-1)} style={BTN}><BackIcon /></button>
         <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600 }}>새 {currentType?.label}</span>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 0, color: ACCENT, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-          게시
+        <button onClick={handlePublish} disabled={isPosting} style={{ background: 'none', border: 0, color: ACCENT, fontSize: 12, fontWeight: 600, cursor: isPosting ? 'not-allowed' : 'pointer', opacity: isPosting ? 0.5 : 1 }}>
+          {isPosting ? '게시 중...' : '게시'}
         </button>
       </div>
 
