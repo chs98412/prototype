@@ -47,16 +47,23 @@ func (r *RecordRepositoryImpl) GetByTMDBID(ctx context.Context, userID string, t
 // List retrieves records with filters
 func (r *RecordRepositoryImpl) List(ctx context.Context, userID string, filters domainrepo.RecordFilters) ([]entity.Record, error) {
 	var records []entity.Record
-	query := r.db.WithContext(ctx).Where("user_id = ?", userID)
+
+	whereClause := "user_id = ?"
+	args := []interface{}{userID}
 
 	if filters.Status != "" {
-		query = query.Where("status = ?", filters.Status)
+		whereClause += " AND status = ?"
+		args = append(args, filters.Status)
 	}
 	if filters.MediaType != "" {
-		query = query.Where("media_type = ?", filters.MediaType)
+		whereClause += " AND media_type = ?"
+		args = append(args, filters.MediaType)
 	}
 
-	query = query.Order("updated_at DESC")
+	query := r.db.WithContext(ctx).
+		Select("id, user_id, tmdb_id, media_type, status, CAST(rating AS INTEGER) as rating, created_at, updated_at").
+		Where(whereClause, args...).
+		Order("updated_at DESC")
 
 	if filters.Limit > 0 {
 		query = query.Limit(filters.Limit)
@@ -115,12 +122,12 @@ func (r *RecordRepositoryImpl) GetStats(ctx context.Context, userID string) (*en
 	err := r.db.WithContext(ctx).
 		Table("user_records").
 		Select(
-			"COUNT(*) as total_records",
-			"COUNT(CASE WHEN media_type = 'movie' THEN 1 END) as movies_watched",
-			"COUNT(CASE WHEN media_type = 'tv' THEN 1 END) as shows_watched",
-			"COALESCE(AVG(CASE WHEN rating > 0 THEN rating ELSE NULL END), 0) as average_rating",
-			"COALESCE(MAX(rating), 0) as highest_rating",
-			"COUNT(CASE WHEN rating > 0 THEN 1 END) as rated_count",
+			"COUNT(*)::INTEGER as total_records",
+			"COUNT(CASE WHEN media_type = 'movie' THEN 1 END)::INTEGER as movies_watched",
+			"COUNT(CASE WHEN media_type = 'tv' THEN 1 END)::INTEGER as shows_watched",
+			"COALESCE(AVG(CASE WHEN rating > 0 THEN CAST(rating AS NUMERIC) ELSE NULL END), 0)::NUMERIC as average_rating",
+			"COALESCE(MAX(CAST(rating AS INTEGER)), 0)::INTEGER as highest_rating",
+			"COUNT(CASE WHEN rating > 0 THEN 1 END)::INTEGER as rated_count",
 		).
 		Where("user_id = ?", userID).
 		Scan(stats).Error
