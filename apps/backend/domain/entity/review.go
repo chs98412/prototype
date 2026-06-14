@@ -14,10 +14,10 @@ type Review struct {
 	Content    string    `gorm:"column:content"`
 	Spoiler    bool      `gorm:"column:is_spoiler"`
 	LikeCount  int       `gorm:"column:like_count"`
-	Title      string
-	PosterPath string
 	CreatedAt  time.Time `gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt  time.Time `gorm:"autoUpdateTime;column:updated_at"`
+	Title      string    `gorm:"-"`
+	PosterPath string    `gorm:"-"`
 }
 
 // TableName specifies the table name for GORM
