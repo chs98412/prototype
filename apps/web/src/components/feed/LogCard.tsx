@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { LogItem, MOVIE_BY_ID } from '../../lib/data';
+import type { LogItem } from '../../lib/data';
+import { MOVIE_BY_ID } from '../../lib/data';
 import TypeBadge from './TypeBadge';
 import Stars from './Stars';
 

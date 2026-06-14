@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ListItem } from '../../lib/data';
+import type { ListItem } from '../../lib/data';
 import { HeartIcon } from '../ui/Icons';
 import TypeBadge from './TypeBadge';
 

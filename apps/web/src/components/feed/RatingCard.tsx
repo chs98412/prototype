@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { RatingItem, MOVIE_BY_ID } from '../../lib/data';
+import type { RatingItem } from '../../lib/data';
+import { MOVIE_BY_ID } from '../../lib/data';
 import { HeartIcon, CommentIcon } from '../ui/Icons';
 import TypeBadge from './TypeBadge';
 import Stars from './Stars';

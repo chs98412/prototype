@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { QuoteItem, MOVIE_BY_ID } from '../../lib/data';
+import type { QuoteItem } from '../../lib/data';
+import { MOVIE_BY_ID } from '../../lib/data';
 import { HeartIcon, BookmarkIcon } from '../ui/Icons';
 import TypeBadge from './TypeBadge';
 
