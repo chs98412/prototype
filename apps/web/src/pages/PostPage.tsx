@@ -274,7 +274,18 @@ export default function PostPage() {
 
   const titleMap: Record<string, string> = { rating: '한줄평', log: '로그', quote: '인용', list: '컬렉션' };
 
-  if (!item && !review && !loading) {
+  if (loading) {
+    return (
+      <Layout>
+        <SubHeader onBack={() => navigate(-1)} title="평론" trailing={<button style={BTN}><EllipsisIcon /></button>} />
+        <div style={{ padding: '60px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
+          로딩 중...
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!item && !review) {
     return (
       <Layout>
         <SubHeader onBack={() => navigate(-1)} title="평론" trailing={<button style={BTN}><EllipsisIcon /></button>} />

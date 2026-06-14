@@ -26,7 +26,7 @@ func (r *ReviewRepositoryImpl) GetByID(ctx context.Context, reviewID string) (*e
 	sql := `
 		SELECT
 			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler as spoiler, rev.like_count,
+			rev.is_spoiler, rev.like_count,
 			COALESCE(m.title, '') as title,
 			COALESCE(m.poster_path, '') as poster_path,
 			rev.created_at, rev.updated_at
@@ -49,7 +49,7 @@ func (r *ReviewRepositoryImpl) GetByTMDBID(ctx context.Context, tmdbID int, limi
 	sql := fmt.Sprintf(`
 		SELECT
 			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler as spoiler, rev.like_count,
+			rev.is_spoiler, rev.like_count,
 			COALESCE(m.title, '') as title,
 			COALESCE(m.poster_path, '') as poster_path,
 			rev.created_at, rev.updated_at
@@ -71,7 +71,7 @@ func (r *ReviewRepositoryImpl) GetByUserID(ctx context.Context, userID string, l
 	sql := fmt.Sprintf(`
 		SELECT
 			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler as spoiler, rev.like_count,
+			rev.is_spoiler, rev.like_count,
 			COALESCE(m.title, '') as title,
 			COALESCE(m.poster_path, '') as poster_path,
 			rev.created_at, rev.updated_at
@@ -93,7 +93,7 @@ func (r *ReviewRepositoryImpl) List(ctx context.Context, limit, offset int) ([]e
 	sql := fmt.Sprintf(`
 		SELECT
 			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler as spoiler, rev.like_count,
+			rev.is_spoiler, rev.like_count,
 			COALESCE(m.title, '') as title,
 			COALESCE(m.poster_path, '') as poster_path,
 			rev.created_at, rev.updated_at
@@ -114,7 +114,7 @@ func (r *ReviewRepositoryImpl) GetUserReviewByTMDB(ctx context.Context, userID s
 	sql := `
 		SELECT
 			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler as spoiler, rev.like_count,
+			rev.is_spoiler, rev.like_count,
 			COALESCE(m.title, '') as title,
 			COALESCE(m.poster_path, '') as poster_path,
 			rev.created_at, rev.updated_at
