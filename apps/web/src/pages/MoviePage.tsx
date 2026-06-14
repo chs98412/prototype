@@ -171,12 +171,15 @@ export default function MoviePage() {
           <div style={{ marginTop: 16, textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
             평론을 작성해보세요.
           </div>
-          <button style={{
-            width: '100%', marginTop: 16,
-            padding: '12px', borderRadius: 4,
-            background: '#1f1f1f', color: '#fff', border: 0,
-            fontSize: 14, fontWeight: 500, cursor: 'pointer',
-          }}>
+          <button
+            onClick={() => navigate('/editor', { state: { movie, kind: 'rating' } })}
+            style={{
+              width: '100%', marginTop: 16,
+              padding: '12px', borderRadius: 4,
+              background: '#1f1f1f', color: '#fff', border: 0,
+              fontSize: 14, fontWeight: 500, cursor: 'pointer',
+            }}
+          >
             평론 작성
           </button>
         </div>

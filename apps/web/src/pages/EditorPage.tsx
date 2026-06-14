@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
 import type { Movie } from '../lib/data';
+import type { TmdbMovieDetail } from '../lib/apiTypes';
 import { MOVIES, MOVIE_BY_ID } from '../lib/data';
 import { BackIcon, StarIcon, CameraIcon, SparkleIcon, BookmarkIcon } from '../components/ui/Icons';
 
@@ -173,7 +174,10 @@ function ListForm({ listName, setListName, listDesc, setListDesc, picks, setPick
 
 export default function EditorPage() {
   const navigate = useNavigate();
-  const [kind, setKind] = useState<Kind>('essay');
+  const location = useLocation();
+  const locationState = (location.state as { movie?: TmdbMovieDetail; kind?: Kind } | null) || {};
+
+  const [kind, setKind] = useState<Kind>(locationState.kind || 'essay');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [blurb, setBlurb] = useState('');
@@ -184,6 +188,8 @@ export default function EditorPage() {
   const [listDesc, setListDesc] = useState('');
   const [listPicks, setListPicks] = useState<string[]>([]);
   const [movieId, setMovieId] = useState(MOVIES[0].id);
+
+  // Use MOVIE_BY_ID for now (LogForm expects Movie type, not TmdbMovieDetail)
   const movie = MOVIE_BY_ID[movieId];
 
   const currentType = TYPES.find(t => t.id === kind);
