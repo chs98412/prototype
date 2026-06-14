@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
 import { api } from '../lib/api';
@@ -179,6 +179,8 @@ export default function EditorPage() {
   const locationState = (location.state as { movie?: TmdbMovieDetail; kind?: Kind } | null) || {};
 
   const [kind, setKind] = useState<Kind>(locationState.kind || 'essay');
+  const kindRef = useRef<Kind>(locationState.kind || 'essay');
+  const handleKindChange = (k: Kind) => { setKind(k); kindRef.current = k; };
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [blurb, setBlurb] = useState('');
@@ -197,8 +199,9 @@ export default function EditorPage() {
 
     try {
       const tmdbId = locationState.movie?.id || parseInt(movieId);
+      const currentKind = kindRef.current;
 
-      if (kind === 'essay') {
+      if (currentKind === 'essay') {
         if (!body.trim()) {
           alert('내용을 입력해주세요');
           setIsPosting(false);
@@ -212,7 +215,7 @@ export default function EditorPage() {
           content: body,
           spoiler: false,
         });
-      } else if (kind === 'rating') {
+      } else if (currentKind === 'rating') {
         if (!blurb.trim() || stars === 0) {
           alert('별점과 한 줄평을 입력해주세요');
           setIsPosting(false);
@@ -230,7 +233,7 @@ export default function EditorPage() {
           media_type: 'movie',
           rating: stars,
         });
-      } else if (kind === 'log') {
+      } else if (currentKind === 'log') {
         if (stars === 0) {
           alert('별점을 선택해주세요');
           setIsPosting(false);
@@ -241,7 +244,7 @@ export default function EditorPage() {
           media_type: 'movie',
           rating: stars,
         });
-      } else if (kind === 'quote') {
+      } else if (currentKind === 'quote') {
         if (!quote.trim()) {
           alert('대사를 입력해주세요');
           setIsPosting(false);
@@ -307,7 +310,7 @@ export default function EditorPage() {
       {/* Type picker */}
       <div style={{ display: 'flex', gap: 6, padding: '12px 16px 14px', borderBottom: '1px solid var(--line-soft)', overflowX: 'auto' }}>
         {TYPES.map(tp => (
-          <button key={tp.id} onClick={() => setKind(tp.id)} style={{
+          <button key={tp.id} onClick={() => handleKindChange(tp.id)} style={{
             flexShrink: 0, padding: '7px 14px', borderRadius: 999,
             fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap',
             background: kind === tp.id ? '#1f1f1f' : 'transparent',

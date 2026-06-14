@@ -172,7 +172,7 @@ export default function MoviePage() {
             평론을 작성해보세요.
           </div>
           <button
-            onClick={() => navigate('/editor', { state: { movie, kind: 'rating' } })}
+            onClick={() => navigate('/editor', { state: { movie } })}
             style={{
               width: '100%', marginTop: 16,
               padding: '12px', borderRadius: 4,
