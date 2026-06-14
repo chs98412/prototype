@@ -38,7 +38,7 @@ export default function AlertsPage() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, padding: '14px 22px 4px' }}>
-        {TABS.map((t, i) => (
+        {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             flexShrink: 0, padding: '5px 12px', borderRadius: 999,
             fontSize: 11, fontWeight: 500, cursor: 'pointer',

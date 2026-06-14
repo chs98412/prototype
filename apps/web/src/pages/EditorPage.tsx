@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
+import type { Movie } from '../lib/data';
 import { MOVIES, MOVIE_BY_ID } from '../lib/data';
 import { BackIcon, StarIcon, CameraIcon, SparkleIcon, BookmarkIcon } from '../components/ui/Icons';
 
@@ -65,7 +66,7 @@ function RatingForm({ stars, setStars, blurb, setBlurb }: { stars: number; setSt
   );
 }
 
-function LogForm({ stars, setStars, movie }: { stars: number; setStars: (v: number) => void; movie: ReturnType<typeof MOVIES[0]['valueOf']> }) {
+function LogForm({ stars, setStars, movie }: { stars: number; setStars: (v: number) => void; movie: Movie }) {
   return (
     <div style={{ padding: '28px 22px', textAlign: 'center' }}>
       <div style={{
