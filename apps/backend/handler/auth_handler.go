@@ -90,6 +90,32 @@ func (h *AuthHandler) InitiateGoogleOAuth(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"auth_url": authURL})
 }
 
+// Refresh issues a new JWT token
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header required"})
+		return
+	}
+
+	// Extract token from "Bearer <token>"
+	var token string
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header"})
+		return
+	}
+
+	newToken, err := h.authSvc.RefreshToken(c.Request.Context(), token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to refresh token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"access_token": newToken})
+}
+
 // Logout clears auth token
 func (h *AuthHandler) Logout(c *gin.Context) {
 	c.SetCookie("auth_token", "", -1, "/", "", false, true)

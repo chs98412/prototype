@@ -121,6 +121,7 @@ func main() {
 	r.GET("/api/openapi.json", handler.OpenAPIHandler)
 	r.POST("/v1/auth/google", authHandler.InitiateGoogleOAuth)
 	r.POST("/v1/auth/callback", authHandler.HandleOAuthCallback)
+	r.POST("/v1/auth/refresh", authHandler.Refresh)
 	r.POST("/v1/auth/logout", authHandler.Logout)
 	// Movies — public (no auth required)
 	r.GET("/v1/movies/search", handler.SearchMovies)

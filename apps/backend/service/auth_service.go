@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/chs98412/prototype/backend/domain/entity"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // AuthService interface
 type AuthService interface {
 	HandleOAuthCallback(ctx context.Context, code string) (*entity.AuthResponse, error)
+	RefreshToken(ctx context.Context, currentToken string) (string, error)
 }
 
 // AuthServiceImpl implements AuthService
@@ -77,4 +80,49 @@ func (s *AuthServiceImpl) HandleOAuthCallback(ctx context.Context, code string) 
 		AccessToken: accessToken,
 		User:        userData,
 	}, nil
+}
+
+// RefreshToken issues a new JWT token from current valid token
+func (s *AuthServiceImpl) RefreshToken(ctx context.Context, currentToken string) (string, error) {
+	if currentToken == "" {
+		return "", fmt.Errorf("token required")
+	}
+
+	secret := os.Getenv("SUPABASE_JWT_SECRET")
+	if secret == "" {
+		return "", fmt.Errorf("missing JWT secret")
+	}
+
+	// Parse and validate current token
+	claims := jwt.MapClaims{}
+	token, err := jwt.ParseWithClaims(currentToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return "", fmt.Errorf("invalid token")
+	}
+
+	// Extract user ID
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		return "", fmt.Errorf("invalid token claims")
+	}
+
+	// Issue new token with 7 day expiry
+	newClaims := jwt.MapClaims{
+		"sub": userID,
+		"iat": time.Now().Unix(),
+		"exp": time.Now().AddDate(0, 0, 7).Unix(),
+		"aud": "authenticated",
+		"role": "authenticated",
+	}
+
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
+	newTokenString, err := newToken.SignedString([]byte(secret))
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token")
+	}
+
+	return newTokenString, nil
 }
