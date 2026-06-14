@@ -302,13 +302,14 @@ export default function PostPage() {
   }
 
   if (review) {
-    const isEssay = review.review_title && review.review_title.trim().length > 0;
+    const kindLabelMap: Record<string, string> = { essay: '에세이', rating: '한줄평', quote: '인용', log: '로그' };
+    const reviewKind = review.kind || 'rating';
 
     return (
       <Layout>
-        <SubHeader onBack={() => navigate(-1)} title={isEssay ? "에세이" : "한줄평"} trailing={<button style={BTN}><EllipsisIcon /></button>} />
-        <div style={{ padding: isEssay ? '20px 22px 0' : '12px 22px 0', textAlign: isEssay ? 'left' : 'center' }}>
-          {isEssay ? (
+        <SubHeader onBack={() => navigate(-1)} title={kindLabelMap[reviewKind] ?? '평론'} trailing={<button style={BTN}><EllipsisIcon /></button>} />
+        <div style={{ padding: reviewKind === 'essay' ? '20px 22px 0' : '12px 22px 0', textAlign: reviewKind === 'essay' ? 'left' : 'center' }}>
+          {reviewKind === 'essay' ? (
             <>
               <div style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', marginBottom: 8 }}>
                 {review.review_title}

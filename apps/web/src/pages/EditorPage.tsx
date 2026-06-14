@@ -207,6 +207,7 @@ export default function EditorPage() {
         await api.post('/v1/reviews', {
           tmdb_id: tmdbId,
           media_type: 'movie',
+          kind: 'essay',
           title: title,
           content: body,
           spoiler: false,
@@ -220,6 +221,7 @@ export default function EditorPage() {
         await api.post('/v1/reviews', {
           tmdb_id: tmdbId,
           media_type: 'movie',
+          kind: 'rating',
           content: blurb,
           spoiler: false,
         });
@@ -248,6 +250,7 @@ export default function EditorPage() {
         await api.post('/v1/reviews', {
           tmdb_id: tmdbId,
           media_type: 'movie',
+          kind: 'quote',
           content: `"${quote}"\n\n— ${cite}`,
           spoiler: false,
         });

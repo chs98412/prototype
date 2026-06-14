@@ -14,7 +14,7 @@ type ReviewService interface {
 	ListReviews(ctx context.Context, limit, offset int) ([]entity.ReviewDTO, error)
 	GetReviewsByTMDB(ctx context.Context, tmdbID int, limit, offset int) ([]entity.ReviewDTO, error)
 	GetUserReviews(ctx context.Context, userID string, limit, offset int) ([]entity.ReviewDTO, error)
-	CreateReview(ctx context.Context, userID string, tmdbID int, mediaType, title, content string, spoiler bool) (*entity.ReviewDTO, error)
+	CreateReview(ctx context.Context, userID string, tmdbID int, mediaType, kind, title, content string, spoiler bool) (*entity.ReviewDTO, error)
 	UpdateReview(ctx context.Context, userID, reviewID string, content string, spoiler bool) (*entity.ReviewDTO, error)
 	DeleteReview(ctx context.Context, userID, reviewID string) error
 	GetLikeCount(ctx context.Context, reviewID string) (int, error)
@@ -117,7 +117,7 @@ func (s *ReviewServiceImpl) GetUserReviews(ctx context.Context, userID string, l
 }
 
 // CreateReview creates a new review (or updates existing)
-func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmdbID int, mediaType, title, content string, spoiler bool) (*entity.ReviewDTO, error) {
+func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmdbID int, mediaType, kind, title, content string, spoiler bool) (*entity.ReviewDTO, error) {
 	// Validate input
 	if content == "" {
 		return nil, domain.ErrInvalidInput
@@ -140,7 +140,7 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 	}
 
 	// Create new review
-	review := entity.NewReview(uuid.New().String(), userID, tmdbID, mediaType, title, content, spoiler)
+	review := entity.NewReview(uuid.New().String(), userID, tmdbID, mediaType, kind, title, content, spoiler)
 
 	if err := s.repo.Save(ctx, review); err != nil {
 		return nil, err
