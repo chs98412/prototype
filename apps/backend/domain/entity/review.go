@@ -11,7 +11,7 @@ type Review struct {
 	UserID    string    `gorm:"index;column:user_id"`
 	TMDBID    int       `gorm:"index;column:tmdb_id"`
 	Content   string    `gorm:"column:content"`
-	Spoiler   bool      `gorm:"column:spoiler"`
+	Spoiler   bool      `gorm:"column:is_spoiler"`
 	LikeCount int       `gorm:"column:like_count"`
 	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
