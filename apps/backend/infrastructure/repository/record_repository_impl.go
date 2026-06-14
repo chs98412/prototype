@@ -48,30 +48,30 @@ func (r *RecordRepositoryImpl) GetByTMDBID(ctx context.Context, userID string, t
 func (r *RecordRepositoryImpl) List(ctx context.Context, userID string, filters domainrepo.RecordFilters) ([]entity.Record, error) {
 	var records []entity.Record
 
-	whereClause := "user_id = ?"
+	query := "SELECT id, user_id, tmdb_id, media_type, status, CAST(rating AS INTEGER)::INTEGER as rating, created_at, updated_at FROM user_records WHERE user_id = ?"
 	args := []interface{}{userID}
 
 	if filters.Status != "" {
-		whereClause += " AND status = ?"
+		query += " AND status = ?"
 		args = append(args, filters.Status)
 	}
 	if filters.MediaType != "" {
-		whereClause += " AND media_type = ?"
+		query += " AND media_type = ?"
 		args = append(args, filters.MediaType)
 	}
 
-	query := r.db.WithContext(ctx).
-		Where(whereClause, args...).
-		Order("updated_at DESC")
+	query += " ORDER BY updated_at DESC"
 
 	if filters.Limit > 0 {
-		query = query.Limit(filters.Limit)
+		query += " LIMIT ?"
+		args = append(args, filters.Limit)
 	}
 	if filters.Offset > 0 {
-		query = query.Offset(filters.Offset)
+		query += " OFFSET ?"
+		args = append(args, filters.Offset)
 	}
 
-	if err := query.Find(&records).Error; err != nil {
+	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&records).Error; err != nil {
 		return nil, fmt.Errorf("failed to query records: %w", err)
 	}
 
