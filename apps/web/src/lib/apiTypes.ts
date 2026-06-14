@@ -61,6 +61,7 @@ export type ReviewDTO = {
   user_id: string
   tmdb_id: number
   media_type: string
+  review_title: string
   title: string
   poster_path: string
   content: string

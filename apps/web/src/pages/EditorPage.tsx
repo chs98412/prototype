@@ -207,6 +207,7 @@ export default function EditorPage() {
         await api.post('/v1/reviews', {
           tmdb_id: tmdbId,
           media_type: 'movie',
+          title: title,
           content: body,
           spoiler: false,
         });
