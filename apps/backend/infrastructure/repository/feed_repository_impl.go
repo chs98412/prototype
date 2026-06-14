@@ -66,17 +66,16 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 			COALESCE(p.display_name, '') AS display_name,
 			COALESCE(p.avatar_url, '') AS avatar_url,
 			rec.tmdb_id,
-			COALESCE(m.title, '') AS title,
-			COALESCE(m.poster_path, '') AS poster_path,
+			COALESCE(rec.title, '') AS title,
+			COALESCE(rec.poster_path, '') AS poster_path,
 			NULL AS content,
 			0 AS like_count,
 			rec.rating,
 			NULL::bool AS spoiler,
-			COALESCE(rec.watched_at, rec.created_at) AS event_time
+			rec.created_at AS event_time
 		FROM user_records rec
 		JOIN user_follows f ON f.following_id = rec.user_id AND f.follower_id = ?
 		LEFT JOIN user_profiles p ON p.user_id = rec.user_id
-		LEFT JOIN movies m ON m.id = rec.tmdb_id
 
 		ORDER BY event_time DESC
 		LIMIT ? OFFSET ?

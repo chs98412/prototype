@@ -20,15 +20,16 @@ const (
 
 // Record is the domain entity for watch history records
 type Record struct {
-	ID         string       `gorm:"primaryKey;column:id"`
-	UserID     string       `gorm:"index;column:user_id"`
-	TMDBID     int          `gorm:"index;column:tmdb_id"`
-	MediaType  string       `gorm:"column:media_type"`
-	Status     RecordStatus `gorm:"column:status"`
-	Rating     int          `gorm:"column:rating"`
-	WatchedAt  time.Time    `gorm:"index;column:watched_at"`
-	CreatedAt  time.Time    `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt  time.Time    `gorm:"autoUpdateTime;column:updated_at"`
+	ID        string       `gorm:"primaryKey;column:id"`
+	UserID    string       `gorm:"index;column:user_id"`
+	TMDBID    int          `gorm:"index;column:tmdb_id"`
+	MediaType string       `gorm:"column:media_type"`
+	Status    RecordStatus `gorm:"column:status"`
+	Rating    int          `gorm:"column:rating"`
+	Title     string       `gorm:"column:title"`
+	PosterPath string      `gorm:"column:poster_path"`
+	CreatedAt time.Time    `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt time.Time    `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
@@ -47,7 +48,6 @@ func NewRecord(id, userID string, tmdbID int, mediaType string) *Record {
 		Rating:    0,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		WatchedAt: time.Now(),
 	}
 }
 
@@ -58,7 +58,6 @@ func (r *Record) SetWatched(rating int) error {
 	}
 	r.Status = StatusWatched
 	r.Rating = rating
-	r.WatchedAt = time.Now()
 	r.UpdatedAt = time.Now()
 	return nil
 }
@@ -94,7 +93,8 @@ func (r *Record) ToDTO() *RecordDTO {
 		MediaType: r.MediaType,
 		Status:    string(r.Status),
 		Rating:    r.Rating,
-		WatchedAt: r.WatchedAt.Format(time.RFC3339),
+		Title:     r.Title,
+		PosterPath: r.PosterPath,
 		CreatedAt: r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
 	}
@@ -108,7 +108,8 @@ type RecordDTO struct {
 	MediaType string `json:"media_type"`
 	Status    string `json:"status"`
 	Rating    int    `json:"rating"`
-	WatchedAt string `json:"watched_at"`
+	Title     string `json:"title"`
+	PosterPath string `json:"poster_path"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
