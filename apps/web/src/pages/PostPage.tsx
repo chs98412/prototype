@@ -302,26 +302,45 @@ export default function PostPage() {
   }
 
   if (review) {
+    const isEssay = review.review_title && review.review_title.trim().length > 0;
+
     return (
       <Layout>
-        <SubHeader onBack={() => navigate(-1)} title="평론" trailing={<button style={BTN}><EllipsisIcon /></button>} />
-        <div style={{ padding: '12px 22px 0', textAlign: 'center' }}>
-          {review.poster_path && (
-            <div style={{
-              width: 170, height: 236, borderRadius: 3, margin: '0 auto', cursor: 'pointer',
-              background: `url(https://image.tmdb.org/t/p/w500${review.poster_path}) center / cover no-repeat #eee`,
-              boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
-            }} />
+        <SubHeader onBack={() => navigate(-1)} title={isEssay ? "에세이" : "한줄평"} trailing={<button style={BTN}><EllipsisIcon /></button>} />
+        <div style={{ padding: isEssay ? '20px 22px 0' : '12px 22px 0', textAlign: isEssay ? 'left' : 'center' }}>
+          {isEssay ? (
+            <>
+              <div style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 500, letterSpacing: '-0.01em', marginBottom: 8 }}>
+                {review.review_title}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--mute)', marginBottom: 24 }}>
+                {review.title}
+              </div>
+              <p style={{
+                fontFamily: 'var(--serif)', fontSize: 15, lineHeight: 1.8,
+                color: '#1f1f1f', letterSpacing: '-0.004em', wordBreak: 'keep-all',
+              }}>{review.content}</p>
+            </>
+          ) : (
+            <>
+              {review.poster_path && (
+                <div style={{
+                  width: 170, height: 236, borderRadius: 3, margin: '0 auto', cursor: 'pointer',
+                  background: `url(https://image.tmdb.org/t/p/w500${review.poster_path}) center / cover no-repeat #eee`,
+                  boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
+                }} />
+              )}
+              <div style={{
+                marginTop: 18, fontFamily: 'var(--serif)', fontSize: 22,
+                fontWeight: 500, letterSpacing: '-0.02em',
+              }}>{review.title}</div>
+              <p style={{
+                margin: '32px auto 0', maxWidth: 300,
+                fontFamily: 'var(--serif)', fontSize: 17, lineHeight: 1.7,
+                color: '#1f1f1f', letterSpacing: '-0.005em', wordBreak: 'keep-all',
+              }}>{review.content}</p>
+            </>
           )}
-          <div style={{
-            marginTop: 18, fontFamily: 'var(--serif)', fontSize: 22,
-            fontWeight: 500, letterSpacing: '-0.02em',
-          }}>{review.title}</div>
-          <p style={{
-            margin: '32px auto 0', maxWidth: 300,
-            fontFamily: 'var(--serif)', fontSize: 16, lineHeight: 1.7,
-            color: '#1f1f1f', letterSpacing: '-0.005em', wordBreak: 'keep-all',
-          }}>{review.content}</p>
         </div>
         <div style={{
           margin: '30px 22px 0', padding: '16px 0',
