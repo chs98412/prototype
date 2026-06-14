@@ -1,7 +1,11 @@
 {
-  "buildCommand": "cd apps/mobile && npm install --legacy-peer-deps && npx expo export --platform web",
-  "outputDirectory": "./apps/mobile/dist",
-  "framework": null
+  "buildCommand": "cd apps/web && npm install --no-workspaces && npm run build",
+  "outputDirectory": "apps/web/dist",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
-
-
