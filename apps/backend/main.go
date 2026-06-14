@@ -165,6 +165,7 @@ func main() {
 
 		// Feed & Notifications
 		v1.GET("/feed", socialHandler.GetFeed)
+		v1.GET("/feed/social", socialHandler.GetSocialFeed)
 		v1.GET("/notifications", socialHandler.GetNotifications)
 
 		// Goals & Challenges

@@ -9,6 +9,7 @@ import (
 // FeedService interface
 type FeedService interface {
 	GetFeed(ctx context.Context, userID string, limit, offset int) ([]entity.FeedItemDTO, error)
+	GetSocialFeed(ctx context.Context, userID string, limit, offset int) ([]entity.SocialFeedItem, error)
 }
 
 // NotificationService interface
@@ -28,7 +29,7 @@ func NewFeedService(repo repository.FeedRepository) FeedService {
 	}
 }
 
-// GetFeed retrieves friend's activity feed
+// GetFeed retrieves friend's activity feed (legacy)
 func (s *FeedServiceImpl) GetFeed(ctx context.Context, userID string, limit, offset int) ([]entity.FeedItemDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 20
@@ -44,6 +45,14 @@ func (s *FeedServiceImpl) GetFeed(ctx context.Context, userID string, limit, off
 		dtos = append(dtos, *item.ToDTO())
 	}
 	return dtos, nil
+}
+
+// GetSocialFeed retrieves a mixed social feed of reviews and records from followed users
+func (s *FeedServiceImpl) GetSocialFeed(ctx context.Context, userID string, limit, offset int) ([]entity.SocialFeedItem, error) {
+	if limit == 0 || limit > 100 {
+		limit = 20
+	}
+	return s.repo.GetSocialFeed(ctx, userID, limit, offset)
 }
 
 // NotificationServiceImpl implements NotificationService

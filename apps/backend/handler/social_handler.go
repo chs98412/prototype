@@ -22,7 +22,7 @@ func NewSocialHandler(feedSvc service.FeedService, notifSvc service.Notification
 	}
 }
 
-// GetFeed retrieves friend's activity feed
+// GetFeed retrieves friend's activity feed (legacy)
 func (h *SocialHandler) GetFeed(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -34,6 +34,29 @@ func (h *SocialHandler) GetFeed(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	items, err := h.feedSvc.GetFeed(c.Request.Context(), userID, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  items,
+		"count": len(items),
+	})
+}
+
+// GetSocialFeed retrieves a mixed social feed (reviews + records from followed users)
+func (h *SocialHandler) GetSocialFeed(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+	items, err := h.feedSvc.GetSocialFeed(c.Request.Context(), userID, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
