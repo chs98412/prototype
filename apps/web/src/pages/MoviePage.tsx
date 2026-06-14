@@ -1,10 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Layout from '../components/ui/Layout';
-import { MOVIE_BY_ID, MOVIES, ESSAYS } from '../lib/data';
 import { BackIcon, BookmarkIcon, StarIcon } from '../components/ui/Icons';
+import { api } from '../lib/api';
+import type { TmdbMovieDetail } from '../lib/apiTypes';
 
 const ACCENT = '#6a7040';
 const BTN: React.CSSProperties = { background: 'none', border: 0, padding: 4, cursor: 'pointer', display: 'flex', alignItems: 'center' };
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -15,16 +18,63 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-const SYNOPSES: Record<string, string> = {
-  monster: '어느 날 밤, 학교에서 일어난 작은 사건이 한 어머니와 교사, 그리고 두 아이의 세계를 차례로 흔든다. 세 개의 시점이 겹쳐지며 \'누가 괴물인가\'라는 질문은 점점 거울처럼 관객을 향한다.',
-};
-const DEFAULT_SYNOPSIS = '여기에 들어갈 시놉시스. 평론과 함께 영화를 천천히 읽어내려 갑니다. 세 개의 시점이 겹쳐지면서 우리가 무엇을 보았다고 말할 수 있는지에 대해 질문을 던집니다.';
-
 export default function MoviePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const movie = (id && MOVIE_BY_ID[id]) || MOVIES[0];
-  const movieEssays = ESSAYS.filter(e => e.movieId === movie.id);
+  const [movie, setMovie] = useState<TmdbMovieDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      setError('영화 ID가 없습니다');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    api.get<TmdbMovieDetail>(`/v1/movies/${id}`)
+      .then(data => {
+        setMovie(data);
+        setError(null);
+      })
+      .catch(e => {
+        setError(e.message);
+        setMovie(null);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ padding: '40px 22px', textAlign: 'center', color: 'var(--mute)' }}>
+          불러오는 중…
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !movie) {
+    return (
+      <Layout>
+        <div style={{ padding: '40px 22px', textAlign: 'center' }}>
+          <div style={{ color: '#c44', marginBottom: 8 }}>오류 발생</div>
+          <div style={{ color: 'var(--mute)', fontSize: 13 }}>{error}</div>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ marginTop: 16, padding: '8px 16px', borderRadius: 4, border: '1px solid #ccc', cursor: 'pointer' }}
+          >
+            돌아가기
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const year = new Date(movie.release_date).getFullYear();
+  const genreStr = movie.genres.map(g => g.name).join(', ');
+  const director = movie.credits?.crew.find(c => c.job === 'Director')?.name || '-';
 
   return (
     <Layout>
@@ -42,7 +92,9 @@ export default function MoviePage() {
       {/* Backdrop */}
       <div style={{
         width: '100%', height: 280,
-        background: `url(${movie.backdrop || movie.poster}) center / cover no-repeat #222`,
+        background: movie.backdrop_path
+          ? `url(${TMDB_IMG}${movie.backdrop_path}) center / cover no-repeat #222`
+          : `url(${TMDB_IMG}${movie.poster_path}) center / cover no-repeat #222`,
         position: 'relative',
       }}>
         <div style={{
@@ -56,7 +108,9 @@ export default function MoviePage() {
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{
             width: 186, height: 264, borderRadius: 2, flexShrink: 0,
-            background: `url(${movie.poster}) center / cover no-repeat #eee`,
+            background: movie.poster_path
+              ? `url(${TMDB_IMG}${movie.poster_path}) center / cover no-repeat #eee`
+              : '#eee',
             boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
           }} />
         </div>
@@ -67,73 +121,64 @@ export default function MoviePage() {
             {movie.title}
           </div>
           <div style={{ marginTop: 6, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.06em' }}>
-            {movie.year} · {movie.genre} · {movie.country}
+            {year} · {genreStr}
           </div>
           <div style={{ marginTop: 2, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.06em' }}>
-            {movie.runtime} · {movie.rating} · {movie.director}
+            {movie.runtime ? `${movie.runtime}분` : '-'} · {movie.vote_average.toFixed(1)}
           </div>
+          {director !== '-' && (
+            <div style={{ marginTop: 2, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.06em' }}>
+              감독 · {director}
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 16 }}>
             {[1, 2, 3, 4, 5].map(i => (
-              <StarIcon key={i} size={20} filled={i <= 4} stroke="#1f1f1f" />
+              <StarIcon key={i} size={20} filled={i <= Math.round(movie.vote_average / 2)} stroke="#1f1f1f" />
             ))}
           </div>
-          <div style={{ marginTop: 6, fontSize: 10, color: 'var(--mute)', letterSpacing: '0.04em' }}>
-            4.1 · {movieEssays.length} 평론
-          </div>
-        </div>
-
-        {/* CTAs */}
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-          <button
-            onClick={() => navigate('/editor')}
-            style={{
-              flex: 2, background: '#1f1f1f', color: '#fff', border: 0,
-              padding: '13px 14px', borderRadius: 8, cursor: 'pointer',
-              fontSize: 12.5, fontWeight: 600, letterSpacing: '0.04em', fontFamily: 'var(--sans)',
-            }}
-          >평론 쓰러가기</button>
-          <button style={{
-            flex: 1, background: 'transparent', border: '0.5px solid var(--line-soft)',
-            padding: '13px 14px', borderRadius: 8, cursor: 'pointer',
-            fontSize: 12.5, fontWeight: 500, fontFamily: 'var(--sans)',
-          }}>보기 목록</button>
         </div>
 
         {/* Synopsis */}
-        <div style={{ marginTop: 28 }}>
+        <div style={{ marginTop: 32, padding: '0 0 32px' }}>
           <SectionLabel>시놉시스</SectionLabel>
           <p style={{
-            margin: '10px 0 0', fontFamily: 'var(--serif)',
-            fontSize: 13, lineHeight: 1.85, color: '#1f1f1f', wordBreak: 'keep-all',
+            marginTop: 12, fontFamily: 'var(--serif)', fontSize: 13, lineHeight: 1.8,
+            color: '#1f1f1f',
           }}>
-            {SYNOPSES[movie.id] || DEFAULT_SYNOPSIS}
+            {movie.overview || '시놉시스가 없습니다.'}
           </p>
         </div>
 
-        {/* Essays */}
-        <div style={{ marginTop: 32, marginBottom: 24 }}>
-          <SectionLabel>이 영화의 평론</SectionLabel>
-          <div style={{ marginTop: 8 }}>
-            {(movieEssays.length ? movieEssays : ESSAYS.slice(0, 2)).map(e => (
-              <button key={e.id} onClick={() => navigate(`/essay/${e.id}`)} style={{
-                display: 'block', width: '100%', textAlign: 'left',
-                background: 'transparent', border: 0, cursor: 'pointer',
-                padding: '14px 0', borderBottom: '1px solid var(--line-soft)',
-              }}>
-                <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 500, letterSpacing: '-0.005em' }}>
-                  {e.title}
+        {/* Cast */}
+        {movie.credits?.cast && movie.credits.cast.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <SectionLabel>출연</SectionLabel>
+            <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {movie.credits.cast.slice(0, 6).map((actor) => (
+                <div key={actor.id} style={{ fontSize: 12 }}>
+                  <div style={{ fontWeight: 500, color: '#1f1f1f' }}>{actor.name}</div>
+                  <div style={{ marginTop: 2, fontSize: 11, color: 'var(--mute)' }}>{actor.character}</div>
                 </div>
-                <div style={{
-                  marginTop: 6, fontSize: 11.5, color: '#444', fontFamily: 'var(--serif)', lineHeight: 1.55,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                } as React.CSSProperties}>{e.excerpt}</div>
-                <div style={{ marginTop: 8, fontSize: 10, color: ACCENT, letterSpacing: '0.06em' }}>
-                  {e.author} · {e.date} · 좋아요 {e.likes}
-                </div>
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Reviews Section */}
+        <div style={{ marginBottom: 40, paddingTop: 16, borderTop: '1px solid var(--line-soft)' }}>
+          <SectionLabel>평론</SectionLabel>
+          <div style={{ marginTop: 16, textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
+            평론을 작성해보세요.
+          </div>
+          <button style={{
+            width: '100%', marginTop: 16,
+            padding: '12px', borderRadius: 4,
+            background: '#1f1f1f', color: '#fff', border: 0,
+            fontSize: 14, fontWeight: 500, cursor: 'pointer',
+          }}>
+            평론 작성
+          </button>
         </div>
       </div>
     </Layout>

@@ -82,3 +82,20 @@ export type TmdbSearchResponse = {
   page: number
   total_pages: number
 }
+
+export type TmdbMovieDetail = {
+  id: number
+  title: string
+  original_title: string
+  poster_path: string | null
+  backdrop_path: string | null
+  release_date: string
+  vote_average: number
+  runtime: number
+  overview: string
+  genres: Array<{ id: number; name: string }>
+  credits?: {
+    cast: Array<{ id: number; name: string; character: string }>
+    crew: Array<{ id: number; name: string; job: string; department: string }>
+  }
+}
