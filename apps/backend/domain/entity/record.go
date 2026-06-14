@@ -26,10 +26,10 @@ type Record struct {
 	MediaType  string       `gorm:"column:media_type"`
 	Status     RecordStatus `gorm:"column:status"`
 	Rating     int          `gorm:"column:rating"`
-	Title      string       `gorm:"-"`
-	PosterPath string       `gorm:"-"`
-	CreatedAt  time.Time    `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt  time.Time    `gorm:"autoUpdateTime;column:updated_at"`
+	Title      string
+	PosterPath string
+	CreatedAt  time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt  time.Time `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
