@@ -7,17 +7,15 @@ import (
 
 // Review is the domain entity for user reviews
 type Review struct {
-	ID         string    `gorm:"primaryKey;column:id"`
-	UserID     string    `gorm:"index;column:user_id"`
-	TMDBID     int       `gorm:"index;column:tmdb_id"`
-	MediaType  string    `gorm:"column:media_type"`
-	Content    string    `gorm:"column:content"`
-	Spoiler    bool      `gorm:"column:is_spoiler"`
-	LikeCount  int       `gorm:"column:like_count"`
-	CreatedAt  time.Time `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt  time.Time `gorm:"autoUpdateTime;column:updated_at"`
-	Title      string    `gorm:"-"`
-	PosterPath string    `gorm:"-"`
+	ID        string    `gorm:"primaryKey;column:id"`
+	UserID    string    `gorm:"index;column:user_id"`
+	TMDBID    int       `gorm:"index;column:tmdb_id"`
+	MediaType string    `gorm:"column:media_type"`
+	Content   string    `gorm:"column:content"`
+	Spoiler   bool      `gorm:"column:is_spoiler"`
+	LikeCount int       `gorm:"column:like_count"`
+	CreatedAt time.Time `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
@@ -66,20 +64,18 @@ func (r *Review) DecrementLike() {
 	}
 }
 
-// ToDTO converts entity to response DTO
+// ToDTO converts entity to response DTO (without title/poster_path)
 func (r *Review) ToDTO() *ReviewDTO {
 	return &ReviewDTO{
-		ID:         r.ID,
-		UserID:     r.UserID,
-		TMDBID:     r.TMDBID,
-		MediaType:  r.MediaType,
-		Title:      r.Title,
-		PosterPath: r.PosterPath,
-		Content:    r.Content,
-		Spoiler:    r.Spoiler,
-		LikeCount:  r.LikeCount,
-		CreatedAt:  r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:  r.UpdatedAt.Format(time.RFC3339),
+		ID:        r.ID,
+		UserID:    r.UserID,
+		TMDBID:    r.TMDBID,
+		MediaType: r.MediaType,
+		Content:   r.Content,
+		Spoiler:   r.Spoiler,
+		LikeCount: r.LikeCount,
+		CreatedAt: r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
 	}
 }
 

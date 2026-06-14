@@ -20,16 +20,14 @@ const (
 
 // Record is the domain entity for watch history records
 type Record struct {
-	ID         string       `gorm:"primaryKey;column:id"`
-	UserID     string       `gorm:"index;column:user_id"`
-	TMDBID     int          `gorm:"index;column:tmdb_id"`
-	MediaType  string       `gorm:"column:media_type"`
-	Status     RecordStatus `gorm:"column:status"`
-	Rating     int          `gorm:"column:rating"`
-	CreatedAt  time.Time    `gorm:"autoCreateTime;column:created_at"`
-	UpdatedAt  time.Time    `gorm:"autoUpdateTime;column:updated_at"`
-	Title      string       `gorm:"-"`
-	PosterPath string       `gorm:"-"`
+	ID        string       `gorm:"primaryKey;column:id"`
+	UserID    string       `gorm:"index;column:user_id"`
+	TMDBID    int          `gorm:"index;column:tmdb_id"`
+	MediaType string       `gorm:"column:media_type"`
+	Status    RecordStatus `gorm:"column:status"`
+	Rating    int          `gorm:"column:rating"`
+	CreatedAt time.Time    `gorm:"autoCreateTime;column:created_at"`
+	UpdatedAt time.Time    `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
@@ -84,7 +82,7 @@ func (r *Record) UpdateRating(rating int) error {
 	return nil
 }
 
-// ToDTO converts entity to response DTO
+// ToDTO converts entity to response DTO (without title/poster_path)
 func (r *Record) ToDTO() *RecordDTO {
 	return &RecordDTO{
 		ID:         r.ID,
@@ -93,8 +91,6 @@ func (r *Record) ToDTO() *RecordDTO {
 		MediaType:  r.MediaType,
 		Status:     string(r.Status),
 		Rating:     r.Rating,
-		Title:      r.Title,
-		PosterPath: r.PosterPath,
 		CreatedAt:  r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:  r.UpdatedAt.Format(time.RFC3339),
 	}

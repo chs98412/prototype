@@ -23,18 +23,7 @@ func NewReviewRepository(db *gorm.DB) domainrepo.ReviewRepository {
 // GetByID retrieves a review by ID
 func (r *ReviewRepositoryImpl) GetByID(ctx context.Context, reviewID string) (*entity.Review, error) {
 	review := &entity.Review{}
-	sql := `
-		SELECT
-			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler, rev.like_count,
-			COALESCE(m.title, '') as title,
-			COALESCE(m.poster_path, '') as poster_path,
-			rev.created_at, rev.updated_at
-		FROM reviews rev
-		LEFT JOIN movies m ON m.id = rev.tmdb_id
-		WHERE rev.id = ?
-	`
-	if err := r.db.WithContext(ctx).Raw(sql, reviewID).Scan(review).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ?", reviewID).First(review).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
@@ -46,20 +35,12 @@ func (r *ReviewRepositoryImpl) GetByID(ctx context.Context, reviewID string) (*e
 // GetByTMDBID retrieves reviews by TMDB ID
 func (r *ReviewRepositoryImpl) GetByTMDBID(ctx context.Context, tmdbID int, limit, offset int) ([]entity.Review, error) {
 	var reviews []entity.Review
-	sql := fmt.Sprintf(`
-		SELECT
-			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler, rev.like_count,
-			COALESCE(m.title, '') as title,
-			COALESCE(m.poster_path, '') as poster_path,
-			rev.created_at, rev.updated_at
-		FROM reviews rev
-		LEFT JOIN movies m ON m.id = rev.tmdb_id
-		WHERE rev.tmdb_id = ?
-		ORDER BY rev.created_at DESC
-		LIMIT %d OFFSET %d
-	`, limit, offset)
-	if err := r.db.WithContext(ctx).Raw(sql, tmdbID).Scan(&reviews).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("tmdb_id = ?", tmdbID).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&reviews).Error; err != nil {
 		return nil, fmt.Errorf("failed to query reviews: %w", err)
 	}
 	return reviews, nil
@@ -68,20 +49,12 @@ func (r *ReviewRepositoryImpl) GetByTMDBID(ctx context.Context, tmdbID int, limi
 // GetByUserID retrieves reviews by user ID
 func (r *ReviewRepositoryImpl) GetByUserID(ctx context.Context, userID string, limit, offset int) ([]entity.Review, error) {
 	var reviews []entity.Review
-	sql := fmt.Sprintf(`
-		SELECT
-			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler, rev.like_count,
-			COALESCE(m.title, '') as title,
-			COALESCE(m.poster_path, '') as poster_path,
-			rev.created_at, rev.updated_at
-		FROM reviews rev
-		LEFT JOIN movies m ON m.id = rev.tmdb_id
-		WHERE rev.user_id = ?
-		ORDER BY rev.created_at DESC
-		LIMIT %d OFFSET %d
-	`, limit, offset)
-	if err := r.db.WithContext(ctx).Raw(sql, userID).Scan(&reviews).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&reviews).Error; err != nil {
 		return nil, fmt.Errorf("failed to query reviews: %w", err)
 	}
 	return reviews, nil
@@ -90,19 +63,11 @@ func (r *ReviewRepositoryImpl) GetByUserID(ctx context.Context, userID string, l
 // List retrieves all reviews
 func (r *ReviewRepositoryImpl) List(ctx context.Context, limit, offset int) ([]entity.Review, error) {
 	var reviews []entity.Review
-	sql := fmt.Sprintf(`
-		SELECT
-			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler, rev.like_count,
-			COALESCE(m.title, '') as title,
-			COALESCE(m.poster_path, '') as poster_path,
-			rev.created_at, rev.updated_at
-		FROM reviews rev
-		LEFT JOIN movies m ON m.id = rev.tmdb_id
-		ORDER BY rev.created_at DESC
-		LIMIT %d OFFSET %d
-	`, limit, offset)
-	if err := r.db.WithContext(ctx).Raw(sql).Scan(&reviews).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&reviews).Error; err != nil {
 		return nil, fmt.Errorf("failed to query reviews: %w", err)
 	}
 	return reviews, nil
@@ -111,23 +76,13 @@ func (r *ReviewRepositoryImpl) List(ctx context.Context, limit, offset int) ([]e
 // GetUserReviewByTMDB retrieves a user's review for a specific TMDB ID
 func (r *ReviewRepositoryImpl) GetUserReviewByTMDB(ctx context.Context, userID string, tmdbID int) (*entity.Review, error) {
 	review := &entity.Review{}
-	sql := `
-		SELECT
-			rev.id, rev.user_id, rev.tmdb_id, rev.media_type, rev.content,
-			rev.is_spoiler, rev.like_count,
-			COALESCE(m.title, '') as title,
-			COALESCE(m.poster_path, '') as poster_path,
-			rev.created_at, rev.updated_at
-		FROM reviews rev
-		LEFT JOIN movies m ON m.id = rev.tmdb_id
-		WHERE rev.user_id = ? AND rev.tmdb_id = ?
-	`
-	result := r.db.WithContext(ctx).Raw(sql, userID, tmdbID).Scan(review)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to query review: %w", result.Error)
-	}
-	if result.RowsAffected == 0 || review.ID == "" {
-		return nil, domain.ErrNotFound
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ? AND tmdb_id = ?", userID, tmdbID).
+		First(review).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to query review: %w", err)
 	}
 	return review, nil
 }
