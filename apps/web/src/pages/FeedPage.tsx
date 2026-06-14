@@ -65,9 +65,17 @@ function FeedCard({ item }: { item: SocialFeedItem }) {
 
       <div style={{ display: 'flex', gap: 12 }}>
         <div style={{
-          width: 50, height: 70, borderRadius: 2, flexShrink: 0, background: '#eee',
+          width: 50, height: 70, borderRadius: 2, flexShrink: 0,
+          background: item.poster_path
+            ? `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`
+            : '#eee',
         }} />
         <div style={{ flex: 1, minWidth: 0 }}>
+          {item.title && (
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#1f1f1f', marginBottom: 4 }}>
+              {item.title}
+            </div>
+          )}
           {item.rating != null && (
             <div style={{ marginBottom: 4 }}>
               <Stars n={item.rating} />

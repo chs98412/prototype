@@ -20,13 +20,15 @@ type RecordService interface {
 
 // RecordServiceImpl implements RecordService
 type RecordServiceImpl struct {
-	repo repository.RecordRepository
+	repo     repository.RecordRepository
+	movieSvc MovieService
 }
 
 // NewRecordService creates a new record service
-func NewRecordService(repo repository.RecordRepository) RecordService {
+func NewRecordService(repo repository.RecordRepository, movieSvc MovieService) RecordService {
 	return &RecordServiceImpl{
-		repo: repo,
+		repo:     repo,
+		movieSvc: movieSvc,
 	}
 }
 
@@ -98,6 +100,9 @@ func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmd
 	if err := s.repo.Save(ctx, record); err != nil {
 		return nil, err
 	}
+
+	// Best-effort: cache movie metadata from TMDB
+	go s.movieSvc.UpsertFromTMDB(context.Background(), tmdbID)
 
 	return record.ToDTO(), nil
 }

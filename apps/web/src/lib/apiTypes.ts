@@ -9,6 +9,8 @@ export type SocialFeedItem = {
   display_name: string
   avatar_url: string
   tmdb_id: number
+  title: string
+  poster_path: string
   content?: string
   like_count: number
   rating?: number

@@ -21,13 +21,15 @@ type ReviewService interface {
 
 // ReviewServiceImpl implements ReviewService
 type ReviewServiceImpl struct {
-	repo repository.ReviewRepository
+	repo     repository.ReviewRepository
+	movieSvc MovieService
 }
 
 // NewReviewService creates a new review service
-func NewReviewService(repo repository.ReviewRepository) ReviewService {
+func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService) ReviewService {
 	return &ReviewServiceImpl{
-		repo: repo,
+		repo:     repo,
+		movieSvc: movieSvc,
 	}
 }
 
@@ -121,6 +123,9 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 	if err := s.repo.Save(ctx, review); err != nil {
 		return nil, err
 	}
+
+	// Best-effort: cache movie metadata from TMDB
+	go s.movieSvc.UpsertFromTMDB(context.Background(), tmdbID)
 
 	return review.ToDTO(), nil
 }
