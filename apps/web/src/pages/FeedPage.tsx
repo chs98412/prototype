@@ -59,8 +59,6 @@ function FeedCard({ item }: { item: SocialFeedItem }) {
     </div>
   );
 
-  const isReview = ['essay', 'rating', 'quote'].includes(item.kind);
-
   return (
     <div
       onClick={() => navigate(`/post/review/${item.id}`)}
