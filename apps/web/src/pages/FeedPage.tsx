@@ -5,7 +5,7 @@ import { PencilIcon } from '../components/ui/Icons';
 import { api } from '../lib/api';
 import type { SocialFeedItem, ApiList } from '../lib/apiTypes';
 
-const FILTERS = ['전체', '평론', '기록'] as const;
+const FILTERS = ['전체', '에세이', '한줄평', '인용', '로그'] as const;
 type Filter = typeof FILTERS[number];
 
 function timeAgo(iso: string): string {
@@ -27,78 +27,135 @@ function Stars({ n }: { n: number }) {
   );
 }
 
+const KIND_LABELS: Record<SocialFeedItem['kind'], string> = {
+  essay: '에세이', rating: '한줄평', quote: '인용', log: '로그'
+};
+
 function FeedCard({ item }: { item: SocialFeedItem }) {
   const navigate = useNavigate();
+
+  // 공통 헤더
+  const header = (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+        background: item.avatar_url ? `url(${item.avatar_url}) center / cover no-repeat #ddd` : '#ddd',
+      }} />
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#1f1f1f' }}>
+          {item.display_name || '알 수 없는 사용자'}
+        </div>
+        <div style={{ fontSize: 10, color: 'var(--mute)', marginTop: 1 }}>
+          {timeAgo(item.event_time)}
+        </div>
+      </div>
+      <div style={{
+        marginLeft: 'auto', fontSize: 9.5, fontWeight: 500, letterSpacing: '0.08em',
+        textTransform: 'uppercase', color: '#6a7040',
+        border: '0.5px solid #6a7040', borderRadius: 3, padding: '2px 6px',
+      }}>
+        {KIND_LABELS[item.kind]}
+      </div>
+    </div>
+  );
+
+  const isReview = ['essay', 'rating', 'quote'].includes(item.kind);
+
   return (
     <div
-      onClick={() => navigate(`/post/${item.kind}/${item.id}`)}
+      onClick={() => navigate(`/post/review/${item.id}`)}
       style={{
         padding: '18px 22px',
         borderBottom: '1px solid var(--line-soft)',
         cursor: 'pointer',
       }}
     >
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-          background: item.avatar_url
-            ? `url(${item.avatar_url}) center / cover no-repeat #ddd`
-            : '#ddd',
-        }} />
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#1f1f1f' }}>
-            {item.display_name || '알 수 없는 사용자'}
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--mute)', marginTop: 1 }}>
-            {timeAgo(item.event_time)}
-          </div>
-        </div>
-        <div style={{
-          marginLeft: 'auto', fontSize: 9.5, fontWeight: 500, letterSpacing: '0.08em',
-          textTransform: 'uppercase', color: item.kind === 'review' ? '#6a7040' : '#888',
-          border: `0.5px solid ${item.kind === 'review' ? '#6a7040' : '#ccc'}`,
-          borderRadius: 3, padding: '2px 6px',
-        }}>
-          {item.kind === 'review' ? '평론' : '기록'}
-        </div>
-      </div>
+      {header}
 
-      <div style={{ display: 'flex', gap: 12 }}>
-        <div style={{
-          width: 50, height: 70, borderRadius: 2, flexShrink: 0,
-          background: item.poster_path
-            ? `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`
-            : '#eee',
-        }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {item.title && (
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#1f1f1f', marginBottom: 4 }}>
+      {/* Essay: 제목 + 긴 본문 */}
+      {item.kind === 'essay' && (
+        <div style={{ display: 'flex', gap: 12 }}>
+          {item.poster_path && (
+            <div style={{
+              width: 50, height: 70, borderRadius: 2, flexShrink: 0,
+              background: `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`,
+            }} />
+          )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontFamily: 'var(--serif)', fontWeight: 500, marginBottom: 6, color: '#1f1f1f' }}>
               {item.title}
             </div>
-          )}
-          {item.rating != null && (
-            <div style={{ marginBottom: 4 }}>
-              <Stars n={item.rating} />
-            </div>
-          )}
-          {item.content && (
             <p style={{
-              margin: 0, fontFamily: 'var(--serif)', fontSize: 13,
-              lineHeight: 1.6, color: '#1f1f1f',
-              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              margin: 0, fontFamily: 'var(--serif)', fontSize: 13, lineHeight: 1.6, color: '#1f1f1f',
+              display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             } as React.CSSProperties}>{item.content}</p>
-          )}
-          {!item.content && item.kind === 'record' && (
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--mute)' }}>시청 기록</p>
-          )}
-          {item.kind === 'review' && (
             <div style={{ marginTop: 8, fontSize: 11, color: 'var(--mute)' }}>
               ♥ {item.like_count}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Rating: 포스터 + 제목 + 별점 + 한줄평 */}
+      {item.kind === 'rating' && (
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{
+            width: 50, height: 70, borderRadius: 2, flexShrink: 0,
+            background: item.poster_path
+              ? `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`
+              : '#eee',
+          }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#1f1f1f', marginBottom: 4 }}>
+              {item.title}
+            </div>
+            <div style={{ marginBottom: 6 }}>
+              <Stars n={item.rating ?? 0} />
+            </div>
+            <p style={{
+              margin: 0, fontFamily: 'var(--serif)', fontSize: 13, lineHeight: 1.6, color: '#1f1f1f',
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            } as React.CSSProperties}>{item.content}</p>
+            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--mute)' }}>
+              ♥ {item.like_count}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quote: 풀 너비 인용문 */}
+      {item.kind === 'quote' && (
+        <div style={{ background: '#f7f6f3', padding: '16px', borderRadius: 4, marginBottom: 12 }}>
+          <p style={{
+            margin: 0, fontFamily: 'var(--serif)', fontSize: 14, lineHeight: 1.8,
+            color: '#1f1f1f', fontStyle: 'italic',
+          }}>"{item.content}"</p>
+          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--mute)' }}>
+            ♥ {item.like_count}
+          </div>
+        </div>
+      )}
+
+      {/* Log: 포스터 + 제목 + 별점 */}
+      {item.kind === 'log' && (
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{
+            width: 50, height: 70, borderRadius: 2, flexShrink: 0,
+            background: item.poster_path
+              ? `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`
+              : '#eee',
+          }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#1f1f1f', marginBottom: 4 }}>
+              {item.title}
+            </div>
+            <div style={{ marginBottom: 4 }}>
+              <Stars n={item.rating ?? 0} />
+            </div>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--mute)' }}>시청 기록</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -123,8 +180,11 @@ export default function FeedPage() {
 
   const filtered = items.filter(item => {
     if (filter === '전체') return true;
-    if (filter === '평론') return item.kind === 'review';
-    return item.kind === 'record';
+    if (filter === '에세이') return item.kind === 'essay';
+    if (filter === '한줄평') return item.kind === 'rating';
+    if (filter === '인용') return item.kind === 'quote';
+    if (filter === '로그') return item.kind === 'log';
+    return true;
   });
 
   return (

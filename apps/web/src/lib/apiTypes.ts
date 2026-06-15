@@ -3,7 +3,7 @@
 export type ApiList<T> = { data: T[]; count: number }
 
 export type SocialFeedItem = {
-  kind: 'review' | 'record'
+  kind: 'essay' | 'rating' | 'quote' | 'log'
   id: string
   user_id: string
   display_name: string

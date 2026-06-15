@@ -39,7 +39,7 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 
 	query := `
 		SELECT
-			'review' AS kind,
+			r.kind,
 			r.id,
 			r.user_id,
 			COALESCE(p.display_name, '') AS display_name,
@@ -62,7 +62,7 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 		UNION ALL
 
 		SELECT
-			'record' AS kind,
+			'log' AS kind,
 			rec.id,
 			rec.user_id,
 			COALESCE(p.display_name, '') AS display_name,
