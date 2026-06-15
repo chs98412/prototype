@@ -166,6 +166,7 @@ export default function ProfilePage() {
                 fontFamily: 'var(--sans)',
                 fontSize: 12, fontWeight: 500,
                 color: tab === k ? '#000' : '#999',
+                textDecoration: 'none',
                 borderBottom: `1.5px solid ${tab === k ? '#000' : 'transparent'}`,
                 marginBottom: -1,
               }}
