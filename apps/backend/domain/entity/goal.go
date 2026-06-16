@@ -2,7 +2,9 @@ package entity
 
 import (
 	"time"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 )
 
 // Goal is the domain entity for user yearly goals
@@ -47,8 +49,8 @@ func (g *Goal) Update(movieGoal, dramaGoal int) error {
 }
 
 // ToDTO converts entity to response DTO
-func (g *Goal) ToDTO() *GoalDTO {
-	return &GoalDTO{
+func (g *Goal) ToDTO() *dto.GoalDTO {
+	return &dto.GoalDTO{
 		ID:        g.ID,
 		UserID:    g.UserID,
 		Year:      g.Year,
@@ -57,15 +59,4 @@ func (g *Goal) ToDTO() *GoalDTO {
 		CreatedAt: g.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: g.UpdatedAt.Format(time.RFC3339),
 	}
-}
-
-// GoalDTO is the data transfer object for goal responses
-type GoalDTO struct {
-	ID        string `json:"id"`
-	UserID    string `json:"user_id"`
-	Year      int    `json:"year"`
-	MovieGoal int    `json:"movie_goal"`
-	DramaGoal int    `json:"drama_goal"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
 }

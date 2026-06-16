@@ -2,7 +2,9 @@ package entity
 
 import (
 	"time"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 )
 
 // AlbumReview is the domain entity for user music album reviews
@@ -46,8 +48,8 @@ func (ar *AlbumReview) Update(content string, hasSpoiler bool) error {
 }
 
 // ToDTO converts entity to response DTO
-func (ar *AlbumReview) ToDTO() *AlbumReviewDTO {
-	return &AlbumReviewDTO{
+func (ar *AlbumReview) ToDTO() *dto.AlbumReviewDTO {
+	return &dto.AlbumReviewDTO{
 		ID:             ar.ID,
 		UserID:         ar.UserID,
 		AlbumSpotifyID: ar.AlbumSpotifyID,
@@ -56,15 +58,4 @@ func (ar *AlbumReview) ToDTO() *AlbumReviewDTO {
 		CreatedAt:      ar.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:      ar.UpdatedAt.Format(time.RFC3339),
 	}
-}
-
-// AlbumReviewDTO is the data transfer object for album review responses
-type AlbumReviewDTO struct {
-	ID             string `json:"id"`
-	UserID         string `json:"user_id"`
-	AlbumSpotifyID string `json:"album_spotify_id"`
-	Content        string `json:"content"`
-	HasSpoiler     bool   `json:"has_spoiler"`
-	CreatedAt      string `json:"created_at"`
-	UpdatedAt      string `json:"updated_at"`
 }

@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
+)
 
 // SocialFeedItem represents a mixed social feed item (review or record)
 type SocialFeedItem struct {
@@ -31,21 +35,9 @@ type FeedItem struct {
 	WatchedAt  time.Time
 }
 
-// FeedItemDTO is the data transfer object for feed items (legacy)
-type FeedItemDTO struct {
-	ID         string `json:"id"`
-	UserID     string `json:"user_id"`
-	TMDBID     string `json:"tmdb_id"`
-	MediaType  string `json:"media_type"`
-	Title      string `json:"title"`
-	PosterPath string `json:"poster_path"`
-	Rating     int    `json:"rating"`
-	WatchedAt  string `json:"watched_at"`
-}
-
 // ToDTO converts entity to DTO
-func (f *FeedItem) ToDTO() *FeedItemDTO {
-	return &FeedItemDTO{
+func (f *FeedItem) ToDTO() *dto.FeedItemDTO {
+	return &dto.FeedItemDTO{
 		ID:         f.ID,
 		UserID:     f.UserID,
 		TMDBID:     f.TMDBID,

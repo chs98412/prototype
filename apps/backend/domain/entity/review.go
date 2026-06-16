@@ -2,7 +2,9 @@ package entity
 
 import (
 	"time"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 )
 
 // Review is the domain entity for user reviews
@@ -69,8 +71,8 @@ func (r *Review) DecrementLike() {
 }
 
 // ToDTO converts entity to response DTO
-func (r *Review) ToDTO() *ReviewDTO {
-	return &ReviewDTO{
+func (r *Review) ToDTO() *dto.ReviewDTO {
+	return &dto.ReviewDTO{
 		ID:          r.ID,
 		UserID:      r.UserID,
 		TMDBID:      r.TMDBID,
@@ -83,23 +85,4 @@ func (r *Review) ToDTO() *ReviewDTO {
 		CreatedAt:   r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   r.UpdatedAt.Format(time.RFC3339),
 	}
-}
-
-// ReviewDTO is the data transfer object for responses
-type ReviewDTO struct {
-	ID          string `json:"id"`
-	UserID      string `json:"user_id"`
-	DisplayName string `json:"display_name"`
-	AvatarURL   string `json:"avatar_url"`
-	TMDBID      int    `json:"tmdb_id"`
-	MediaType   string `json:"media_type"`
-	Kind        string `json:"kind"`
-	ReviewTitle string `json:"review_title"`
-	Title       string `json:"title"`
-	PosterPath  string `json:"poster_path"`
-	Content     string `json:"content"`
-	Spoiler     bool   `json:"spoiler"`
-	LikeCount   int    `json:"like_count"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
 }

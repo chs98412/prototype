@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	domainrepo "github.com/chs98412/prototype/backend/domain/repository"
 	"gorm.io/gorm"
 )
@@ -19,8 +19,8 @@ func NewAnalyticsRepository(db *gorm.DB) domainrepo.AnalyticsRepository {
 }
 
 // GetHeatmap retrieves user's activity heatmap by date
-func (r *AnalyticsRepositoryImpl) GetHeatmap(ctx context.Context, userID string) ([]entity.HeatmapEntry, error) {
-	var entries []entity.HeatmapEntry
+func (r *AnalyticsRepositoryImpl) GetHeatmap(ctx context.Context, userID string) ([]dto.HeatmapEntry, error) {
+	var entries []dto.HeatmapEntry
 	err := r.db.WithContext(ctx).
 		Raw(`
 			SELECT DATE(watched_at) as activity_date, COUNT(*) as cnt
@@ -39,8 +39,8 @@ func (r *AnalyticsRepositoryImpl) GetHeatmap(ctx context.Context, userID string)
 }
 
 // GetGenreRatings retrieves user's genre preferences and ratings
-func (r *AnalyticsRepositoryImpl) GetGenreRatings(ctx context.Context, userID string) ([]entity.GenreRating, error) {
-	var ratings []entity.GenreRating
+func (r *AnalyticsRepositoryImpl) GetGenreRatings(ctx context.Context, userID string) ([]dto.GenreRating, error) {
+	var ratings []dto.GenreRating
 	err := r.db.WithContext(ctx).
 		Raw(`
 			SELECT JSONB_ARRAY_ELEMENTS(genre_ids) as genre_id, AVG(rating) as avg_rating, COUNT(*) as count
@@ -59,8 +59,8 @@ func (r *AnalyticsRepositoryImpl) GetGenreRatings(ctx context.Context, userID st
 }
 
 // GetTasteMatch retrieves taste compatibility between two users
-func (r *AnalyticsRepositoryImpl) GetTasteMatch(ctx context.Context, userID, otherUserID string) (*entity.TasteMatch, error) {
-	tasteMatch := &entity.TasteMatch{}
+func (r *AnalyticsRepositoryImpl) GetTasteMatch(ctx context.Context, userID, otherUserID string) (*dto.TasteMatch, error) {
+	tasteMatch := &dto.TasteMatch{}
 	err := r.db.WithContext(ctx).
 		Raw(`
 			SELECT
@@ -84,8 +84,8 @@ func (r *AnalyticsRepositoryImpl) GetTasteMatch(ctx context.Context, userID, oth
 }
 
 // GetCommonWorks retrieves common works watched by both users
-func (r *AnalyticsRepositoryImpl) GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]entity.CommonWork, error) {
-	var works []entity.CommonWork
+func (r *AnalyticsRepositoryImpl) GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]dto.CommonWork, error) {
+	var works []dto.CommonWork
 	err := r.db.WithContext(ctx).
 		Raw(`
 			SELECT ur1.tmdb_id, ur1.media_type, ur1.title, ur1.poster_path, ur1.rating

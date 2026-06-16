@@ -5,14 +5,15 @@ import (
 	"time"
 	"github.com/chs98412/prototype/backend/domain"
 	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
 )
 
 // GoalService interface
 type GoalService interface {
-	GetGoal(ctx context.Context, userID string, year int) (*entity.GoalDTO, error)
-	UpdateGoal(ctx context.Context, userID string, year, movieGoal, dramaGoal int) (*entity.GoalDTO, error)
+	GetGoal(ctx context.Context, userID string, year int) (*dto.GoalDTO, error)
+	UpdateGoal(ctx context.Context, userID string, year, movieGoal, dramaGoal int) (*dto.GoalDTO, error)
 }
 
 // GoalServiceImpl implements GoalService
@@ -28,7 +29,7 @@ func NewGoalService(repo repository.GoalRepository) GoalService {
 }
 
 // GetGoal retrieves user's goal for a year
-func (s *GoalServiceImpl) GetGoal(ctx context.Context, userID string, year int) (*entity.GoalDTO, error) {
+func (s *GoalServiceImpl) GetGoal(ctx context.Context, userID string, year int) (*dto.GoalDTO, error) {
 	goal, err := s.repo.GetByUserIDAndYear(ctx, userID, year)
 	if err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func (s *GoalServiceImpl) GetGoal(ctx context.Context, userID string, year int) 
 }
 
 // UpdateGoal updates or creates user's goal
-func (s *GoalServiceImpl) UpdateGoal(ctx context.Context, userID string, year, movieGoal, dramaGoal int) (*entity.GoalDTO, error) {
+func (s *GoalServiceImpl) UpdateGoal(ctx context.Context, userID string, year, movieGoal, dramaGoal int) (*dto.GoalDTO, error) {
 	// Validate input
 	err := entity.NewGoal(uuid.New().String(), userID, year, movieGoal, dramaGoal).Update(movieGoal, dramaGoal)
 	if err != nil {

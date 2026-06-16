@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 )
 
@@ -14,7 +15,7 @@ type RecordRepository interface {
 	Update(ctx context.Context, record *entity.Record) error
 	Delete(ctx context.Context, recordID, userID string) error
 	DeleteByTMDB(ctx context.Context, userID string, tmdbID int) error
-	GetStats(ctx context.Context, userID string) (*entity.RecordStatsDTO, error)
+	GetStats(ctx context.Context, userID string) (*dto.RecordStatsDTO, error)
 }
 
 // RecordFilters for querying records

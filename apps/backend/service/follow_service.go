@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
@@ -10,9 +12,9 @@ import (
 
 // FollowService interface
 type FollowService interface {
-	GetFollows(ctx context.Context, userID string, limit, offset int) ([]entity.FollowDTO, error)
-	GetFollowers(ctx context.Context, userID string, limit, offset int) ([]entity.FollowDTO, error)
-	Follow(ctx context.Context, followerID, followingID string) (*entity.FollowResponse, error)
+	GetFollows(ctx context.Context, userID string, limit, offset int) ([]dto.FollowDTO, error)
+	GetFollowers(ctx context.Context, userID string, limit, offset int) ([]dto.FollowDTO, error)
+	Follow(ctx context.Context, followerID, followingID string) (*dto.FollowResponse, error)
 	Unfollow(ctx context.Context, followerID, followingID string) error
 	IsFollowing(ctx context.Context, followerID, followingID string) (bool, error)
 	GetFollowStats(ctx context.Context, userID string) (followCount, followerCount int, err error)
@@ -31,7 +33,7 @@ func NewFollowService(repo repository.FollowRepository) FollowService {
 }
 
 // GetFollows retrieves users followed by a user
-func (s *FollowServiceImpl) GetFollows(ctx context.Context, userID string, limit, offset int) ([]entity.FollowDTO, error) {
+func (s *FollowServiceImpl) GetFollows(ctx context.Context, userID string, limit, offset int) ([]dto.FollowDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 50
 	}
@@ -41,7 +43,7 @@ func (s *FollowServiceImpl) GetFollows(ctx context.Context, userID string, limit
 		return nil, err
 	}
 
-	dtos := make([]entity.FollowDTO, 0, len(follows))
+	dtos := make([]dto.FollowDTO, 0, len(follows))
 	for _, f := range follows {
 		dtos = append(dtos, *f.ToDTO())
 	}
@@ -49,7 +51,7 @@ func (s *FollowServiceImpl) GetFollows(ctx context.Context, userID string, limit
 }
 
 // GetFollowers retrieves followers of a user
-func (s *FollowServiceImpl) GetFollowers(ctx context.Context, userID string, limit, offset int) ([]entity.FollowDTO, error) {
+func (s *FollowServiceImpl) GetFollowers(ctx context.Context, userID string, limit, offset int) ([]dto.FollowDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 50
 	}
@@ -59,7 +61,7 @@ func (s *FollowServiceImpl) GetFollowers(ctx context.Context, userID string, lim
 		return nil, err
 	}
 
-	dtos := make([]entity.FollowDTO, 0, len(followers))
+	dtos := make([]dto.FollowDTO, 0, len(followers))
 	for _, f := range followers {
 		dtos = append(dtos, *f.ToDTO())
 	}
@@ -67,7 +69,7 @@ func (s *FollowServiceImpl) GetFollowers(ctx context.Context, userID string, lim
 }
 
 // Follow creates a follow relationship
-func (s *FollowServiceImpl) Follow(ctx context.Context, followerID, followingID string) (*entity.FollowResponse, error) {
+func (s *FollowServiceImpl) Follow(ctx context.Context, followerID, followingID string) (*dto.FollowResponse, error) {
 	// Validate
 	if followerID == followingID {
 		return nil, domain.ErrInvalidInput
@@ -80,7 +82,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID, followingID 
 		return nil, err
 	}
 
-	return &entity.FollowResponse{
+	return &dto.FollowResponse{
 		Success:   true,
 		Following: true,
 	}, nil

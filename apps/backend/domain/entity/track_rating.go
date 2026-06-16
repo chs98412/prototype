@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
+)
 
 // TrackRating is the domain entity for user music track ratings
 type TrackRating struct {
@@ -28,21 +32,12 @@ func NewTrackRating(id, userID, trackSpotifyID string, rating int) *TrackRating 
 }
 
 // ToDTO converts entity to response DTO
-func (tr *TrackRating) ToDTO() *TrackRatingDTO {
-	return &TrackRatingDTO{
+func (tr *TrackRating) ToDTO() *dto.TrackRatingDTO {
+	return &dto.TrackRatingDTO{
 		ID:             tr.ID,
 		UserID:         tr.UserID,
 		TrackSpotifyID: tr.TrackSpotifyID,
 		Rating:         tr.Rating,
 		ListenedAt:     tr.ListenedAt.Format(time.RFC3339),
 	}
-}
-
-// TrackRatingDTO is the data transfer object for track rating responses
-type TrackRatingDTO struct {
-	ID             string `json:"id"`
-	UserID         string `json:"user_id"`
-	TrackSpotifyID string `json:"track_spotify_id"`
-	Rating         int    `json:"rating"`
-	ListenedAt     string `json:"listened_at"`
 }

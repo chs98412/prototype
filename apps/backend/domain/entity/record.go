@@ -3,6 +3,8 @@ package entity
 import (
 	"errors"
 	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 )
 
 var (
@@ -83,39 +85,15 @@ func (r *Record) UpdateRating(rating int) error {
 }
 
 // ToDTO converts entity to response DTO (without title/poster_path)
-func (r *Record) ToDTO() *RecordDTO {
-	return &RecordDTO{
-		ID:         r.ID,
-		UserID:     r.UserID,
-		TMDBID:     r.TMDBID,
-		MediaType:  r.MediaType,
-		Status:     string(r.Status),
-		Rating:     r.Rating,
-		CreatedAt:  r.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:  r.UpdatedAt.Format(time.RFC3339),
+func (r *Record) ToDTO() *dto.RecordDTO {
+	return &dto.RecordDTO{
+		ID:        r.ID,
+		UserID:    r.UserID,
+		TMDBID:    r.TMDBID,
+		MediaType: r.MediaType,
+		Status:    string(r.Status),
+		Rating:    r.Rating,
+		CreatedAt: r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: r.UpdatedAt.Format(time.RFC3339),
 	}
-}
-
-// RecordDTO is the data transfer object for responses
-type RecordDTO struct {
-	ID         string `json:"id"`
-	UserID     string `json:"user_id"`
-	TMDBID     int    `json:"tmdb_id"`
-	MediaType  string `json:"media_type"`
-	Status     string `json:"status"`
-	Rating     int    `json:"rating"`
-	Title      string `json:"title"`
-	PosterPath string `json:"poster_path"`
-	CreatedAt  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
-}
-
-// RecordStatsDTO for statistics
-type RecordStatsDTO struct {
-	TotalRecords   int     `json:"total_records"`
-	MoviesWatched  int     `json:"movies_watched"`
-	ShowsWatched   int     `json:"shows_watched"`
-	AverageRating  float64 `json:"average_rating"`
-	HighestRating  int     `json:"highest_rating"`
-	RatedCount     int     `json:"rated_count"`
 }

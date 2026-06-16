@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
@@ -10,9 +12,9 @@ import (
 
 // ChallengeService interface
 type ChallengeService interface {
-	GetChallenges(ctx context.Context, limit, offset int) ([]entity.ChallengeDTO, error)
-	GetUserChallenges(ctx context.Context, userID string, status string, limit, offset int) ([]entity.ChallengeProgressDTO, error)
-	StartChallenge(ctx context.Context, userID, challengeID string) (*entity.ChallengeProgressDTO, error)
+	GetChallenges(ctx context.Context, limit, offset int) ([]dto.ChallengeDTO, error)
+	GetUserChallenges(ctx context.Context, userID string, status string, limit, offset int) ([]dto.ChallengeProgressDTO, error)
+	StartChallenge(ctx context.Context, userID, challengeID string) (*dto.ChallengeProgressDTO, error)
 	AbandonChallenge(ctx context.Context, userID, progressID string) error
 	UpdateChallengeProgress(ctx context.Context, userID, challengeID string, delta int) error
 }
@@ -30,7 +32,7 @@ func NewChallengeService(repo repository.ChallengeRepository) ChallengeService {
 }
 
 // GetChallenges retrieves challenge catalog
-func (s *ChallengeServiceImpl) GetChallenges(ctx context.Context, limit, offset int) ([]entity.ChallengeDTO, error) {
+func (s *ChallengeServiceImpl) GetChallenges(ctx context.Context, limit, offset int) ([]dto.ChallengeDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 50
 	}
@@ -40,7 +42,7 @@ func (s *ChallengeServiceImpl) GetChallenges(ctx context.Context, limit, offset 
 		return nil, err
 	}
 
-	dtos := make([]entity.ChallengeDTO, 0, len(challenges))
+	dtos := make([]dto.ChallengeDTO, 0, len(challenges))
 	for _, c := range challenges {
 		dtos = append(dtos, *c.ToDTO())
 	}
@@ -48,7 +50,7 @@ func (s *ChallengeServiceImpl) GetChallenges(ctx context.Context, limit, offset 
 }
 
 // GetUserChallenges retrieves user's challenge progress with optional status filter
-func (s *ChallengeServiceImpl) GetUserChallenges(ctx context.Context, userID string, status string, limit, offset int) ([]entity.ChallengeProgressDTO, error) {
+func (s *ChallengeServiceImpl) GetUserChallenges(ctx context.Context, userID string, status string, limit, offset int) ([]dto.ChallengeProgressDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 50
 	}
@@ -58,7 +60,7 @@ func (s *ChallengeServiceImpl) GetUserChallenges(ctx context.Context, userID str
 		return nil, err
 	}
 
-	dtos := make([]entity.ChallengeProgressDTO, 0, len(progresses))
+	dtos := make([]dto.ChallengeProgressDTO, 0, len(progresses))
 	for _, p := range progresses {
 		dtos = append(dtos, *p.ToDTO())
 	}
@@ -66,7 +68,7 @@ func (s *ChallengeServiceImpl) GetUserChallenges(ctx context.Context, userID str
 }
 
 // StartChallenge creates new challenge progress for a user
-func (s *ChallengeServiceImpl) StartChallenge(ctx context.Context, userID, challengeID string) (*entity.ChallengeProgressDTO, error) {
+func (s *ChallengeServiceImpl) StartChallenge(ctx context.Context, userID, challengeID string) (*dto.ChallengeProgressDTO, error) {
 	// Verify challenge exists
 	_, err := s.repo.GetChallengeByID(ctx, challengeID)
 	if err != nil {

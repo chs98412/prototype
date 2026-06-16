@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
-	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 )
 
 // AnalyticsRepository defines repository interface for analytics operations
 type AnalyticsRepository interface {
-	GetHeatmap(ctx context.Context, userID string) ([]entity.HeatmapEntry, error)
-	GetGenreRatings(ctx context.Context, userID string) ([]entity.GenreRating, error)
-	GetTasteMatch(ctx context.Context, userID, otherUserID string) (*entity.TasteMatch, error)
-	GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]entity.CommonWork, error)
+	GetHeatmap(ctx context.Context, userID string) ([]dto.HeatmapEntry, error)
+	GetGenreRatings(ctx context.Context, userID string) ([]dto.GenreRating, error)
+	GetTasteMatch(ctx context.Context, userID, otherUserID string) (*dto.TasteMatch, error)
+	GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]dto.CommonWork, error)
 }

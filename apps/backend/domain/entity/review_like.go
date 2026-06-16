@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
+)
 
 // ReviewLike is the domain entity for review likes
 type ReviewLike struct {
@@ -26,19 +30,11 @@ func NewReviewLike(id, reviewID, userID string) *ReviewLike {
 }
 
 // ToDTO converts entity to response DTO
-func (rl *ReviewLike) ToDTO() *ReviewLikeDTO {
-	return &ReviewLikeDTO{
+func (rl *ReviewLike) ToDTO() *dto.ReviewLikeDTO {
+	return &dto.ReviewLikeDTO{
 		ID:        rl.ID,
 		ReviewID:  rl.ReviewID,
 		UserID:    rl.UserID,
 		CreatedAt: rl.CreatedAt.Format(time.RFC3339),
 	}
-}
-
-// ReviewLikeDTO is the data transfer object for review like responses
-type ReviewLikeDTO struct {
-	ID        string `json:"id"`
-	ReviewID  string `json:"review_id"`
-	UserID    string `json:"user_id"`
-	CreatedAt string `json:"created_at"`
 }

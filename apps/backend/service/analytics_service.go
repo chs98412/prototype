@@ -2,17 +2,18 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
-	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/repository"
 )
 
 // AnalyticsService interface
 type AnalyticsService interface {
-	GetHeatmap(ctx context.Context, userID string) ([]entity.HeatmapEntry, error)
-	GetGenreRatings(ctx context.Context, userID string) ([]entity.GenreRating, error)
-	GetTasteMatch(ctx context.Context, userID, otherUserID string) (*entity.TasteMatch, error)
-	GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]entity.CommonWork, error)
+	GetHeatmap(ctx context.Context, userID string) ([]dto.HeatmapEntry, error)
+	GetGenreRatings(ctx context.Context, userID string) ([]dto.GenreRating, error)
+	GetTasteMatch(ctx context.Context, userID, otherUserID string) (*dto.TasteMatch, error)
+	GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]dto.CommonWork, error)
 }
 
 // AnalyticsServiceImpl implements AnalyticsService
@@ -28,17 +29,17 @@ func NewAnalyticsService(repo repository.AnalyticsRepository) AnalyticsService {
 }
 
 // GetHeatmap retrieves user's activity heatmap
-func (s *AnalyticsServiceImpl) GetHeatmap(ctx context.Context, userID string) ([]entity.HeatmapEntry, error) {
+func (s *AnalyticsServiceImpl) GetHeatmap(ctx context.Context, userID string) ([]dto.HeatmapEntry, error) {
 	return s.repo.GetHeatmap(ctx, userID)
 }
 
 // GetGenreRatings retrieves user's genre preferences
-func (s *AnalyticsServiceImpl) GetGenreRatings(ctx context.Context, userID string) ([]entity.GenreRating, error) {
+func (s *AnalyticsServiceImpl) GetGenreRatings(ctx context.Context, userID string) ([]dto.GenreRating, error) {
 	return s.repo.GetGenreRatings(ctx, userID)
 }
 
 // GetTasteMatch retrieves taste compatibility between two users
-func (s *AnalyticsServiceImpl) GetTasteMatch(ctx context.Context, userID, otherUserID string) (*entity.TasteMatch, error) {
+func (s *AnalyticsServiceImpl) GetTasteMatch(ctx context.Context, userID, otherUserID string) (*dto.TasteMatch, error) {
 	// Validate
 	if userID == otherUserID {
 		return nil, domain.ErrInvalidInput
@@ -48,7 +49,7 @@ func (s *AnalyticsServiceImpl) GetTasteMatch(ctx context.Context, userID, otherU
 }
 
 // GetCommonWorks retrieves common works watched by both users
-func (s *AnalyticsServiceImpl) GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]entity.CommonWork, error) {
+func (s *AnalyticsServiceImpl) GetCommonWorks(ctx context.Context, userID, otherUserID string) ([]dto.CommonWork, error) {
 	// Validate
 	if userID == otherUserID {
 		return nil, domain.ErrInvalidInput

@@ -2,19 +2,21 @@ package service
 
 import (
 	"context"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 )
 
 // FeedService interface
 type FeedService interface {
-	GetFeed(ctx context.Context, userID string, limit, offset int) ([]entity.FeedItemDTO, error)
+	GetFeed(ctx context.Context, userID string, limit, offset int) ([]dto.FeedItemDTO, error)
 	GetSocialFeed(ctx context.Context, userID string, limit, offset int) ([]entity.SocialFeedItem, error)
 }
 
 // NotificationService interface
 type NotificationService interface {
-	GetNotifications(ctx context.Context, userID string, limit, offset int) ([]entity.NotificationDTO, error)
+	GetNotifications(ctx context.Context, userID string, limit, offset int) ([]dto.NotificationDTO, error)
 }
 
 // FeedServiceImpl implements FeedService
@@ -30,7 +32,7 @@ func NewFeedService(repo repository.FeedRepository) FeedService {
 }
 
 // GetFeed retrieves friend's activity feed (legacy)
-func (s *FeedServiceImpl) GetFeed(ctx context.Context, userID string, limit, offset int) ([]entity.FeedItemDTO, error) {
+func (s *FeedServiceImpl) GetFeed(ctx context.Context, userID string, limit, offset int) ([]dto.FeedItemDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 20
 	}
@@ -40,7 +42,7 @@ func (s *FeedServiceImpl) GetFeed(ctx context.Context, userID string, limit, off
 		return nil, err
 	}
 
-	dtos := make([]entity.FeedItemDTO, 0, len(items))
+	dtos := make([]dto.FeedItemDTO, 0, len(items))
 	for _, item := range items {
 		dtos = append(dtos, *item.ToDTO())
 	}
@@ -68,7 +70,7 @@ func NewNotificationService(repo repository.NotificationRepository) Notification
 }
 
 // GetNotifications retrieves user's notifications
-func (s *NotificationServiceImpl) GetNotifications(ctx context.Context, userID string, limit, offset int) ([]entity.NotificationDTO, error) {
+func (s *NotificationServiceImpl) GetNotifications(ctx context.Context, userID string, limit, offset int) ([]dto.NotificationDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 20
 	}
@@ -78,7 +80,7 @@ func (s *NotificationServiceImpl) GetNotifications(ctx context.Context, userID s
 		return nil, err
 	}
 
-	dtos := make([]entity.NotificationDTO, 0, len(notifications))
+	dtos := make([]dto.NotificationDTO, 0, len(notifications))
 	for _, notif := range notifications {
 		dtos = append(dtos, *notif.ToDTO())
 	}

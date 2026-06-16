@@ -2,15 +2,16 @@ package service
 
 import (
 	"context"
-	"github.com/chs98412/prototype/backend/domain/entity"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/repository"
 )
 
 // ProfileService interface
 type ProfileService interface {
-	GetProfile(ctx context.Context, userID string) (*entity.ProfileDTO, error)
-	GetUserProfile(ctx context.Context, userID string) (*entity.ProfileDTO, error)
-	UpdateProfile(ctx context.Context, userID string, displayName, bio, avatarURL string) (*entity.ProfileDTO, error)
+	GetProfile(ctx context.Context, userID string) (*dto.ProfileDTO, error)
+	GetUserProfile(ctx context.Context, userID string) (*dto.ProfileDTO, error)
+	UpdateProfile(ctx context.Context, userID string, displayName, bio, avatarURL string) (*dto.ProfileDTO, error)
 }
 
 // ProfileServiceImpl implements ProfileService
@@ -26,7 +27,7 @@ func NewProfileService(repo repository.ProfileRepository) ProfileService {
 }
 
 // GetProfile retrieves current user's profile
-func (s *ProfileServiceImpl) GetProfile(ctx context.Context, userID string) (*entity.ProfileDTO, error) {
+func (s *ProfileServiceImpl) GetProfile(ctx context.Context, userID string) (*dto.ProfileDTO, error) {
 	profile, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -35,7 +36,7 @@ func (s *ProfileServiceImpl) GetProfile(ctx context.Context, userID string) (*en
 }
 
 // GetUserProfile retrieves another user's profile
-func (s *ProfileServiceImpl) GetUserProfile(ctx context.Context, userID string) (*entity.ProfileDTO, error) {
+func (s *ProfileServiceImpl) GetUserProfile(ctx context.Context, userID string) (*dto.ProfileDTO, error) {
 	profile, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -48,7 +49,7 @@ func (s *ProfileServiceImpl) UpdateProfile(
 	ctx context.Context,
 	userID string,
 	displayName, bio, avatarURL string,
-) (*entity.ProfileDTO, error) {
+) (*dto.ProfileDTO, error) {
 	// Load existing profile
 	profile, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {

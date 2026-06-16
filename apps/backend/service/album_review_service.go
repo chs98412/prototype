@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
@@ -10,9 +12,9 @@ import (
 
 // AlbumReviewService interface
 type AlbumReviewService interface {
-	SaveReview(ctx context.Context, userID, albumSpotifyID, content string, hasSpoiler bool) (*entity.AlbumReviewDTO, error)
-	GetReview(ctx context.Context, id string) (*entity.AlbumReviewDTO, error)
-	UpdateReview(ctx context.Context, userID, id, content string, hasSpoiler bool) (*entity.AlbumReviewDTO, error)
+	SaveReview(ctx context.Context, userID, albumSpotifyID, content string, hasSpoiler bool) (*dto.AlbumReviewDTO, error)
+	GetReview(ctx context.Context, id string) (*dto.AlbumReviewDTO, error)
+	UpdateReview(ctx context.Context, userID, id, content string, hasSpoiler bool) (*dto.AlbumReviewDTO, error)
 	DeleteReview(ctx context.Context, userID, id string) error
 }
 
@@ -29,7 +31,7 @@ func NewAlbumReviewService(repo repository.AlbumReviewRepository) AlbumReviewSer
 }
 
 // SaveReview creates a new album review
-func (s *AlbumReviewServiceImpl) SaveReview(ctx context.Context, userID, albumSpotifyID, content string, hasSpoiler bool) (*entity.AlbumReviewDTO, error) {
+func (s *AlbumReviewServiceImpl) SaveReview(ctx context.Context, userID, albumSpotifyID, content string, hasSpoiler bool) (*dto.AlbumReviewDTO, error) {
 	if content == "" {
 		return nil, domain.ErrInvalidInput
 	}
@@ -44,7 +46,7 @@ func (s *AlbumReviewServiceImpl) SaveReview(ctx context.Context, userID, albumSp
 }
 
 // GetReview retrieves an album review by ID
-func (s *AlbumReviewServiceImpl) GetReview(ctx context.Context, id string) (*entity.AlbumReviewDTO, error) {
+func (s *AlbumReviewServiceImpl) GetReview(ctx context.Context, id string) (*dto.AlbumReviewDTO, error) {
 	review, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -53,7 +55,7 @@ func (s *AlbumReviewServiceImpl) GetReview(ctx context.Context, id string) (*ent
 }
 
 // UpdateReview updates an existing album review
-func (s *AlbumReviewServiceImpl) UpdateReview(ctx context.Context, userID, id, content string, hasSpoiler bool) (*entity.AlbumReviewDTO, error) {
+func (s *AlbumReviewServiceImpl) UpdateReview(ctx context.Context, userID, id, content string, hasSpoiler bool) (*dto.AlbumReviewDTO, error) {
 	// Get existing review to verify ownership
 	review, err := s.repo.GetByID(ctx, id)
 	if err != nil {

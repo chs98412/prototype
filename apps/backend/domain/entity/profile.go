@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
+)
 
 // Profile is the domain entity for user profiles
 // Not exported outside domain layer
@@ -45,19 +49,11 @@ func (p *Profile) UpdateInfo(displayName, bio, avatarURL string) {
 }
 
 // ToDTO converts entity to response DTO
-func (p *Profile) ToDTO() *ProfileDTO {
-	return &ProfileDTO{
+func (p *Profile) ToDTO() *dto.ProfileDTO {
+	return &dto.ProfileDTO{
 		UserID:      p.UserID,
 		DisplayName: p.DisplayName,
 		Bio:         p.Bio,
 		AvatarURL:   p.AvatarURL,
 	}
-}
-
-// ProfileDTO is the data transfer object for responses
-type ProfileDTO struct {
-	UserID      string `json:"user_id"`
-	DisplayName string `json:"display_name"`
-	Bio         string `json:"bio"`
-	AvatarURL   string `json:"avatar_url"`
 }

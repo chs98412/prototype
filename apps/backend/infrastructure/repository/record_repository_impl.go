@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/chs98412/prototype/backend/domain"
 	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	domainrepo "github.com/chs98412/prototype/backend/domain/repository"
 	"gorm.io/gorm"
 )
@@ -116,8 +117,8 @@ func (r *RecordRepositoryImpl) DeleteByTMDB(ctx context.Context, userID string, 
 }
 
 // GetStats retrieves user's watch statistics
-func (r *RecordRepositoryImpl) GetStats(ctx context.Context, userID string) (*entity.RecordStatsDTO, error) {
-	stats := &entity.RecordStatsDTO{}
+func (r *RecordRepositoryImpl) GetStats(ctx context.Context, userID string) (*dto.RecordStatsDTO, error) {
+	stats := &dto.RecordStatsDTO{}
 	err := r.db.WithContext(ctx).
 		Table("user_records").
 		Select(

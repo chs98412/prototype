@@ -8,13 +8,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 // AuthService interface
 type AuthService interface {
-	HandleOAuthCallback(ctx context.Context, code string) (*entity.AuthResponse, error)
+	HandleOAuthCallback(ctx context.Context, code string) (*dto.AuthResponse, error)
 	RefreshToken(ctx context.Context, currentToken string) (string, error)
 }
 
@@ -27,7 +27,7 @@ func NewAuthService() AuthService {
 }
 
 // HandleOAuthCallback exchanges OAuth code for access token
-func (s *AuthServiceImpl) HandleOAuthCallback(ctx context.Context, code string) (*entity.AuthResponse, error) {
+func (s *AuthServiceImpl) HandleOAuthCallback(ctx context.Context, code string) (*dto.AuthResponse, error) {
 	if code == "" {
 		return nil, fmt.Errorf("code is required")
 	}
@@ -76,7 +76,7 @@ func (s *AuthServiceImpl) HandleOAuthCallback(ctx context.Context, code string) 
 		return nil, fmt.Errorf("failed to parse user")
 	}
 
-	return &entity.AuthResponse{
+	return &dto.AuthResponse{
 		AccessToken: accessToken,
 		User:        userData,
 	}, nil

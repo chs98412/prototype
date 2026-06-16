@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
@@ -10,8 +12,8 @@ import (
 
 // TrackRatingService interface
 type TrackRatingService interface {
-	RateTrack(ctx context.Context, userID, trackSpotifyID string, rating int) (*entity.TrackRatingDTO, error)
-	GetRating(ctx context.Context, userID, trackSpotifyID string) (*entity.TrackRatingDTO, error)
+	RateTrack(ctx context.Context, userID, trackSpotifyID string, rating int) (*dto.TrackRatingDTO, error)
+	GetRating(ctx context.Context, userID, trackSpotifyID string) (*dto.TrackRatingDTO, error)
 	DeleteRating(ctx context.Context, userID, trackSpotifyID string) error
 }
 
@@ -28,7 +30,7 @@ func NewTrackRatingService(repo repository.TrackRatingRepository) TrackRatingSer
 }
 
 // RateTrack rates or updates a track rating
-func (s *TrackRatingServiceImpl) RateTrack(ctx context.Context, userID, trackSpotifyID string, rating int) (*entity.TrackRatingDTO, error) {
+func (s *TrackRatingServiceImpl) RateTrack(ctx context.Context, userID, trackSpotifyID string, rating int) (*dto.TrackRatingDTO, error) {
 	// Validate rating
 	if rating < 0 || rating > 5 {
 		return nil, domain.ErrInvalidInput
@@ -44,7 +46,7 @@ func (s *TrackRatingServiceImpl) RateTrack(ctx context.Context, userID, trackSpo
 }
 
 // GetRating retrieves a track rating
-func (s *TrackRatingServiceImpl) GetRating(ctx context.Context, userID, trackSpotifyID string) (*entity.TrackRatingDTO, error) {
+func (s *TrackRatingServiceImpl) GetRating(ctx context.Context, userID, trackSpotifyID string) (*dto.TrackRatingDTO, error) {
 	tr, err := s.repo.GetByTrackID(ctx, userID, trackSpotifyID)
 	if err != nil {
 		return nil, err

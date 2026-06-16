@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
@@ -10,9 +12,9 @@ import (
 
 // ReviewLikeService interface
 type ReviewLikeService interface {
-	GetLikes(ctx context.Context, reviewID string, limit, offset int) ([]entity.ReviewLikeDTO, error)
+	GetLikes(ctx context.Context, reviewID string, limit, offset int) ([]dto.ReviewLikeDTO, error)
 	IsLiked(ctx context.Context, reviewID, userID string) (bool, error)
-	Like(ctx context.Context, reviewID, userID string) (*entity.ReviewLikeDTO, error)
+	Like(ctx context.Context, reviewID, userID string) (*dto.ReviewLikeDTO, error)
 	Unlike(ctx context.Context, reviewID, userID string) error
 }
 
@@ -29,7 +31,7 @@ func NewReviewLikeService(repo repository.ReviewLikeRepository) ReviewLikeServic
 }
 
 // GetLikes retrieves likes for a review
-func (s *ReviewLikeServiceImpl) GetLikes(ctx context.Context, reviewID string, limit, offset int) ([]entity.ReviewLikeDTO, error) {
+func (s *ReviewLikeServiceImpl) GetLikes(ctx context.Context, reviewID string, limit, offset int) ([]dto.ReviewLikeDTO, error) {
 	if limit == 0 || limit > 100 {
 		limit = 50
 	}
@@ -39,7 +41,7 @@ func (s *ReviewLikeServiceImpl) GetLikes(ctx context.Context, reviewID string, l
 		return nil, err
 	}
 
-	dtos := make([]entity.ReviewLikeDTO, 0, len(likes))
+	dtos := make([]dto.ReviewLikeDTO, 0, len(likes))
 	for _, like := range likes {
 		dtos = append(dtos, *like.ToDTO())
 	}
@@ -52,7 +54,7 @@ func (s *ReviewLikeServiceImpl) IsLiked(ctx context.Context, reviewID, userID st
 }
 
 // Like creates a like for a review
-func (s *ReviewLikeServiceImpl) Like(ctx context.Context, reviewID, userID string) (*entity.ReviewLikeDTO, error) {
+func (s *ReviewLikeServiceImpl) Like(ctx context.Context, reviewID, userID string) (*dto.ReviewLikeDTO, error) {
 	// Check if already liked
 	liked, err := s.repo.IsLiked(ctx, reviewID, userID)
 	if err != nil {

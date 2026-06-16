@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
+)
 
 // ChallengeStatus represents the status of a challenge
 type ChallengeStatus string
@@ -37,8 +41,8 @@ func NewChallenge(id, title, description string, target int) *Challenge {
 }
 
 // ToDTO converts entity to response DTO
-func (c *Challenge) ToDTO() *ChallengeDTO {
-	return &ChallengeDTO{
+func (c *Challenge) ToDTO() *dto.ChallengeDTO {
+	return &dto.ChallengeDTO{
 		ID:          c.ID,
 		Title:       c.Title,
 		Description: c.Description,
@@ -47,24 +51,15 @@ func (c *Challenge) ToDTO() *ChallengeDTO {
 	}
 }
 
-// ChallengeDTO is the data transfer object for challenge responses
-type ChallengeDTO struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Target      int    `json:"target"`
-	CreatedAt   string `json:"created_at"`
-}
-
 // ChallengeProgress is the domain entity for user's challenge progress
 type ChallengeProgress struct {
-	ID          string            `gorm:"primaryKey;column:id"`
-	UserID      string            `gorm:"index;column:user_id"`
-	ChallengeID string            `gorm:"index;column:challenge_id"`
-	Progress    int               `gorm:"column:progress"`
-	Status      ChallengeStatus   `gorm:"column:status"`
-	StartedAt   time.Time         `gorm:"index;column:started_at"`
-	UpdatedAt   time.Time         `gorm:"autoUpdateTime;column:updated_at"`
+	ID          string          `gorm:"primaryKey;column:id"`
+	UserID      string          `gorm:"index;column:user_id"`
+	ChallengeID string          `gorm:"index;column:challenge_id"`
+	Progress    int             `gorm:"column:progress"`
+	Status      ChallengeStatus `gorm:"column:status"`
+	StartedAt   time.Time       `gorm:"index;column:started_at"`
+	UpdatedAt   time.Time       `gorm:"autoUpdateTime;column:updated_at"`
 }
 
 // TableName specifies the table name for GORM
@@ -104,8 +99,8 @@ func (cp *ChallengeProgress) Abandon() {
 }
 
 // ToDTO converts entity to response DTO
-func (cp *ChallengeProgress) ToDTO() *ChallengeProgressDTO {
-	return &ChallengeProgressDTO{
+func (cp *ChallengeProgress) ToDTO() *dto.ChallengeProgressDTO {
+	return &dto.ChallengeProgressDTO{
 		ID:          cp.ID,
 		UserID:      cp.UserID,
 		ChallengeID: cp.ChallengeID,
@@ -114,15 +109,4 @@ func (cp *ChallengeProgress) ToDTO() *ChallengeProgressDTO {
 		StartedAt:   cp.StartedAt.Format(time.RFC3339),
 		UpdatedAt:   cp.UpdatedAt.Format(time.RFC3339),
 	}
-}
-
-// ChallengeProgressDTO is the data transfer object for challenge progress responses
-type ChallengeProgressDTO struct {
-	ID          string `json:"id"`
-	UserID      string `json:"user_id"`
-	ChallengeID string `json:"challenge_id"`
-	Progress    int    `json:"progress"`
-	Status      string `json:"status"`
-	StartedAt   string `json:"started_at"`
-	UpdatedAt   string `json:"updated_at"`
 }

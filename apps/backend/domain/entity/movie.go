@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
+)
 
 // Movie stores TMDB movie metadata locally to avoid repeated API calls
 type Movie struct {
@@ -20,19 +24,8 @@ func (m *Movie) TableName() string {
 	return "movies"
 }
 
-type MovieDTO struct {
-	ID            int    `json:"id"`
-	Title         string `json:"title"`
-	OriginalTitle string `json:"original_title"`
-	PosterPath    string `json:"poster_path"`
-	BackdropPath  string `json:"backdrop_path"`
-	ReleaseYear   int    `json:"release_year"`
-	Overview      string `json:"overview"`
-	Runtime       int    `json:"runtime"`
-}
-
-func (m *Movie) ToDTO() *MovieDTO {
-	return &MovieDTO{
+func (m *Movie) ToDTO() *dto.MovieDTO {
+	return &dto.MovieDTO{
 		ID:            m.ID,
 		Title:         m.Title,
 		OriginalTitle: m.OriginalTitle,

@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+
 	"github.com/chs98412/prototype/backend/domain"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 	"github.com/chs98412/prototype/backend/domain/repository"
 	"github.com/google/uuid"
@@ -10,20 +12,20 @@ import (
 
 // RecordService interface
 type RecordService interface {
-	GetRecord(ctx context.Context, userID, recordID string) (*entity.RecordDTO, error)
-	ListRecords(ctx context.Context, userID string, status, mediaType string, limit, offset int) ([]entity.RecordDTO, error)
-	CreateRecord(ctx context.Context, userID string, tmdbID int, mediaType string, rating int) (*entity.RecordDTO, error)
-	UpdateRecordRating(ctx context.Context, userID, recordID string, rating int) (*entity.RecordDTO, error)
+	GetRecord(ctx context.Context, userID, recordID string) (*dto.RecordDTO, error)
+	ListRecords(ctx context.Context, userID string, status, mediaType string, limit, offset int) ([]dto.RecordDTO, error)
+	CreateRecord(ctx context.Context, userID string, tmdbID int, mediaType string, rating int) (*dto.RecordDTO, error)
+	UpdateRecordRating(ctx context.Context, userID, recordID string, rating int) (*dto.RecordDTO, error)
 	DeleteRecord(ctx context.Context, userID, recordID string) error
 	DeleteRecordByTMDB(ctx context.Context, userID string, tmdbID int) error
-	GetStats(ctx context.Context, userID string) (*entity.RecordStatsDTO, error)
+	GetStats(ctx context.Context, userID string) (*dto.RecordStatsDTO, error)
 }
 
 // RecordServiceImpl implements RecordService
 type RecordServiceImpl struct {
-	repo           repository.RecordRepository
-	movieSvc       MovieService
-	movieRepo      repository.MovieRepository
+	repo      repository.RecordRepository
+	movieSvc  MovieService
+	movieRepo repository.MovieRepository
 }
 
 // NewRecordService creates a new record service
@@ -36,27 +38,27 @@ func NewRecordService(repo repository.RecordRepository, movieSvc MovieService, m
 }
 
 // enrichRecordDTO populates title and poster_path from movies table
-func (s *RecordServiceImpl) enrichRecordDTO(ctx context.Context, dto *entity.RecordDTO) {
-	movie, err := s.movieRepo.GetByID(ctx, dto.TMDBID)
+func (s *RecordServiceImpl) enrichRecordDTO(ctx context.Context, d *dto.RecordDTO) {
+	movie, err := s.movieRepo.GetByID(ctx, d.TMDBID)
 	if err == nil && movie != nil {
-		dto.Title = movie.Title
-		dto.PosterPath = movie.PosterPath
+		d.Title = movie.Title
+		d.PosterPath = movie.PosterPath
 	}
 }
 
 // GetRecord retrieves a single record
-func (s *RecordServiceImpl) GetRecord(ctx context.Context, userID, recordID string) (*entity.RecordDTO, error) {
+func (s *RecordServiceImpl) GetRecord(ctx context.Context, userID, recordID string) (*dto.RecordDTO, error) {
 	record, err := s.repo.GetByID(ctx, recordID, userID)
 	if err != nil {
 		return nil, err
 	}
-	dto := record.ToDTO()
-	s.enrichRecordDTO(ctx, dto)
-	return dto, nil
+	d := record.ToDTO()
+	s.enrichRecordDTO(ctx, d)
+	return d, nil
 }
 
 // ListRecords retrieves records with filters
-func (s *RecordServiceImpl) ListRecords(ctx context.Context, userID string, status, mediaType string, limit, offset int) ([]entity.RecordDTO, error) {
+func (s *RecordServiceImpl) ListRecords(ctx context.Context, userID string, status, mediaType string, limit, offset int) ([]dto.RecordDTO, error) {
 	if limit == 0 {
 		limit = 100
 	}
@@ -76,17 +78,17 @@ func (s *RecordServiceImpl) ListRecords(ctx context.Context, userID string, stat
 		return nil, err
 	}
 
-	dtos := make([]entity.RecordDTO, 0, len(records))
+	dtos := make([]dto.RecordDTO, 0, len(records))
 	for _, r := range records {
-		dto := r.ToDTO()
-		s.enrichRecordDTO(ctx, dto)
-		dtos = append(dtos, *dto)
+		d := r.ToDTO()
+		s.enrichRecordDTO(ctx, d)
+		dtos = append(dtos, *d)
 	}
 	return dtos, nil
 }
 
 // CreateRecord creates a new watch record (or updates existing)
-func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmdbID int, mediaType string, rating int) (*entity.RecordDTO, error) {
+func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmdbID int, mediaType string, rating int) (*dto.RecordDTO, error) {
 	// Validate input
 	if tmdbID == 0 {
 		return nil, domain.ErrInvalidInput
@@ -106,9 +108,9 @@ func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmd
 		if err := s.repo.Update(ctx, existingRecord); err != nil {
 			return nil, err
 		}
-		dto := existingRecord.ToDTO()
-		s.enrichRecordDTO(ctx, dto)
-		return dto, nil
+		d := existingRecord.ToDTO()
+		s.enrichRecordDTO(ctx, d)
+		return d, nil
 	}
 
 	// Create new record
@@ -122,13 +124,13 @@ func (s *RecordServiceImpl) CreateRecord(ctx context.Context, userID string, tmd
 	// Best-effort: cache movie metadata from TMDB
 	go s.movieSvc.UpsertFromTMDB(context.Background(), tmdbID)
 
-	dto := record.ToDTO()
-	s.enrichRecordDTO(ctx, dto)
-	return dto, nil
+	d := record.ToDTO()
+	s.enrichRecordDTO(ctx, d)
+	return d, nil
 }
 
 // UpdateRecordRating updates the rating of a record
-func (s *RecordServiceImpl) UpdateRecordRating(ctx context.Context, userID, recordID string, rating int) (*entity.RecordDTO, error) {
+func (s *RecordServiceImpl) UpdateRecordRating(ctx context.Context, userID, recordID string, rating int) (*dto.RecordDTO, error) {
 	record, err := s.repo.GetByID(ctx, recordID, userID)
 	if err != nil {
 		return nil, err
@@ -142,9 +144,9 @@ func (s *RecordServiceImpl) UpdateRecordRating(ctx context.Context, userID, reco
 		return nil, err
 	}
 
-	dto := record.ToDTO()
-	s.enrichRecordDTO(ctx, dto)
-	return dto, nil
+	d := record.ToDTO()
+	s.enrichRecordDTO(ctx, d)
+	return d, nil
 }
 
 // DeleteRecord deletes a watch record
@@ -164,6 +166,6 @@ func (s *RecordServiceImpl) DeleteRecordByTMDB(ctx context.Context, userID strin
 }
 
 // GetStats retrieves watch statistics
-func (s *RecordServiceImpl) GetStats(ctx context.Context, userID string) (*entity.RecordStatsDTO, error) {
+func (s *RecordServiceImpl) GetStats(ctx context.Context, userID string) (*dto.RecordStatsDTO, error) {
 	return s.repo.GetStats(ctx, userID)
 }

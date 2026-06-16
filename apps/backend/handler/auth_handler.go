@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/chs98412/prototype/backend/domain/entity"
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/service"
 	"github.com/gin-gonic/gin"
 )
@@ -119,10 +119,10 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 // Logout clears auth token
 func (h *AuthHandler) Logout(c *gin.Context) {
 	c.SetCookie("auth_token", "", -1, "/", "", false, true)
-	c.JSON(http.StatusOK, &entity.LogoutResponse{Success: true})
+	c.JSON(http.StatusOK, &dto.LogoutResponse{Success: true})
 }
 
 // Health returns health status
 func (h *AuthHandler) Health(c *gin.Context) {
-	c.JSON(http.StatusOK, &entity.HealthResponse{Status: "ok"})
+	c.JSON(http.StatusOK, &dto.HealthResponse{Status: "ok"})
 }
