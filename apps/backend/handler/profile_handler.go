@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+
+	handlerdto "github.com/chs98412/prototype/backend/handler/dto"
 	"github.com/chs98412/prototype/backend/service"
 	"github.com/gin-gonic/gin"
 )
@@ -16,13 +18,6 @@ func NewProfileHandler(svc service.ProfileService) *ProfileHandler {
 	return &ProfileHandler{
 		svc: svc,
 	}
-}
-
-// UpdateProfileRequest is the request DTO for updating profile
-type UpdateProfileRequest struct {
-	DisplayName string `json:"display_name"`
-	Bio         string `json:"bio"`
-	AvatarURL   string `json:"avatar_url"`
 }
 
 // GetProfile retrieves current user's profile
@@ -63,7 +58,7 @@ func (h *ProfileHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	var req UpdateProfileRequest
+	var req handlerdto.UpdateProfileRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/chs98412/prototype/backend/domain"
+	handlerdto "github.com/chs98412/prototype/backend/handler/dto"
 	"github.com/chs98412/prototype/backend/service"
 	"github.com/gin-gonic/gin"
 )
@@ -19,22 +20,6 @@ func NewReviewHandler(svc service.ReviewService) *ReviewHandler {
 	return &ReviewHandler{
 		svc: svc,
 	}
-}
-
-// CreateReviewRequest is the request DTO for creating a review
-type CreateReviewRequest struct {
-	TMDBID    int    `json:"tmdb_id" binding:"required"`
-	MediaType string `json:"media_type"`
-	Kind      string `json:"kind"`
-	Title     string `json:"title"`
-	Content   string `json:"content" binding:"required"`
-	Spoiler   bool   `json:"spoiler"`
-}
-
-// UpdateReviewRequest is the request DTO for updating a review
-type UpdateReviewRequest struct {
-	Content string `json:"content" binding:"required"`
-	Spoiler bool   `json:"spoiler"`
 }
 
 // GetReviews retrieves reviews
@@ -79,7 +64,7 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 		return
 	}
 
-	var req CreateReviewRequest
+	var req handlerdto.CreateReviewRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -118,7 +103,7 @@ func (h *ReviewHandler) UpdateReview(c *gin.Context) {
 
 	reviewID := c.Param("reviewId")
 
-	var req UpdateReviewRequest
+	var req handlerdto.UpdateReviewRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return

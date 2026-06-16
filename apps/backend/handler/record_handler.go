@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/chs98412/prototype/backend/domain"
+	handlerdto "github.com/chs98412/prototype/backend/handler/dto"
 	"github.com/chs98412/prototype/backend/service"
 	"github.com/gin-gonic/gin"
 )
@@ -19,18 +20,6 @@ func NewRecordHandler(svc service.RecordService) *RecordHandler {
 	return &RecordHandler{
 		svc: svc,
 	}
-}
-
-// CreateRecordRequest is the request DTO for creating a record
-type CreateRecordRequest struct {
-	TMDBID     int `json:"tmdb_id" binding:"required"`
-	MediaType  string `json:"media_type" binding:"required"`
-	Rating     int `json:"rating" binding:"required"`
-}
-
-// UpdateRecordRatingRequest is the request DTO for updating rating
-type UpdateRecordRatingRequest struct {
-	Rating int `json:"rating" binding:"required"`
 }
 
 // GetRecords retrieves user's watch history
@@ -66,7 +55,7 @@ func (h *RecordHandler) CreateRecord(c *gin.Context) {
 		return
 	}
 
-	var req CreateRecordRequest
+	var req handlerdto.CreateRecordRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return

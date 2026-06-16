@@ -10,15 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type LoginRequest struct {
-	Code string `json:"code" binding:"required"`
-}
-
-type AuthResponse struct {
-	AccessToken string `json:"access_token"`
-	User        map[string]interface{} `json:"user"`
-}
-
 // HandleOAuthCallback handles OAuth callback from Supabase
 func HandleOAuthCallback(c *gin.Context) {
 	code := c.Query("code")

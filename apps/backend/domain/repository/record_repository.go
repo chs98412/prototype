@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"github.com/chs98412/prototype/backend/domain/dto"
+
+	dto "github.com/chs98412/prototype/backend/domain/dto"
 	"github.com/chs98412/prototype/backend/domain/entity"
 )
 

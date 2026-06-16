@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	handlerdto "github.com/chs98412/prototype/backend/handler/dto"
 	"github.com/chs98412/prototype/backend/pkg/supabase"
 	"github.com/gin-gonic/gin"
 )
@@ -77,7 +78,7 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	var req UpdateProfileRequest
+	var req handlerdto.UpdateProfileRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
