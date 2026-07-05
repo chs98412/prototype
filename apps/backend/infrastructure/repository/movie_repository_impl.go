@@ -31,3 +31,14 @@ func (r *MovieRepositoryImpl) GetByID(ctx context.Context, tmdbID int) (*entity.
 	}
 	return &movie, nil
 }
+
+func (r *MovieRepositoryImpl) GetByIDs(ctx context.Context, tmdbIDs []int) ([]entity.Movie, error) {
+	var movies []entity.Movie
+	if len(tmdbIDs) == 0 {
+		return movies, nil
+	}
+	if err := r.db.WithContext(ctx).Where("id IN ?", tmdbIDs).Find(&movies).Error; err != nil {
+		return nil, err
+	}
+	return movies, nil
+}

@@ -9,8 +9,7 @@ import (
 // Profile is the domain entity for user profiles
 // Not exported outside domain layer
 type Profile struct {
-	ID          string    `gorm:"primaryKey;column:id"`
-	UserID      string    `gorm:"uniqueIndex;column:user_id"`
+	UserID      string    `gorm:"primaryKey;column:user_id"`
 	DisplayName string    `gorm:"column:display_name"`
 	Bio         string    `gorm:"column:bio"`
 	AvatarURL   string    `gorm:"column:avatar_url"`
@@ -24,9 +23,8 @@ func (p *Profile) TableName() string {
 }
 
 // NewProfile creates a new profile entity
-func NewProfile(id, userID, displayName string) *Profile {
+func NewProfile(userID, displayName string) *Profile {
 	return &Profile{
-		ID:          id,
 		UserID:      userID,
 		DisplayName: displayName,
 		CreatedAt:   time.Now(),

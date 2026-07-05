@@ -40,7 +40,7 @@ func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService, m
 	}
 }
 
-// enrichReviewDTO populates title, poster_path, display_name, avatar_url
+// enrichReviewDTO populates title, poster_path, display_name, avatar_url for a single item
 func (s *ReviewServiceImpl) enrichReviewDTO(ctx context.Context, d *dto.ReviewDTO) {
 	movie, err := s.movieRepo.GetByID(ctx, d.TMDBID)
 	if err == nil && movie != nil {
@@ -51,6 +51,53 @@ func (s *ReviewServiceImpl) enrichReviewDTO(ctx context.Context, d *dto.ReviewDT
 	if err == nil && profile != nil {
 		d.DisplayName = profile.DisplayName
 		d.AvatarURL = profile.AvatarURL
+	}
+}
+
+// enrichReviewDTOs batch-fetches movies and profiles to avoid N+1 queries
+func (s *ReviewServiceImpl) enrichReviewDTOs(ctx context.Context, dtos []dto.ReviewDTO) {
+	if len(dtos) == 0 {
+		return
+	}
+
+	tmdbIDs := make([]int, 0, len(dtos))
+	userIDs := make([]string, 0, len(dtos))
+	seenTMDB := map[int]bool{}
+	seenUser := map[string]bool{}
+	for _, d := range dtos {
+		if !seenTMDB[d.TMDBID] {
+			tmdbIDs = append(tmdbIDs, d.TMDBID)
+			seenTMDB[d.TMDBID] = true
+		}
+		if !seenUser[d.UserID] {
+			userIDs = append(userIDs, d.UserID)
+			seenUser[d.UserID] = true
+		}
+	}
+
+	movieMap := map[int]entity.Movie{}
+	if movies, err := s.movieRepo.GetByIDs(ctx, tmdbIDs); err == nil {
+		for _, m := range movies {
+			movieMap[m.ID] = m
+		}
+	}
+
+	profileMap := map[string]entity.Profile{}
+	if profiles, err := s.profileRepo.GetByUserIDs(ctx, userIDs); err == nil {
+		for _, p := range profiles {
+			profileMap[p.UserID] = p
+		}
+	}
+
+	for i := range dtos {
+		if m, ok := movieMap[dtos[i].TMDBID]; ok {
+			dtos[i].Title = m.Title
+			dtos[i].PosterPath = m.PosterPath
+		}
+		if p, ok := profileMap[dtos[i].UserID]; ok {
+			dtos[i].DisplayName = p.DisplayName
+			dtos[i].AvatarURL = p.AvatarURL
+		}
 	}
 }
 
@@ -78,10 +125,9 @@ func (s *ReviewServiceImpl) ListReviews(ctx context.Context, limit, offset int) 
 
 	dtos := make([]dto.ReviewDTO, 0, len(reviews))
 	for _, r := range reviews {
-		d := r.ToDTO()
-		s.enrichReviewDTO(ctx, d)
-		dtos = append(dtos, *d)
+		dtos = append(dtos, *r.ToDTO())
 	}
+	s.enrichReviewDTOs(ctx, dtos)
 	return dtos, nil
 }
 
@@ -98,10 +144,9 @@ func (s *ReviewServiceImpl) GetReviewsByTMDB(ctx context.Context, tmdbID int, li
 
 	dtos := make([]dto.ReviewDTO, 0, len(reviews))
 	for _, r := range reviews {
-		d := r.ToDTO()
-		s.enrichReviewDTO(ctx, d)
-		dtos = append(dtos, *d)
+		dtos = append(dtos, *r.ToDTO())
 	}
+	s.enrichReviewDTOs(ctx, dtos)
 	return dtos, nil
 }
 
@@ -118,10 +163,9 @@ func (s *ReviewServiceImpl) GetUserReviews(ctx context.Context, userID string, l
 
 	dtos := make([]dto.ReviewDTO, 0, len(reviews))
 	for _, r := range reviews {
-		d := r.ToDTO()
-		s.enrichReviewDTO(ctx, d)
-		dtos = append(dtos, *d)
+		dtos = append(dtos, *r.ToDTO())
 	}
+	s.enrichReviewDTOs(ctx, dtos)
 	return dtos, nil
 }
 

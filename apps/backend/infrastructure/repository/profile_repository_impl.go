@@ -31,6 +31,18 @@ func (r *ProfileRepositoryImpl) GetByUserID(ctx context.Context, userID string) 
 	return profile, nil
 }
 
+// GetByUserIDs retrieves profiles by multiple user IDs
+func (r *ProfileRepositoryImpl) GetByUserIDs(ctx context.Context, userIDs []string) ([]entity.Profile, error) {
+	var profiles []entity.Profile
+	if len(userIDs) == 0 {
+		return profiles, nil
+	}
+	if err := r.db.WithContext(ctx).Where("user_id IN ?", userIDs).Find(&profiles).Error; err != nil {
+		return nil, fmt.Errorf("failed to query profiles: %w", err)
+	}
+	return profiles, nil
+}
+
 // Save creates a new profile
 func (r *ProfileRepositoryImpl) Save(ctx context.Context, profile *entity.Profile) error {
 	if err := r.db.WithContext(ctx).Create(profile).Error; err != nil {
