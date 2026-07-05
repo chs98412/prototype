@@ -37,12 +37,41 @@ func NewRecordService(repo repository.RecordRepository, movieSvc MovieService, m
 	}
 }
 
-// enrichRecordDTO populates title and poster_path from movies table
+// enrichRecordDTO populates title and poster_path for a single item
 func (s *RecordServiceImpl) enrichRecordDTO(ctx context.Context, d *dto.RecordDTO) {
 	movie, err := s.movieRepo.GetByID(ctx, d.TMDBID)
 	if err == nil && movie != nil {
 		d.Title = movie.Title
 		d.PosterPath = movie.PosterPath
+	}
+}
+
+// enrichRecordDTOs batch-fetches movies to avoid N+1 queries
+func (s *RecordServiceImpl) enrichRecordDTOs(ctx context.Context, dtos []dto.RecordDTO) {
+	if len(dtos) == 0 {
+		return
+	}
+	tmdbIDs := make([]int, 0, len(dtos))
+	seen := map[int]bool{}
+	for _, d := range dtos {
+		if !seen[d.TMDBID] {
+			tmdbIDs = append(tmdbIDs, d.TMDBID)
+			seen[d.TMDBID] = true
+		}
+	}
+	movies, err := s.movieRepo.GetByIDs(ctx, tmdbIDs)
+	if err != nil {
+		return
+	}
+	movieMap := map[int]entity.Movie{}
+	for _, m := range movies {
+		movieMap[m.ID] = m
+	}
+	for i := range dtos {
+		if m, ok := movieMap[dtos[i].TMDBID]; ok {
+			dtos[i].Title = m.Title
+			dtos[i].PosterPath = m.PosterPath
+		}
 	}
 }
 
@@ -80,10 +109,9 @@ func (s *RecordServiceImpl) ListRecords(ctx context.Context, userID string, stat
 
 	dtos := make([]dto.RecordDTO, 0, len(records))
 	for _, r := range records {
-		d := r.ToDTO()
-		s.enrichRecordDTO(ctx, d)
-		dtos = append(dtos, *d)
+		dtos = append(dtos, *r.ToDTO())
 	}
+	s.enrichRecordDTOs(ctx, dtos)
 	return dtos, nil
 }
 
