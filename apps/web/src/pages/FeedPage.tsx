@@ -5,9 +5,6 @@ import { PencilIcon } from '../components/ui/Icons';
 import { api } from '../lib/api';
 import type { SocialFeedItem, ApiList } from '../lib/apiTypes';
 
-const FILTERS = ['전체', '에세이', '한줄평', '인용', '로그'] as const;
-type Filter = typeof FILTERS[number];
-
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -160,7 +157,6 @@ function FeedCard({ item }: { item: SocialFeedItem }) {
 
 export default function FeedPage() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<Filter>('전체');
   const [items, setItems] = useState<SocialFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,15 +171,6 @@ export default function FeedPage() {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
-
-  const filtered = items.filter(item => {
-    if (filter === '전체') return true;
-    if (filter === '에세이') return item.kind === 'essay';
-    if (filter === '한줄평') return item.kind === 'rating';
-    if (filter === '인용') return item.kind === 'quote';
-    if (filter === '로그') return item.kind === 'log';
-    return true;
-  });
 
   return (
     <Layout>
@@ -206,26 +193,6 @@ export default function FeedPage() {
           </button>
         </div>
 
-        {/* Filter chips */}
-        <div style={{ display: 'flex', gap: 8, padding: '14px 22px', overflowX: 'auto' }}>
-          {FILTERS.map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                flexShrink: 0, padding: '5px 12px', borderRadius: 999,
-                fontSize: 11, fontWeight: 500, cursor: 'pointer',
-                border: '0.5px solid',
-                background: filter === f ? '#1f1f1f' : '#fff',
-                color: filter === f ? '#fff' : '#1f1f1f',
-                borderColor: filter === f ? '#1f1f1f' : 'var(--line-soft)',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                transition: 'all 0.12s',
-              }}
-            >{f}</button>
-          ))}
-        </div>
-
         {/* Feed */}
         {loading && (
           <div style={{ padding: '60px 22px', textAlign: 'center', color: 'var(--mute)', fontSize: 13 }}>
@@ -239,7 +206,7 @@ export default function FeedPage() {
           </div>
         )}
 
-        {!loading && !error && filtered.length === 0 && (
+        {!loading && !error && items.length === 0 && (
           <div style={{ padding: '60px 22px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--serif)', fontSize: 16, color: '#888', marginBottom: 8 }}>
               아직 피드가 비어있어요
@@ -250,7 +217,7 @@ export default function FeedPage() {
           </div>
         )}
 
-        {!loading && !error && filtered.map(item => (
+        {!loading && !error && items.map(item => (
           <FeedCard key={item.id} item={item} />
         ))}
 

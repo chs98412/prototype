@@ -49,10 +49,11 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 			COALESCE(m.poster_path, '') AS poster_path,
 			r.content,
 			r.like_count,
-			NULL::int AS rating,
+			COALESCE(CAST(rec.rating AS INTEGER), 0) AS rating,
 			r.is_spoiler AS spoiler,
 			r.created_at AS event_time
 		FROM reviews r
+		LEFT JOIN user_records rec ON rec.user_id = r.user_id AND rec.tmdb_id = r.tmdb_id
 		LEFT JOIN user_profiles p ON p.user_id = r.user_id
 		LEFT JOIN movies m ON m.id = r.tmdb_id
 		WHERE r.user_id = ? OR r.user_id IN (
@@ -78,8 +79,11 @@ func (r *FeedRepositoryImpl) GetSocialFeed(ctx context.Context, userID string, l
 		FROM user_records rec
 		LEFT JOIN user_profiles p ON p.user_id = rec.user_id
 		LEFT JOIN movies m ON m.id = rec.tmdb_id
-		WHERE rec.user_id = ? OR rec.user_id IN (
+		WHERE (rec.user_id = ? OR rec.user_id IN (
 			SELECT following_id FROM user_follows WHERE follower_id = ?
+		))
+		AND NOT EXISTS (
+			SELECT 1 FROM reviews r WHERE r.user_id = rec.user_id AND r.tmdb_id = rec.tmdb_id
 		)
 
 		ORDER BY event_time DESC
