@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RequestLogger logs API request/response times
+const slowRequestThreshold = 200 * time.Millisecond
+
+// RequestLogger logs API request/response times, warning on slow requests
 func RequestLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		startTime := time.Now()
@@ -19,6 +21,10 @@ func RequestLogger() gin.HandlerFunc {
 		method := c.Request.Method
 		path := c.Request.URL.Path
 
-		log.Printf("[API] %s %s - %d (%dms)", method, path, statusCode, duration.Milliseconds())
+		if duration >= slowRequestThreshold {
+			log.Printf("[SLOW] %s %s - %d (%dms) ⚠️", method, path, statusCode, duration.Milliseconds())
+		} else {
+			log.Printf("[API] %s %s - %d (%dms)", method, path, statusCode, duration.Milliseconds())
+		}
 	}
 }
