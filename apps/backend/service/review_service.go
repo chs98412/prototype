@@ -25,15 +25,17 @@ type ReviewService interface {
 // ReviewServiceImpl implements ReviewService
 type ReviewServiceImpl struct {
 	repo        repository.ReviewRepository
+	recordRepo  repository.RecordRepository
 	movieSvc    MovieService
 	movieRepo   repository.MovieRepository
 	profileRepo repository.ProfileRepository
 }
 
 // NewReviewService creates a new review service
-func NewReviewService(repo repository.ReviewRepository, movieSvc MovieService, movieRepo repository.MovieRepository, profileRepo repository.ProfileRepository) ReviewService {
+func NewReviewService(repo repository.ReviewRepository, recordRepo repository.RecordRepository, movieSvc MovieService, movieRepo repository.MovieRepository, profileRepo repository.ProfileRepository) ReviewService {
 	return &ReviewServiceImpl{
 		repo:        repo,
+		recordRepo:  recordRepo,
 		movieSvc:    movieSvc,
 		movieRepo:   movieRepo,
 		profileRepo: profileRepo,
@@ -199,8 +201,17 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 		return nil, err
 	}
 
-	// Best-effort: cache movie metadata from TMDB
-	go s.movieSvc.UpsertFromTMDB(context.Background(), tmdbID)
+	// Best-effort: ensure a user_records entry exists so the movie appears in watch history
+	go func() {
+		bgCtx := context.Background()
+		existing, _ := s.recordRepo.GetByTMDBID(bgCtx, userID, tmdbID)
+		if existing == nil {
+			rec := entity.NewRecord(uuid.New().String(), userID, tmdbID, mediaType)
+			_ = rec.SetWatched(0)
+			_ = s.recordRepo.Save(bgCtx, rec)
+		}
+		s.movieSvc.UpsertFromTMDB(bgCtx, tmdbID)
+	}()
 
 	d := review.ToDTO()
 	s.enrichReviewDTO(ctx, d)
