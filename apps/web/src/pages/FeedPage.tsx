@@ -18,15 +18,6 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 }
 
-function TypeBadge({ label }: { label: string }) {
-  return (
-    <span style={{
-      display: 'inline-block', fontSize: 9, fontWeight: 600,
-      letterSpacing: '0.2em', color: ACCENT, textTransform: 'uppercase',
-    }}>· {label}</span>
-  );
-}
-
 function Stars({ n, size = 13 }: { n: number; size?: number }) {
   return (
     <span style={{ display: 'inline-flex', gap: 2 }}>
@@ -54,10 +45,13 @@ function Poster({ path, w, h }: { path: string; w: number; h: number }) {
   );
 }
 
+const KIND_STRINGS = new Set(['essay', 'rating', 'quote', 'log', '에세이', '한줄평', '인용', '로그']);
+
 // ── Essay card: large poster + review title + excerpt ──
 function EssayCard({ item }: { item: SocialFeedItem }) {
   const navigate = useNavigate();
-  const displayTitle = item.review_title || item.title;
+  const hasRealTitle = item.review_title && !KIND_STRINGS.has(item.review_title);
+  const displayTitle = hasRealTitle ? item.review_title : item.title;
 
   return (
     <div
@@ -69,7 +63,6 @@ function EssayCard({ item }: { item: SocialFeedItem }) {
     >
       <Poster path={item.poster_path} w={130} h={180} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <TypeBadge label="에세이" />
         <div style={{
           marginTop: 6,
           fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500,
@@ -112,7 +105,6 @@ function EvalCard({ item }: { item: SocialFeedItem }) {
     >
       <Poster path={item.poster_path} w={130} h={180} />
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        <TypeBadge label="평가" />
         <div style={{
           marginTop: 6,
           fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500,
@@ -160,7 +152,6 @@ function QuoteCard({ item }: { item: SocialFeedItem }) {
       onClick={() => navigate(`/post/review/${item.id}`)}
       style={{ padding: '20px 22px 22px', borderBottom: '1px solid var(--line-soft)', cursor: 'pointer' }}
     >
-      <TypeBadge label="인용" />
       <div style={{
         marginTop: 10,
         background: '#f7f6f3',
