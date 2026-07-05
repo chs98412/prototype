@@ -5,6 +5,8 @@ import { PencilIcon } from '../components/ui/Icons';
 import { api } from '../lib/api';
 import type { SocialFeedItem, ApiList } from '../lib/apiTypes';
 
+const ACCENT = '#6a7040';
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -16,131 +18,186 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 }
 
-function Stars({ n }: { n: number }) {
+function TypeBadge({ label }: { label: string }) {
   return (
-    <span style={{ color: '#6a7040', fontSize: 11, letterSpacing: 1 }}>
-      {'★'.repeat(n)}{'☆'.repeat(5 - n)}
+    <span style={{
+      display: 'inline-block', fontSize: 9, fontWeight: 600,
+      letterSpacing: '0.2em', color: ACCENT, textTransform: 'uppercase',
+    }}>· {label}</span>
+  );
+}
+
+function Stars({ n, size = 13 }: { n: number; size?: number }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 2 }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={i <= n ? ACCENT : 'none'}>
+          <path
+            d="m12 3 2.6 6 6.4.6-4.9 4.2L17.6 21 12 17.3 6.4 21l1.5-7.2L3 9.6 9.4 9 12 3Z"
+            stroke={ACCENT} strokeWidth="1.4" strokeLinejoin="round"
+          />
+        </svg>
+      ))}
     </span>
   );
 }
 
-function FeedCard({ item }: { item: SocialFeedItem }) {
-  const navigate = useNavigate();
-
-  const header = (
-    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-        background: item.avatar_url ? `url(${item.avatar_url}) center / cover no-repeat #ddd` : '#ddd',
-      }} />
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#1f1f1f' }}>
-          {item.display_name || '알 수 없는 사용자'}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--mute)', marginTop: 1 }}>
-          {timeAgo(item.event_time)}
-        </div>
-      </div>
-    </div>
+function Poster({ path, w, h }: { path: string; w: number; h: number }) {
+  return (
+    <div style={{
+      width: w, height: h, borderRadius: 5, flexShrink: 0,
+      background: path
+        ? `url(https://image.tmdb.org/t/p/w185${path}) center / cover no-repeat #eee`
+        : '#eee',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
+    }} />
   );
+}
+
+// ── Essay card: large poster + review title + excerpt ──
+function EssayCard({ item }: { item: SocialFeedItem }) {
+  const navigate = useNavigate();
+  const displayTitle = item.review_title || item.title;
 
   return (
     <div
       onClick={() => navigate(`/post/review/${item.id}`)}
       style={{
-        padding: '18px 22px',
-        borderBottom: '1px solid var(--line-soft)',
-        cursor: 'pointer',
+        display: 'flex', gap: 14, padding: '20px 22px 22px',
+        borderBottom: '1px solid var(--line-soft)', cursor: 'pointer',
       }}
     >
-      {header}
-
-      {/* Essay: 제목 + 긴 본문 */}
-      {item.kind === 'essay' && (
-        <div style={{ display: 'flex', gap: 12 }}>
-          {item.poster_path && (
-            <div style={{
-              width: 50, height: 70, borderRadius: 2, flexShrink: 0,
-              background: `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`,
-            }} />
-          )}
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontFamily: 'var(--serif)', fontWeight: 500, marginBottom: 6, color: '#1f1f1f' }}>
-              {item.title}
-            </div>
-            <p style={{
-              margin: 0, fontFamily: 'var(--serif)', fontSize: 13, lineHeight: 1.6, color: '#1f1f1f',
-              display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-            } as React.CSSProperties}>{item.content}</p>
-            <div style={{ marginTop: 8, fontSize: 11, color: 'var(--mute)' }}>
-              ♥ {item.like_count}
-            </div>
-          </div>
+      <Poster path={item.poster_path} w={130} h={180} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <TypeBadge label="에세이" />
+        <div style={{
+          marginTop: 6,
+          fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500,
+          lineHeight: 1.35, letterSpacing: '-0.01em', color: '#000',
+        }}>{displayTitle}</div>
+        <div style={{ marginTop: 6, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.04em' }}>
+          {item.display_name} · {timeAgo(item.event_time)}
         </div>
-      )}
-
-      {/* Rating: 포스터 + 제목 + 별점 + 한줄평 */}
-      {item.kind === 'rating' && (
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{
-            width: 50, height: 70, borderRadius: 2, flexShrink: 0,
-            background: item.poster_path
-              ? `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`
-              : '#eee',
-          }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#1f1f1f', marginBottom: 4 }}>
-              {item.title}
-            </div>
-            <div style={{ marginBottom: 6 }}>
-              <Stars n={item.rating ?? 0} />
-            </div>
-            <p style={{
-              margin: 0, fontFamily: 'var(--serif)', fontSize: 13, lineHeight: 1.6, color: '#1f1f1f',
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-            } as React.CSSProperties}>{item.content}</p>
-            <div style={{ marginTop: 6, fontSize: 11, color: 'var(--mute)' }}>
-              ♥ {item.like_count}
-            </div>
-          </div>
+        <p style={{
+          margin: '10px 0 0', fontSize: 12.5, lineHeight: 1.65,
+          color: '#222', fontFamily: 'var(--serif)',
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        } as React.CSSProperties}>{item.content}</p>
+        <div style={{
+          marginTop: 10, display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 10, fontWeight: 500 }}>♥ {item.like_count}</span>
+          <span style={{ fontSize: 9.5, color: 'var(--mute)', letterSpacing: '0.06em' }}>{item.title}</span>
         </div>
-      )}
-
-      {/* Quote: 풀 너비 인용문 */}
-      {item.kind === 'quote' && (
-        <div style={{ background: '#f7f6f3', padding: '16px', borderRadius: 4, marginBottom: 12 }}>
-          <p style={{
-            margin: 0, fontFamily: 'var(--serif)', fontSize: 14, lineHeight: 1.8,
-            color: '#1f1f1f', fontStyle: 'italic',
-          }}>"{item.content}"</p>
-          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--mute)' }}>
-            ♥ {item.like_count}
-          </div>
-        </div>
-      )}
-
-      {/* Log: 포스터 + 제목 + 별점 */}
-      {item.kind === 'log' && (
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{
-            width: 50, height: 70, borderRadius: 2, flexShrink: 0,
-            background: item.poster_path
-              ? `url(https://image.tmdb.org/t/p/w185${item.poster_path}) center / cover no-repeat #eee`
-              : '#eee',
-          }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#1f1f1f', marginBottom: 4 }}>
-              {item.title}
-            </div>
-            <div style={{ marginBottom: 4 }}>
-              <Stars n={item.rating ?? 0} />
-            </div>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--mute)' }}>시청 기록</p>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
+}
+
+// ── Eval card: unified 평가 — rating or log ──
+function EvalCard({ item }: { item: SocialFeedItem }) {
+  const navigate = useNavigate();
+  const stars = Math.round((item.rating ?? 0) / 2);
+  const hasBlurb = !!item.content;
+
+  return (
+    <div
+      onClick={() => navigate(item.kind === 'log' ? `/movie/${item.tmdb_id}` : `/post/review/${item.id}`)}
+      style={{
+        display: 'flex', gap: 14, padding: '20px 22px 22px',
+        borderBottom: '1px solid var(--line-soft)', cursor: 'pointer',
+      }}
+    >
+      <Poster path={item.poster_path} w={130} h={180} />
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <TypeBadge label="평가" />
+        <div style={{
+          marginTop: 6,
+          fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500,
+          letterSpacing: '-0.01em', lineHeight: 1.3,
+        }}>{item.title}</div>
+        <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Stars n={stars} size={13} />
+          {stars > 0 && <span style={{ fontSize: 11, color: ACCENT, fontWeight: 500 }}>{stars}.0</span>}
+        </div>
+        <div style={{ marginTop: 4, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.04em' }}>
+          {item.display_name} · {timeAgo(item.event_time)}
+        </div>
+        {hasBlurb ? (
+          <>
+            <p style={{
+              margin: '10px 0 0', fontFamily: 'var(--serif)',
+              fontSize: 12.5, lineHeight: 1.65, color: '#222',
+              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+              overflow: 'hidden', flex: 1,
+            } as React.CSSProperties}>{item.content}</p>
+            <div style={{ marginTop: 10 }}>
+              <span style={{ fontSize: 10, fontWeight: 500 }}>♥ {item.like_count}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ flex: 1 }} />
+            <div style={{
+              marginTop: 12, fontSize: 10.5, color: 'var(--mute)',
+              fontStyle: 'italic', fontFamily: 'var(--serif)',
+            }}>— 멘트 없이 기록됨</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Quote card: bordered box with centred quote ──
+function QuoteCard({ item }: { item: SocialFeedItem }) {
+  const navigate = useNavigate();
+
+  return (
+    <div
+      onClick={() => navigate(`/post/review/${item.id}`)}
+      style={{ padding: '20px 22px 22px', borderBottom: '1px solid var(--line-soft)', cursor: 'pointer' }}
+    >
+      <TypeBadge label="인용" />
+      <div style={{
+        marginTop: 10,
+        background: '#f7f6f3',
+        borderTop: `1px solid ${ACCENT}`,
+        borderBottom: `1px solid ${ACCENT}`,
+        padding: '18px 20px',
+        minHeight: 100,
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      }}>
+        <div style={{
+          fontFamily: 'var(--serif)', fontSize: 16, fontWeight: 500,
+          lineHeight: 1.55, color: '#1f1f1f', letterSpacing: '-0.005em',
+          textAlign: 'center',
+        }}>
+          <span style={{ fontSize: 22, color: ACCENT, verticalAlign: '-4px' }}>"</span>
+          {item.content}
+          <span style={{ fontSize: 22, color: ACCENT, verticalAlign: '-4px' }}>"</span>
+        </div>
+        <div style={{
+          marginTop: 12, textAlign: 'center',
+          fontSize: 10, color: ACCENT, letterSpacing: '0.08em',
+        }}>
+          〈{item.title}〉 중에서 · {item.display_name}
+        </div>
+      </div>
+      <div style={{ marginTop: 10 }}>
+        <span style={{ fontSize: 10, fontWeight: 500 }}>♥ {item.like_count}</span>
+      </div>
+    </div>
+  );
+}
+
+function FeedCard({ item }: { item: SocialFeedItem }) {
+  if (item.kind === 'essay') return <EssayCard item={item} />;
+  if (item.kind === 'rating' || item.kind === 'log') return <EvalCard item={item} />;
+  if (item.kind === 'quote') return <QuoteCard item={item} />;
+  return null;
 }
 
 export default function FeedPage() {
@@ -164,13 +221,13 @@ export default function FeedPage() {
     <Layout>
       <div>
         {/* Masthead */}
-        <div style={{ padding: '24px 22px 6px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ padding: '16px 22px 6px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontFamily: 'var(--serif)', fontWeight: 500, fontSize: 28, letterSpacing: '-0.02em', lineHeight: 1 }}>
               피드
             </div>
-            <div style={{ marginTop: 6, fontSize: 11, color: '#6a7040', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              팔로우한 사람들의 기록
+            <div style={{ marginTop: 6, fontSize: 11, color: ACCENT, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              essays · ratings · logs · 이번 주
             </div>
           </div>
           <button

@@ -8,13 +8,14 @@ import (
 
 // SocialFeedItem represents a mixed social feed item (review or record)
 type SocialFeedItem struct {
-	Kind        string    `json:"kind"` // "review" | "record"
+	Kind        string    `json:"kind"` // essay | rating | quote | log
 	ID          string    `json:"id"`
 	UserID      string    `json:"user_id"`
 	DisplayName string    `json:"display_name"`
 	AvatarURL   string    `json:"avatar_url"`
 	TmdbID      int       `json:"tmdb_id"`
-	Title       string    `json:"title"`
+	Title       string    `json:"title"`       // movie title
+	ReviewTitle string    `json:"review_title"` // review's own title (essays)
 	PosterPath  string    `json:"poster_path"`
 	Content     *string   `json:"content,omitempty"`
 	LikeCount   int       `json:"like_count"`
