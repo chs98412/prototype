@@ -24,14 +24,9 @@ function Stars({ n }: { n: number }) {
   );
 }
 
-const KIND_LABELS: Record<SocialFeedItem['kind'], string> = {
-  essay: '에세이', rating: '한줄평', quote: '인용', log: '로그'
-};
-
 function FeedCard({ item }: { item: SocialFeedItem }) {
   const navigate = useNavigate();
 
-  // 공통 헤더
   const header = (
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
       <div style={{
@@ -45,13 +40,6 @@ function FeedCard({ item }: { item: SocialFeedItem }) {
         <div style={{ fontSize: 10, color: 'var(--mute)', marginTop: 1 }}>
           {timeAgo(item.event_time)}
         </div>
-      </div>
-      <div style={{
-        marginLeft: 'auto', fontSize: 9.5, fontWeight: 500, letterSpacing: '0.08em',
-        textTransform: 'uppercase', color: '#6a7040',
-        border: '0.5px solid #6a7040', borderRadius: 3, padding: '2px 6px',
-      }}>
-        {KIND_LABELS[item.kind]}
       </div>
     </div>
   );
