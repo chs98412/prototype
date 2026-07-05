@@ -45,13 +45,10 @@ function Poster({ path, w, h }: { path: string; w: number; h: number }) {
   );
 }
 
-const KIND_STRINGS = new Set(['essay', 'rating', 'quote', 'log', '에세이', '한줄평', '인용', '로그']);
-
 // ── Essay card: large poster + review title + excerpt ──
 function EssayCard({ item }: { item: SocialFeedItem }) {
   const navigate = useNavigate();
-  const hasRealTitle = item.review_title && !KIND_STRINGS.has(item.review_title);
-  const displayTitle = hasRealTitle ? item.review_title : item.title;
+  const displayTitle = item.review_title || item.title;
 
   return (
     <div
