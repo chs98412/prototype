@@ -94,7 +94,7 @@ function EvalCard({ item }: { item: SocialFeedItem }) {
 
   return (
     <div
-      onClick={() => navigate(item.kind === 'log' ? `/movie/${item.tmdb_id}` : `/post/review/${item.id}`)}
+      onClick={() => navigate(`/post/${item.kind === 'log' ? 'record' : 'review'}/${item.id}`)}
       style={{
         display: 'flex', gap: 14, padding: '20px 22px 22px',
         borderBottom: '1px solid var(--line-soft)', cursor: 'pointer',

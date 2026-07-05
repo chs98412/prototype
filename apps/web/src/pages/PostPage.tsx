@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/ui/Layout';
 import { api } from '../lib/api';
-import type { ReviewDTO } from '../lib/apiTypes';
+import type { ReviewDTO, RecordDTO } from '../lib/apiTypes';
 import { FEED_ITEMS, MOVIE_BY_ID, MOVIES, ME } from '../lib/data';
 import type { RatingItem, LogItem, QuoteItem, ListItem } from '../lib/data';
 import { BackIcon, EllipsisIcon, HeartIcon, CommentIcon, BookmarkIcon, StarIcon } from '../components/ui/Icons';
@@ -258,16 +258,20 @@ export default function PostPage() {
   const { kind, id } = useParams<{ kind: string; id: string }>();
   const navigate = useNavigate();
   const [review, setReview] = useState<ReviewDTO | null>(null);
+  const [record, setRecord] = useState<RecordDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id && kind === 'review') {
+    if (!id) { setLoading(false); return; }
+    if (kind === 'review') {
       api.get<ReviewDTO>(`/v1/reviews/${id}`)
         .then(r => setReview(r))
-        .catch(err => {
-          console.error('Failed to fetch review:', err);
-          setReview(null);
-        })
+        .catch(err => { console.error('Failed to fetch review:', err); })
+        .finally(() => setLoading(false));
+    } else if (kind === 'record') {
+      api.get<RecordDTO>(`/v1/records/${id}`)
+        .then(r => setRecord(r))
+        .catch(err => { console.error('Failed to fetch record:', err); })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -290,7 +294,7 @@ export default function PostPage() {
     );
   }
 
-  if (!item && !review) {
+  if (!item && !review && !record) {
     return (
       <Layout>
         <SubHeader onBack={() => navigate(-1)} title="평론" trailing={<button style={BTN}><EllipsisIcon /></button>} />
@@ -358,6 +362,40 @@ export default function PostPage() {
         </div>
         <div style={{ padding: '18px 22px', fontSize: 10, color: 'var(--mute)', letterSpacing: '0.08em' }}>
           {review.like_count} likes
+        </div>
+      </Layout>
+    );
+  }
+
+  if (record) {
+    const stars = Math.round((record.rating ?? 0) / 2);
+    return (
+      <Layout>
+        <SubHeader onBack={() => navigate(-1)} title={record.title || ''} trailing={<button style={BTN}><EllipsisIcon /></button>} />
+        <div style={{ padding: '30px 22px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {record.poster_path && (
+            <div
+              onClick={() => navigate(`/movie/${record.tmdb_id}`)}
+              style={{
+                width: 210, height: 290, borderRadius: 3, cursor: 'pointer',
+                background: `url(https://image.tmdb.org/t/p/w500${record.poster_path}) center / cover no-repeat #eee`,
+                boxShadow: '0 16px 36px rgba(0,0,0,0.28)',
+              }}
+            />
+          )}
+          <div
+            onClick={() => navigate(`/movie/${record.tmdb_id}`)}
+            style={{ marginTop: 22, fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', cursor: 'pointer' }}
+          >{record.title}</div>
+          {stars > 0 && (
+            <div style={{ marginTop: 24, display: 'flex', gap: 6, justifyContent: 'center' }}>
+              <Stars value={stars} size={24} />
+            </div>
+          )}
+          <div style={{ marginTop: 60, fontFamily: 'var(--serif)', fontSize: 13, color: 'var(--mute)', fontStyle: 'italic', letterSpacing: '0.04em' }}>
+            — 멘트 없이 기록됨
+          </div>
+          <div style={{ height: 80 }} />
         </div>
       </Layout>
     );
