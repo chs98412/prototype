@@ -177,9 +177,7 @@ func (s *ReviewServiceImpl) CreateReview(ctx context.Context, userID string, tmd
 	if content == "" {
 		return nil, domain.ErrInvalidInput
 	}
-	if len(content) > 500 {
-		return nil, domain.ErrInvalidInput
-	}
+
 
 	// Check if review exists
 	existingReview, _ := s.repo.GetUserReviewByTMDB(ctx, userID, tmdbID)
